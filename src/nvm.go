@@ -19,6 +19,7 @@ import (
 
 var root = ""
 var symlink = ""
+var settingsFile = os.Getenv("APPDATA")+"\\nvm\\settings.txt"
 
 func main() {
   args := os.Args
@@ -42,12 +43,16 @@ func main() {
     case "uninstall": uninstall(detail)
     case "use": use(detail)
     case "list": list(detail)
-    case "enable": enable()
-    case "disable": disable()
-    //case "root": setRootDir(detail)
+    case "on": enable()
+    case "off": disable()
+    case "root":
+      if len(args) == 3 {
+        updateRootDir(args[2])
+      } else {
+        fmt.Println("\nCurrent Root: "+root)
+      }
     default: help()
   }
-
 }
 
 func install(version string) {
@@ -103,10 +108,7 @@ func install(version string) {
     } else {
       fmt.Println("Could not download node.js executable for version "+version+".")
     }
-    return
 
-    // Move node and npm to their directory, then update the symlink
-    // Remember to set the symlink path in the PATH during the installation
     // If this is ever shipped for Mac, it should use homebrew.
     // If this ever ships on Linux, it should be on bintray so it can use yum, apt-get, etc.
 
@@ -150,8 +152,8 @@ func use(version string) {
 
   // Create or update the symlink
   sym, serr := os.Stat(symlink)
-  sym = sym
-  if serr == nil {
+  serr = serr
+  if sym != nil {
     cmd := exec.Command(root+"\\elevate.cmd", "cmd", "/C", "rmdir", symlink)
     var output bytes.Buffer
     var _stderr bytes.Buffer
@@ -178,25 +180,76 @@ func use(version string) {
 }
 
 func list(listtype string) {
-  if listtype == "" {
+//  if listtype == "" {
     listtype = "installed"
+//  }
+//  if listtype != "installed" && listtype != "available" {
+//    fmt.Println("\nInvalid list option.\n\nPlease use on of the following\n  - nvm list\n  - nvm list installed\n  - nvm list available")
+//    help()
+//    return
+//  }
+  if listtype == "installed" {
+    fmt.Println("")
+    vers := ""
+    cmd := exec.Command("node","-v")
+    str, err := cmd.Output()
+    if err == nil {
+      vers = strings.Trim(string(str)," \n\r")
+    }
+
+    dir := ""
+    files, _ := ioutil.ReadDir(root)
+    for _, f := range files {
+      if f.IsDir() {
+        isnode, verr := regexp.MatchString("v",f.Name())
+        verr = verr
+        if isnode {
+          dir = f.Name()
+          if f.Name() == vers {
+            fmt.Printf("  * ")
+          } else {
+            fmt.Printf("    ")
+          }
+          fmt.Printf(regexp.MustCompile("v").ReplaceAllString(f.Name(),""))
+          if f.Name() == vers {
+            fmt.Printf(" (In Use)")
+          }
+          fmt.Printf("\n")
+        }
+      }
+    }
+    if len(strings.Trim(dir," \n\r")) == 0 {
+      fmt.Println("No installations recognized.")
+    }
+//  } else {
+//    fmt.Printf("List "+listtype)
   }
-  if listtype != "installed" && listtype != "available" {
-    fmt.Println("\nInvalid list option.\n\nPlease use on of the following\n  - nvm list\n  - nvm list installed\n  - nvm list available")
-    help()
-    return
-  }
-  fmt.Printf("List "+listtype)
 }
 
 func enable() {
-  // Prompt user, warning them what they're going to do
-  fmt.Printf("Enable by setting the PATH to use the root with a symlink")
+  dir := ""
+  files, _ := ioutil.ReadDir(root)
+  for _, f := range files {
+    if f.IsDir() {
+      isnode, verr := regexp.MatchString("v",f.Name())
+      verr = verr
+      if isnode {
+        dir = f.Name()
+      }
+    }
+  }
+  fmt.Println("nvm enabled")
+  if dir != "" {
+    use(strings.Trim(regexp.MustCompile("v").ReplaceAllString(dir,"")," \n\r"))
+  } else {
+    fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest")
+  }
 }
 
 func disable() {
-  // Prompt user, warning them what they're going to do
-  fmt.Printf("Disable by removing the symlink in PATH var")
+  cmd := exec.Command(root+"\\elevate.cmd", "cmd", "/C", "rmdir", symlink)
+  cmd.Run()
+  fmt.Println("nvm disabled")
 }
 
 func help() {
@@ -204,12 +257,10 @@ func help() {
   fmt.Println("  nvm install <version>        : The version can be a node.js version or \"latest\" for the latest stable version.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
   fmt.Println("  nvm use <version>            : Switch to use the specified version.")
-  fmt.Println("  nvm list [type]              : type can be \"available\" (from nodejs.org),")
-  fmt.Println("                                 \"installed\" (what is currently on the computer),")
-  fmt.Println("                                 or left blank (same as \"installed\").")
+  fmt.Println("  nvm list                     : List what is currently installed.")
   fmt.Println("  nvm on                       : Enable node.js version management.")
   fmt.Println("  nvm off                      : Disable node.js version management.")
-  fmt.Println("  nvm root <path>              : Set the directory where wnvm should install different node.js versions.")
+  fmt.Println("  nvm root <path>              : Set the directory where nvm should store different versions of node.js.")
   fmt.Println("                                 If <path> is not set, the current root will be displayed.\n")
 }
 
@@ -379,8 +430,22 @@ func readLines(path string) ([]string, error) {
   return lines, scanner.Err()
 }
 
+func updateRootDir(path string) {
+  ok, err := os.Stat(path)
+  if err != nil {
+    fmt.Println(path+" does not exist or could not be found.")
+    return
+  }
+  ok = ok
+
+  content := "root: "+strings.Trim(path," \n\r")+"\r\npath: "+strings.Trim(symlink," \n\r")
+  ioutil.WriteFile(settingsFile, []byte(content), 0644)
+  root = path
+  fmt.Println("\nRoot has been set to "+path)
+}
+
 func setRootDir() {
-  lines, err := readLines(os.Getenv("APPDATA")+"\\nvm\\settings.txt")
+  lines, err := readLines(settingsFile)
   if err != nil {
     fmt.Println("\nERROR",err)
     os.Exit(1)
@@ -389,9 +454,17 @@ func setRootDir() {
   // Process each line and extract the value
   for _, line := range lines {
     if strings.Contains(line,"root:") {
-      root = strings.Trim(regexp.MustCompile("root:").ReplaceAllString(line,"")," ")
+      root = strings.Trim(regexp.MustCompile("root:").ReplaceAllString(line,"")," \r\n")
     } else if strings.Contains(line,"path:") {
-      symlink = strings.Trim(regexp.MustCompile("path:").ReplaceAllString(line,"")," ")
+      symlink = strings.Trim(regexp.MustCompile("path:").ReplaceAllString(line,"")," \r\n")
     }
+  }
+
+  // Make sure the directories exist
+  p, e := os.Stat(root)
+  if e != nil {
+    fmt.Println(root+" could not be found or does not exist. Exiting.")
+    return
+    p=p
   }
 }
