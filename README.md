@@ -2,7 +2,7 @@
 
 Manage multiple installations of node.js on a Windows computer.
 
-**tl;dr** This is the Windows version of [nvm](https://github.com/creationix/nvm).
+**tl;dr** It's basically [nvm](https://github.com/creationix/nvm) for Windows.
 
 There are situations where the ability to switch between different versions of Node.js can be very
 useful and save a lot of time. For example, if you want to test a module you're developing with the latest
