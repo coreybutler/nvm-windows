@@ -79,10 +79,10 @@ NVM for Windows comes with an installer, courtesy of a byproduct of my work on [
 
 Overall, this project brings together some ideas, a few battle-hardened pieces of other modules, and support for newer versions of node.
 
-## Why?
+## Motivation
 
 I needed it, plain and simple. Additionally, it's apparent that [support for multiple versions](https://github.com/joyent/node/issues/8075) is not
-coming to node core, or even something they care about. It was also an excuse to play with Go :)
+coming to node core, or even something they care about. It was also an excuse to play with Go.
 
 ## License
 
