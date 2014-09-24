@@ -79,6 +79,9 @@ NVM for Windows comes with an installer, courtesy of a byproduct of my work on [
 
 Overall, this project brings together some ideas, a few battle-hardened pieces of other modules, and support for newer versions of node.
 
+I also wrote a simple [data feed](http://github.com/coreybutler/nodedistro) containing a list of node.js versions and their associated npm version.
+This is how NVM for Windows recognizes the "latest" stable version. It's free for anyone to use.
+
 ## Motivation
 
 I needed it, plain and simple. Additionally, it's apparent that [support for multiple versions](https://github.com/joyent/node/issues/8075) is not
