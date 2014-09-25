@@ -73,6 +73,13 @@ func install(version string) {
   // Check to see if the version is already installed
   if !isVersionInstalled(version) {
 
+    if !isVersionAvailable(version){
+      fmt.Println("Version "+version+" is not available. If you are attempting to download a \"just released\" version,")
+      fmt.Println("it may not be recognized by the nvm service yet (updated hourly). If you feel this is in error and")
+      fmt.Println("you know the version exists, please visit http://github.com/coreybutler/nodedistro and submit a PR.")
+      return
+    }
+
     // Make the output directories
     os.Mkdir(root+"\\v"+version,os.ModeDir)
     os.Mkdir(root+"\\v"+version+"\\node_modules",os.ModeDir)
@@ -467,4 +474,18 @@ func setRootDir() {
     return
     p=p
   }
+}
+
+func isVersionAvailable(v string) bool {
+  // Check the service to make sure the version is available
+  text := getRemoteTextFile("https://raw.githubusercontent.com/coreybutler/nodedistro/master/nodeversions.json")
+
+  // Parse
+  var data interface{}
+  json.Unmarshal([]byte(text), &data);
+  body := data.(map[string]interface{})
+  all := body["all"]
+  npm := all.(map[string]interface{})
+
+  return npm[v] != nil
 }
