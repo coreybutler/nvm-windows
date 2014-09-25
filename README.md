@@ -20,7 +20,7 @@ It comes with an installer (and uninstaller), because getting it should be easy.
 
 ![NVM for Windows Installer](http://coreybutler.github.io/nvm/images/installer.jpg)
 
-**To upgrade**, run the new installer. It will safely overwrite the files it needs to update without touching your nodde.js installations.
+**To upgrade**, run the new installer. It will safely overwrite the files it needs to update without touching your node.js installations.
 Make sure you use the same installation and symlink folder. If you originally installed to the default locations, you just need to click
 "next" on each window until it finishes.
 
