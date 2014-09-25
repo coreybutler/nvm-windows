@@ -12,13 +12,17 @@ bleeding edge version without uninstalling the stable version of node, this util
 
 ![Switch between stable and unstable versions.](http://coreybutler.github.io/nvm/images/use.jpg)
 
-### Installation
+### Installation & Upgrades
 
 It comes with an installer (and uninstaller), because getting it should be easy.
 
+[Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
+
 ![NVM for Windows Installer](http://coreybutler.github.io/nvm/images/installer.jpg)
 
-[Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
+**To upgrade**, run the new installer. It will safely overwrite the files it needs to update without touching your nodde.js installations.
+Make sure you use the same installation and symlink folder. If you originally installed to the default locations, you just need to click
+"next" on each window until it finishes.
 
 ### Usage
 
