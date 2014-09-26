@@ -23,6 +23,6 @@ _testmain.go
 *.test
 *.prof
 
-bin
 dist
 src/v*
+bin/*.exe
