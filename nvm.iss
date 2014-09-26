@@ -34,6 +34,8 @@ SolidCompression=yes
 ChangesEnvironment=yes
 DisableProgramGroupPage=yes
 ArchitecturesInstallIn64BitMode=x64 ia64
+UninstallDisplayIcon={app}\{#MyIcon}
+AppCopyright=Copyright (C) 2014 Corey Butler.
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -72,6 +74,8 @@ begin
 end;
 
 //function getInstalledVErsions(dir: string): 
+var 
+  nodeInUse: string;
 
 function TakeControl(np: string; nv: string): string;
 var
@@ -99,6 +103,8 @@ begin
   StringChangeEx(path,np+';;',';',True);
 
   RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
+
+  nodeInUse := ExpandConstant('{app}')+'\'+nv;
   
 end;
 
@@ -288,9 +294,19 @@ begin
   Result := SymlinkPage.Values[0];
 end;
 
+function getCurrentVersion(o: string): string;
+begin
+  Result := nodeInUse;
+end;
+
+function isNodeAlreadyInUse(): boolean;
+begin
+  Result := Length(nodeInUse) > 0;
+end;
+
 [Run]
-Filename: "{cmd}"; Parameters: "/C {code:getSymLink}"; Flags: runhidden;
-//Filename: "{cmd}"; Parameters: "/K nvm"; Flags: runasoriginaluser postinstall;
+Filename: "{cmd}"; Parameters: "/C ""mklink /D ""{code:getSymLink}"" ""{code:getCurrentVersion}"""" "; Check: isNodeAlreadyInUse; Flags: runhidden;
+Filename: "{cmd}"; Parameters: "/K ""set PATH={app};%PATH% && cls && nvm"""; Flags: runasoriginaluser postinstall;
 
 [UninstallDelete]
 Type: files; Name: "{app}\nvm.exe";
