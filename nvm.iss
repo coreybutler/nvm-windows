@@ -71,6 +71,8 @@ begin
   end;
 end;
 
+//function getInstalledVErsions(dir: string): 
+
 function TakeControl(np: string; nv: string): string;
 var
   path: string;
@@ -191,6 +193,8 @@ var
   path: string;
   nvm_symlink: string;
 begin
+  MsgBox('Removing NVM for Windows will remove the nvm command and all versions of node.js, including global npm modules.', mbInformation, MB_OK);
+  
   // Remove the symlink
   RegQueryStringValue(HKEY_LOCAL_MACHINE,
     'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
