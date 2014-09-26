@@ -32,6 +32,8 @@ SetupIconFile={#ProjectRoot}\{#MyIcon}
 Compression=lzma
 SolidCompression=yes
 ChangesEnvironment=yes
+DisableProgramGroupPage=yes
+ArchitecturesInstallIn64BitMode=x64 ia64
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -40,7 +42,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppShortName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{#MyIcon}"
@@ -49,6 +51,131 @@ Name: "{group}\Uninstall {#MyAppShortName}"; Filename: "{uninstallexe}"
 [Code]
 var
   SymlinkPage: TInputDirWizardPage;
+
+function IsDirEmpty(dir: string): Boolean;
+var 
+  FindRec: TFindRec;
+  ct: Integer;
+begin
+  ct := 0;
+  if FindFirst(ExpandConstant(dir + '\*'), FindRec) then
+  try
+    repeat
+      if FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY = 0 then
+        ct := ct+1;
+    until
+      not FindNext(FindRec);
+  finally
+    FindClose(FindRec);
+    Result := ct = 0;
+  end;
+end;
+
+function TakeControl(np: string; nv: string): string;
+var
+  path: string;
+begin
+  // Move the existing node.js installation directory to the nvm root & update the path
+  RenameFile(np,ExpandConstant('{app}')+'\'+nv);
+
+  RegQueryStringValue(HKEY_LOCAL_MACHINE,
+    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+    'Path', path);
+
+  StringChangeEx(path,np+'\','',True);
+  StringChangeEx(path,np,'',True);
+  StringChangeEx(path,np+';;',';',True);
+
+  RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
+  
+  RegQueryStringValue(HKEY_CURRENT_USER,
+    'Environment',
+    'Path', path);
+
+  StringChangeEx(path,np+'\','',True);
+  StringChangeEx(path,np,'',True);
+  StringChangeEx(path,np+';;',';',True);
+
+  RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
+  
+end;
+
+function Ansi2String(AString:AnsiString):String;
+var
+ i : Integer;
+ iChar : Integer;
+ outString : String;
+begin
+ outString :='';
+ for i := 1 to Length(AString) do
+ begin
+  iChar := Ord(AString[i]); //get int value
+  outString := outString + Chr(iChar);
+ end;
+
+ Result := outString;
+end;
+
+procedure PreInstall();
+var
+  TmpResultFile, TmpJS, NodeVersion, NodePath: string;
+  stdout: Ansistring;
+  ResultCode: integer;
+  msg1, msg2, msg3, dir1: Boolean;
+begin
+  // Create a file to check for Node.JS
+  TmpJS := ExpandConstant('{tmp}') + '\nvm_check.js';
+  SaveStringToFile(TmpJS, 'console.log(require("path").dirname(process.execPath));', False);
+  
+  // Execute the node file and save the output temporarily
+  TmpResultFile := ExpandConstant('{tmp}') + '\nvm_node_check.txt';
+  Exec(ExpandConstant('{cmd}'), '/C node "'+TmpJS+'" > "' + TmpResultFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  DeleteFile(TmpJS)
+
+  // Process the results
+  LoadStringFromFile(TmpResultFile,stdout);
+  NodePath := Trim(Ansi2String(stdout));
+  if DirExists(NodePath) then begin
+    Exec(ExpandConstant('{cmd}'), '/C node -v > "' + TmpResultFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    LoadStringFromFile(TmpResultFile, stdout);
+    NodeVersion := Trim(Ansi2String(stdout));
+    msg1 := MsgBox('Node '+NodeVersion+' is already installed. Do you want NVM to control this version?', mbConfirmation, MB_YESNO) = IDNO;
+    if msg1 then begin
+      msg2 := MsgBox('NVM cannot run in parallel with an existing Node.js installation. Node.js must be uninstalled before NVM can be installed, or you must allow NVM to control the existing installation. Do you want NVM to control node '+NodeVersion+'?', mbConfirmation, MB_YESNO) = IDYES;
+      if msg2 then begin
+        TakeControl(NodePath, NodeVersion);
+      end;
+      if not msg2 then begin
+        DeleteFile(TmpResultFile);
+        WizardForm.Close;
+      end;
+    end;
+    if not msg1 then
+    begin
+      TakeControl(NodePath, NodeVersion);
+    end;
+  end;
+  
+  // Make sure the symlink directory doesn't exist
+  if DirExists(SymlinkPage.Values[0]) then begin
+    // If the directory is empty, just delete it since it will be recreated anyway.
+    dir1 := IsDirEmpty(SymlinkPage.Values[0]);
+    if dir1 then begin
+      RemoveDir(SymlinkPage.Values[0]);
+    end;
+    if not dir1 then begin
+      msg3 := MsgBox(SymlinkPage.Values[0]+' will be overwritten and all contents will be lost. Do you want to proceed?', mbConfirmation, MB_OKCANCEL) = IDOK;
+      if msg3 then begin
+        RemoveDir(SymlinkPage.Values[0]);
+      end;
+      if not msg3 then begin
+        //RaiseException('The symlink cannot be created due to a conflict with the existing directory at '+SymlinkPage.Values[0]);
+        WizardForm.Close;
+      end;
+    end;
+  end;
+end;
+
 procedure InitializeWizard;
 begin
   SymlinkPage := CreateInputDirPage(wpSelectDir,
@@ -56,7 +183,7 @@ begin
     'Select the folder in which Setup should create the symlink, then click Next.',
     False, '');
   SymlinkPage.Add('This directory will automatically be added to your system path.');
-  SymlinkPage.Values[0] := ExpandConstant('{pf32}\nodejs');
+  SymlinkPage.Values[0] := ExpandConstant('{pf}\nodejs');
 end;
 
 function InitializeUninstall(): Boolean;
@@ -158,8 +285,8 @@ begin
 end;
 
 [Run]
-Filename: "{sys}\cmd.exe"; Parameters: "/C {code:getSymLink}"; Flags: runhidden;
-//Filename: "{sys}\cmd.exe"; Parameters: "/K nvm"; Flags: runasoriginaluser postinstall;
+Filename: "{cmd}"; Parameters: "/C {code:getSymLink}"; Flags: runhidden;
+//Filename: "{cmd}"; Parameters: "/K nvm"; Flags: runasoriginaluser postinstall;
 
 [UninstallDelete]
 Type: files; Name: "{app}\nvm.exe";
