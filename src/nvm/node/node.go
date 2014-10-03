@@ -38,7 +38,7 @@ func IsVersionInstalled(root string, version string, cpu string) bool {
   if ((e32||e64) && used) || (e32 && e64) {
     return true
   }
-  if !e32 && !e64 && used && arch.Validate(cpu) == arch.Validate("") {
+  if !e32 && !e64 && used && arch.Validate(cpu) == arch.Bit(root+"\\v"+version+"\\node.exe") {
     return true
   }
   if cpu == "32" {

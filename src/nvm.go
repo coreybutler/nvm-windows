@@ -193,6 +193,11 @@ func uninstall(version string) {
   // Determine if the version exists and skip if it doesn't
   if node.IsVersionInstalled(env.root,version,"32") || node.IsVersionInstalled(env.root,version,"64") {
     fmt.Printf("Uninstalling node v"+version+"...")
+    v, _ := node.GetCurrentVersion()
+    if v == version {
+      cmd := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "rmdir", env.symlink)
+      cmd.Run()
+    }
     e := os.RemoveAll(env.root+"\\v"+version)
     if e != nil {
       fmt.Println("Error removing node v"+version)
