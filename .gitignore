@@ -26,3 +26,5 @@ _testmain.go
 dist
 src/v*
 bin/*.exe
+bin/*.zip
+bin/nvm/*
