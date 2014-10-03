@@ -25,6 +25,7 @@ type Environment struct {
   root      string
   symlink   string
   arch      string
+  proxy     string
 }
 
 var env = &Environment{
@@ -32,6 +33,7 @@ var env = &Environment{
   root: "",
   symlink: "",
   arch: os.Getenv("PROCESSOR_ARCHITECTURE"),
+  proxy: "none",
 }
 
 func main() {
@@ -72,6 +74,13 @@ func main() {
     case "arch":
       _, a := node.GetCurrentVersion()
       fmt.Println(a+"-bit")
+    case "proxy":
+      if detail == "" {
+        fmt.Println("Current proxy: "+env.proxy)
+      } else {
+        env.proxy = detail
+        saveSettings()
+      }
     default: help()
   }
 }
@@ -375,10 +384,11 @@ func help() {
   fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest stable version.")
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
   fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
-  fmt.Println("  nvm list                     : List what is currently installed.")
+  fmt.Println("  nvm list                     : List the node.js installations.")
   fmt.Println("  nvm on                       : Enable node.js version management.")
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
+  fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
   fmt.Println("  nvm use <version> [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
   fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
@@ -416,7 +426,7 @@ func updateRootDir(path string) {
 }
 
 func saveSettings() {
-  content := "root: "+strings.Trim(env.root," \n\r")+"\r\npath: "+strings.Trim(env.symlink," \n\r")+"\r\narch: "+strings.Trim(env.arch," \n\r")
+  content := "root: "+strings.Trim(env.root," \n\r")+"\r\npath: "+strings.Trim(env.symlink," \n\r")+"\r\narch: "+strings.Trim(env.arch," \n\r")+"\r\nproxy: "+strings.Trim(env.proxy," \n\r")
   ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 
@@ -435,6 +445,14 @@ func Setup() {
       env.symlink = strings.Trim(regexp.MustCompile("path:").ReplaceAllString(line,"")," \r\n")
     } else if strings.Contains(line,"arch:"){
       env.arch = strings.Trim(regexp.MustCompile("arch:").ReplaceAllString(line,"")," \r\n")
+    } else if strings.Contains(line,"proxy:"){
+      env.proxy = strings.Trim(regexp.MustCompile("proxy:").ReplaceAllString(line,"")," \r\n")
+      if env.proxy != "none" && env.proxy != "" {
+        if strings.ToLower(env.proxy[0:4]) != "http" {
+          env.proxy = "http://"+env.proxy
+        }
+        web.SetProxy(env.proxy)
+      }
     }
   }
 

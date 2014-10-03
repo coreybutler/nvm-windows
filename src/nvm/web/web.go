@@ -3,6 +3,7 @@ package web
 import(
   "fmt"
   "net/http"
+  "net/url"
   "os"
   "io"
   "io/ioutil"
@@ -10,6 +11,17 @@ import(
   "strconv"
   "../arch"
 )
+
+var client = &http.Client{}
+
+func SetProxy(p string){
+  if p != "" && p != "none" {
+    proxyUrl, _ := url.Parse(p)
+    client = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
+  } else {
+    client = &http.Client{}
+  }
+}
 
 func Download(url string, target string) bool {
 
@@ -19,7 +31,7 @@ func Download(url string, target string) bool {
   }
   defer output.Close()
 
-  response, err := http.Get(url)
+  response, err := client.Get(url)
   if err != nil {
     fmt.Println("Error while downloading", url, "-", err)
   }
@@ -84,7 +96,7 @@ func GetNpm(v string) bool {
 }
 
 func GetRemoteTextFile(url string) string {
-  response, httperr := http.Get(url)
+  response, httperr := client.Get(url)
   if httperr != nil {
     fmt.Println("\nCould not retrieve "+url+".\n\n")
     fmt.Printf("%s", httperr)
@@ -116,7 +128,7 @@ func IsNode64bitAvailable(v string) bool {
   }
 
   // Check online to see if a 64 bit version exists
-  res, err := http.Head("http://nodejs.org/dist/v"+v+"/x64/node.exe")
+  res, err := client.Head("http://nodejs.org/dist/v"+v+"/x64/node.exe")
   if err != nil {
     return false
   }
