@@ -72,8 +72,20 @@ func main() {
     case "version":
       fmt.Println(NvmVersion)
     case "arch":
+      if strings.Trim(detail," \r\n") != "" {
+        detail = strings.Trim(detail," \r\n")
+        if detail != "32" && detail != "64" {
+          fmt.Println("\""+detail+"\" is an invalid architecture. Use 32 or 64.")
+          return
+        }
+        env.arch = detail
+        saveSettings()
+        fmt.Println("Default architecture set to "+detail+"-bit.")
+        return
+      }
       _, a := node.GetCurrentVersion()
-      fmt.Println(a+"-bit")
+      fmt.Println("System Default: "+env.arch+"-bit.")
+      fmt.Println("Currently Configured: "+a+"-bit.")
     case "proxy":
       if detail == "" {
         fmt.Println("Current proxy: "+env.proxy)
