@@ -1,11 +1,11 @@
 #define MyAppName "NVM for Windows"
 #define MyAppShortName "nvm"
 #define MyAppLCShortName "nvm"
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.4"
 #define MyAppPublisher "Ecor Ventures, LLC"
 #define MyAppURL "http://github.com/coreybutler/nvm"
 #define MyAppExeName "nvm.exe"
-#define MyIcon "nodejs.ico"
+#define MyIcon "bin\nodejs.ico"
 #define ProjectRoot "C:\Users\Corey\Documents\workspace\Experiments\nvm"
 
 [Setup]
