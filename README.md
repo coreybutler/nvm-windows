@@ -4,13 +4,13 @@ Manage multiple installations of node.js on a Windows computer.
 
 **tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm/releases)!
 
-![NVM for Windows](http://coreybutler.github.io/nvm/images/installlatest.jpg)
+![NVM for Windows](http://coreybutler.github.io/nvm-windows/images/installlatest.jpg)
 
 There are situations where the ability to switch between different versions of Node.js can be very
 useful. For example, if you want to test a module you're developing with the latest
 bleeding edge version without uninstalling the stable version of node, this utility can help.
 
-![Switch between stable and unstable versions.](http://coreybutler.github.io/nvm/images/use.jpg)
+![Switch between stable and unstable versions.](http://coreybutler.github.io/nvm-windows/images/use.jpg)
 
 ### Installation & Upgrades
 
@@ -18,7 +18,7 @@ It comes with an installer (and uninstaller), because getting it should be easy.
 
 [Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
 
-![NVM for Windows Installer](http://coreybutler.github.io/nvm/images/installer.jpg)
+![NVM for Windows Installer](http://coreybutler.github.io/nvm-windows/images/installer.jpg)
 
 **To upgrade**, run the new installer. It will safely overwrite the files it needs to update without touching your node.js installations.
 Make sure you use the same installation and symlink folder. If you originally installed to the default locations, you just need to click
