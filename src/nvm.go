@@ -9,6 +9,7 @@ import (
   "regexp"
   "bytes"
   "encoding/json"
+  "strconv"
   "./nvm/web"
   "./nvm/arch"
   "./nvm/file"
@@ -135,7 +136,7 @@ func install(version string, cpuarch string) {
   // Check to see if the version is already installed
   if !node.IsVersionInstalled(env.root,version,cpuarch) {
 
-    if !isVersionAvailable(version){
+    if !node.IsVersionAvailable(version){
       fmt.Println("Version "+version+" is not available. If you are attempting to download a \"just released\" version,")
       fmt.Println("it may not be recognized by the nvm service yet (updated hourly). If you feel this is in error and")
       fmt.Println("you know the version exists, please visit http://github.com/coreybutler/nodedistro and submit a PR.")
@@ -321,46 +322,65 @@ func useArchitecture(a string) {
 }
 
 func list(listtype string) {
-//  if listtype == "" {
+  if listtype == "" {
     listtype = "installed"
-//  }
-//  if listtype != "installed" && listtype != "available" {
-//    fmt.Println("\nInvalid list option.\n\nPlease use on of the following\n  - nvm list\n  - nvm list installed\n  - nvm list available")
-//    help()
-//    return
-//  }
+  }
+  if listtype != "installed" && listtype != "available" {
+    fmt.Println("\nInvalid list option.\n\nPlease use on of the following\n  - nvm list\n  - nvm list installed\n  - nvm list available")
+    help()
+    return
+  }
+
   if listtype == "installed" {
     fmt.Println("")
     inuse, a := node.GetCurrentVersion()
 
-    dir := ""
-    files, _ := ioutil.ReadDir(env.root)
-    for i := len(files) - 1; i >= 0; i-- {
-      f := files[i]
-      if f.IsDir() {
-        isnode, _ := regexp.MatchString("v",f.Name())
-        str := ""
-        if isnode {
-          dir = f.Name()
-          if "v"+inuse == f.Name() {
-            str = str+"  * "
-          } else {
-            str = str+"    "
-          }
-          str = str+regexp.MustCompile("v").ReplaceAllString(f.Name(),"")
-          if "v"+inuse == f.Name() {
-            str = str+" ("+a+"-bit)"
-//            str = ansi.Color(str,"green:black")
-          }
-          fmt.Printf(str+"\n")
+    v := node.GetInstalled(env.root)
+    for i := 0; i < len(v); i++ {
+      version := v[i]
+      isnode, _ := regexp.MatchString("v",version)
+      str := ""
+      if isnode {
+        if "v"+inuse == version {
+          str = str+"  * "
+        } else {
+          str = str+"    "
         }
+        str = str+regexp.MustCompile("v").ReplaceAllString(version,"")
+        if "v"+inuse == version {
+          str = str+" (Currently using "+a+"-bit executable)"
+//            str = ansi.Color(str,"green:black")
+        }
+        fmt.Printf(str+"\n")
       }
     }
-    if len(strings.Trim(dir," \n\r")) == 0 {
+    if len(v) == 0 {
       fmt.Println("No installations recognized.")
     }
-//  } else {
-//    fmt.Printf("List "+listtype)
+  } else {
+    _, stable, unstable := node.GetAvailable()
+
+    releases := 15
+
+    fmt.Println("\nShowing the "+strconv.Itoa(releases)+" latest available releases.\n")
+
+    fmt.Println("      STABLE   |    UNSTABLE  ")
+    fmt.Println("   ---------------------------")
+
+    for i := 0; i < releases; i++ {
+      str := "v"+stable[i]
+      for ii := 10-len(str); ii > 0; ii-- {
+        str = " "+str
+      }
+      str = str+"  |  "
+      str2 := "v"+unstable[i]
+      for ii := 10-len(str2); ii > 0; ii-- {
+        str2 = " "+str2
+      }
+      fmt.Println("   "+str+str2)
+    }
+
+    fmt.Println("\nFor a complete list, visit http://coreybutler.github.io/nodedistro")
   }
 }
 
@@ -396,7 +416,7 @@ func help() {
   fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest stable version.")
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
   fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
-  fmt.Println("  nvm list                     : List the node.js installations.")
+  fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed.")
   fmt.Println("  nvm on                       : Enable node.js version management.")
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
@@ -477,18 +497,4 @@ func Setup() {
     return
     p=p
   }
-}
-
-func isVersionAvailable(v string) bool {
-  // Check the service to make sure the version is available
-  text := web.GetRemoteTextFile("https://raw.githubusercontent.com/coreybutler/nodedistro/master/nodeversions.json")
-
-  // Parse
-  var data interface{}
-  json.Unmarshal([]byte(text), &data);
-  body := data.(map[string]interface{})
-  all := body["all"]
-  npm := all.(map[string]interface{})
-
-  return npm[v] != nil
 }
