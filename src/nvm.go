@@ -22,19 +22,23 @@ const (
 )
 
 type Environment struct {
-  settings  string
-  root      string
-  symlink   string
-  arch      string
-  proxy     string
+  settings        string
+  root            string
+  symlink         string
+  arch            string
+  proxy           string
+  originalpath    string
+  originalversion string
 }
 
 var env = &Environment{
   settings: os.Getenv("APPDATA")+"\\nvm\\settings.txt",
   root: "",
-  symlink: "",
+  symlink: os.Getenv("NVM_SYMLINK"),
   arch: os.Getenv("PROCESSOR_ARCHITECTURE"),
   proxy: "none",
+  originalpath: "",
+  originalversion: "",
 }
 
 func main() {
@@ -94,8 +98,22 @@ func main() {
         env.proxy = detail
         saveSettings()
       }
+    case "update": update()
     default: help()
   }
+}
+
+func update() {
+//  cmd := exec.Command("cmd", "/d", "echo", "testing")
+//  var output bytes.Buffer
+//  var _stderr bytes.Buffer
+//  cmd.Stdout = &output
+//  cmd.Stderr = &_stderr
+//  perr := cmd.Run()
+//  if perr != nil {
+//      fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
+//      return
+//  }
 }
 
 func install(version string, cpuarch string) {
@@ -422,7 +440,8 @@ func help() {
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
   fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
-  fmt.Println("  nvm use <version> [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
+//  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
+  fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
   fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
   fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
   fmt.Println("                                 If <path> is not set, the current root will be displayed.")
@@ -458,7 +477,7 @@ func updateRootDir(path string) {
 }
 
 func saveSettings() {
-  content := "root: "+strings.Trim(env.root," \n\r")+"\r\npath: "+strings.Trim(env.symlink," \n\r")+"\r\narch: "+strings.Trim(env.arch," \n\r")+"\r\nproxy: "+strings.Trim(env.proxy," \n\r")
+  content := "root: "+strings.Trim(env.root," \n\r")+"\r\narch: "+strings.Trim(env.arch," \n\r")+"\r\nproxy: "+strings.Trim(env.proxy," \n\r")+"\r\noriginalpath: "+strings.Trim(env.originalpath," \n\r")+"\r\noriginalversion: "+strings.Trim(env.originalversion," \n\r")
   ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 
@@ -473,8 +492,10 @@ func Setup() {
   for _, line := range lines {
     if strings.Contains(line,"root:") {
       env.root = strings.Trim(regexp.MustCompile("root:").ReplaceAllString(line,"")," \r\n")
-    } else if strings.Contains(line,"path:") {
-      env.symlink = strings.Trim(regexp.MustCompile("path:").ReplaceAllString(line,"")," \r\n")
+    } else if strings.Contains(line,"originalpath:") {
+      env.originalpath = strings.Trim(regexp.MustCompile("originalpath:").ReplaceAllString(line,"")," \r\n")
+    } else if strings.Contains(line,"originalversion:") {
+      env.originalversion = strings.Trim(regexp.MustCompile("originalversion:").ReplaceAllString(line,"")," \r\n")
     } else if strings.Contains(line,"arch:"){
       env.arch = strings.Trim(regexp.MustCompile("arch:").ReplaceAllString(line,"")," \r\n")
     } else if strings.Contains(line,"proxy:"){
