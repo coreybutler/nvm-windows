@@ -10,8 +10,8 @@ echo Building NVM for Windows
 SET DIST=%CD%\dist\%version%
 SET GOPATH=%CD%\src
 SET GOBIN=%CD%\bin
+SET GOARCH=386
 go build -o %GOBIN%\nvm.exe %GOPATH%\nvm.go
-
 
 REM Create the "noinstall" zip
 echo Generating nvm-noinstall.zip
