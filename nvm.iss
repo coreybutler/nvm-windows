@@ -1,7 +1,7 @@
 #define MyAppName "NVM for Windows"
 #define MyAppShortName "nvm"
 #define MyAppLCShortName "nvm"
-#define MyAppVersion "1.0.4"
+#define MyAppVersion "1.0.5"
 #define MyAppPublisher "Ecor Ventures, LLC"
 #define MyAppURL "http://github.com/coreybutler/nvm"
 #define MyAppExeName "nvm.exe"
@@ -55,7 +55,7 @@ var
   SymlinkPage: TInputDirWizardPage;
 
 function IsDirEmpty(dir: string): Boolean;
-var 
+var
   FindRec: TFindRec;
   ct: Integer;
 begin
@@ -73,8 +73,8 @@ begin
   end;
 end;
 
-//function getInstalledVErsions(dir: string): 
-var 
+//function getInstalledVErsions(dir: string):
+var
   nodeInUse: string;
 
 function TakeControl(np: string; nv: string): string;
@@ -93,7 +93,7 @@ begin
   StringChangeEx(path,np+';;',';',True);
 
   RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
-  
+
   RegQueryStringValue(HKEY_CURRENT_USER,
     'Environment',
     'Path', path);
@@ -105,7 +105,7 @@ begin
   RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
 
   nodeInUse := ExpandConstant('{app}')+'\'+nv;
-  
+
 end;
 
 function Ansi2String(AString:AnsiString):String;
@@ -134,7 +134,7 @@ begin
   // Create a file to check for Node.JS
   TmpJS := ExpandConstant('{tmp}') + '\nvm_check.js';
   SaveStringToFile(TmpJS, 'console.log(require("path").dirname(process.execPath));', False);
-  
+
   // Execute the node file and save the output temporarily
   TmpResultFile := ExpandConstant('{tmp}') + '\nvm_node_check.txt';
   Exec(ExpandConstant('{cmd}'), '/C node "'+TmpJS+'" > "' + TmpResultFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
@@ -163,7 +163,7 @@ begin
       TakeControl(NodePath, NodeVersion);
     end;
   end;
-  
+
   // Make sure the symlink directory doesn't exist
   if DirExists(SymlinkPage.Values[0]) then begin
     // If the directory is empty, just delete it since it will be recreated anyway.
@@ -200,14 +200,14 @@ var
   nvm_symlink: string;
 begin
   MsgBox('Removing NVM for Windows will remove the nvm command and all versions of node.js, including global npm modules.', mbInformation, MB_OK);
-  
+
   // Remove the symlink
   RegQueryStringValue(HKEY_LOCAL_MACHINE,
     'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
     'NVM_SYMLINK', nvm_symlink);
   RemoveDir(nvm_symlink);
-      
-  // Clean the registry    
+
+  // Clean the registry
   RegDeleteValue(HKEY_LOCAL_MACHINE,
     'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
     'NVM_HOME')
@@ -228,9 +228,9 @@ begin
   StringChangeEx(path,'%NVM_HOME%','',True);
   StringChangeEx(path,'%NVM_SYMLINK%','',True);
   StringChangeEx(path,';;',';',True);
-  
+
   RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
-  
+
   RegQueryStringValue(HKEY_CURRENT_USER,
     'Environment',
     'Path', path);
@@ -238,9 +238,9 @@ begin
   StringChangeEx(path,'%NVM_HOME%','',True);
   StringChangeEx(path,'%NVM_SYMLINK%','',True);
   StringChangeEx(path,';;',';',True);
-  
+
   RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
-  
+
   Result := True;
 end;
 
@@ -249,7 +249,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   path: string;
 begin
-  if CurStep = ssPostInstall then 
+  if CurStep = ssPostInstall then
   begin
     SaveStringToFile(ExpandConstant('{app}\settings.txt'), 'root: ' + ExpandConstant('{app}') + #13#10 + 'path: ' + SymlinkPage.Values[0] + #13#10, False);
 
