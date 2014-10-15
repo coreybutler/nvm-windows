@@ -37,8 +37,7 @@ func Download(url string, target string) bool {
   }
   defer response.Body.Close()
 
-  n, err := io.Copy(output, response.Body)
-  n=n
+  _, err = io.Copy(output, response.Body)
   if err != nil {
     fmt.Println("Error while downloading", url, "-", err)
   }

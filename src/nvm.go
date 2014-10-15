@@ -18,7 +18,7 @@ import (
 )
 
 const (
-  NvmVersion = "1.0.3"
+  NvmVersion = "1.0.5"
 )
 
 type Environment struct {
@@ -118,7 +118,8 @@ func update() {
 
 func install(version string, cpuarch string) {
   if version == "" {
-    fmt.Println("\nInvalid version.\n")
+    fmt.Println("\nInvalid version.")
+    fmt.Println(" ")
     help()
     return
   }
@@ -278,8 +279,7 @@ func use(version string, cpuarch string) {
   }
 
   // Create or update the symlink
-  sym, serr := os.Stat(env.symlink)
-  serr = serr
+  sym, _ := os.Stat(env.symlink)
   if sym != nil {
     cmd := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "rmdir", env.symlink)
     var output bytes.Buffer
@@ -407,8 +407,7 @@ func enable() {
   files, _ := ioutil.ReadDir(env.root)
   for _, f := range files {
     if f.IsDir() {
-      isnode, verr := regexp.MatchString("v",f.Name())
-      verr = verr
+      isnode, _ := regexp.MatchString("v",f.Name())
       if isnode {
         dir = f.Name()
       }
@@ -429,7 +428,9 @@ func disable() {
 }
 
 func help() {
-  fmt.Println("\nUsage:\n")
+  fmt.Println("\nnRunning version "+NvmVersion+".")
+  fmt.Println("\nUsage:")
+  fmt.Println(" ")
   fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
   fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest stable version.")
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
@@ -445,7 +446,8 @@ func help() {
   fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
   fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
   fmt.Println("                                 If <path> is not set, the current root will be displayed.")
-  fmt.Println("  nvm version                  : Displays the current running version of nvm for Windows.\n")
+  fmt.Println("  nvm version                  : Displays the current running version of nvm for Windows.")
+  fmt.Println(" ")
 }
 
 // Given a node.js version, returns the associated npm version
@@ -512,10 +514,9 @@ func Setup() {
   env.arch = arch.Validate(env.arch)
 
   // Make sure the directories exist
-  p, e := os.Stat(env.root)
+  _, e := os.Stat(env.root)
   if e != nil {
     fmt.Println(env.root+" could not be found or does not exist. Exiting.")
     return
-    p=p
   }
 }
