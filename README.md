@@ -30,7 +30,7 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 
 - `nvm arch [32|64]`: Show if node is running in 32 or 64 bit mode. Specify 32 or 64 to override the default architecture.
 - `nvm install <version> [arch]`: The version can be a node.js version or "latest" for the latest stable version. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set `[arch]` to "all" to install 32 AND 64 bit versions.
-- `nvm list`: List the node.js installations.
+- `nvm list [available]`: List the node.js installations. Type `available` at the end to show a list of versions available for download.
 - `nvm on`: Enable node.js version management.
 - `nvm off`: Disable node.js version management (does not uninstall anything).
 - `nvm proxy [url]`: Set a proxy to use for downloads. Leave `[url]` blank to see the current proxy. Set `[url]` to "none" to remove the proxy.
