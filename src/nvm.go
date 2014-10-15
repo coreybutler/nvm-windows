@@ -428,7 +428,7 @@ func disable() {
 }
 
 func help() {
-  fmt.Println("\nnRunning version "+NvmVersion+".")
+  fmt.Println("\nRunning version "+NvmVersion+".")
   fmt.Println("\nUsage:")
   fmt.Println(" ")
   fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
