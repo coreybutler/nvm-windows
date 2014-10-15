@@ -66,6 +66,7 @@ func main() {
     case "uninstall": uninstall(detail)
     case "use": use(detail,procarch)
     case "list": list(detail)
+    case "ls": list(detail)
     case "on": enable()
     case "off": disable()
     case "root":
@@ -75,6 +76,8 @@ func main() {
         fmt.Println("\nCurrent Root: "+env.root)
       }
     case "version":
+      fmt.Println(NvmVersion)
+    case "v":
       fmt.Println(NvmVersion)
     case "arch":
       if strings.Trim(detail," \r\n") != "" {
@@ -435,7 +438,7 @@ func help() {
   fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest stable version.")
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
   fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
-  fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed.")
+  fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
   fmt.Println("  nvm on                       : Enable node.js version management.")
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
@@ -446,7 +449,7 @@ func help() {
   fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
   fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
   fmt.Println("                                 If <path> is not set, the current root will be displayed.")
-  fmt.Println("  nvm version                  : Displays the current running version of nvm for Windows.")
+  fmt.Println("  nvm version                  : Displays the current running version of nvm for Windows. Aliased as v.")
   fmt.Println(" ")
 }
 
