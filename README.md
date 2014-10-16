@@ -100,7 +100,7 @@ MIT.
 
 ## Thanks
 
-Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to @vkbansal, who has actively provided feedback throughout the releases.
+Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to [@vkbansal](https://github.com/vkbansal), who has actively provided feedback throughout the releases.
 
 ## Alternatives
 
