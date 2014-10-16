@@ -97,3 +97,14 @@ coming to node core, or even something they care about. It was also an excuse to
 ## License
 
 MIT.
+
+## Thanks
+
+Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to @vkbansal, who has actively provided feedback throughout the releases.
+
+## Alternatives
+
+- [nvmw](https://github.com/hakobera/nvmw) - Windows Only
+- [nodist](https://github.com/marcelklehr/nodist) - Windows Only
+- [nvm](https://github.com/creationix/nvm) - Mac/Linux Only
+- [n](https://github.com/visionmedia/n) - Mac/Linux Only
