@@ -32,7 +32,7 @@ type Environment struct {
 }
 
 var env = &Environment{
-  settings: os.Getenv("APPDATA")+"\\nvm\\settings.txt",
+  settings: os.Getenv("NVM_HOME")+"\\settings.txt",
   root: "",
   symlink: os.Getenv("NVM_SYMLINK"),
   arch: os.Getenv("PROCESSOR_ARCHITECTURE"),
