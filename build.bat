@@ -39,7 +39,7 @@ REM Create the installer
 echo Generating nvm-setup.zip
 buildtools\iscc %INNOSETUP% /o%DIST%
 buildtools\zip -j -9 -r "%DIST%\nvm-setup.zip" "%DIST%\nvm-setup.exe"
-rm "%DIST%\nvm-setup.exe"
+REM rm "%DIST%\nvm-setup.exe"
 echo --------------------------
 echo Release %version% available in %DIST%
 GOTO COMPLETE

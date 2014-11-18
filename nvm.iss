@@ -6,7 +6,7 @@
 #define MyAppURL "http://github.com/coreybutler/nvm"
 #define MyAppExeName "nvm.exe"
 #define MyIcon "bin\nodejs.ico"
-#define ProjectRoot "C:\Users\Corey\Documents\workspace\Experiments\nvm"
+#define ProjectRoot "C:\Users\Corey\Documents\workspace\Applications\nvm"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -44,7 +44,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "{#ProjectRoot}\bin\install.cmd"
 
 [Icons]
 Name: "{group}\{#MyAppShortName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{#MyIcon}"
