@@ -1,3 +1,7 @@
+[![Tweet This!][1.1] Tweet This!][1]
+[1.1]: http://i.imgur.com/wWzX9uB.png (Tweet about NVM for Windows)
+[1]: https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb
+
 # Node Version Manager (nvm) for Windows
 
 Manage multiple installations of node.js on a Windows computer.
