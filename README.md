@@ -4,6 +4,8 @@
 
 # Node Version Manager (nvm) for Windows
 
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Manage multiple installations of node.js on a Windows computer.
 
 **tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm/releases)!
