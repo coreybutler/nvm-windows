@@ -119,6 +119,19 @@ func update() {
 //  }
 }
 
+func CheckVersionExceedsLatest(version string) bool{
+    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS.txt")
+    re := regexp.MustCompile("node-v(.+)+msi")
+    reg := regexp.MustCompile("node-v|-x.+")
+	latest := reg.ReplaceAllString(re.FindString(content),"")
+	
+	if version <= latest {
+		return false
+	} else {
+		return true
+	}
+}
+
 func install(version string, cpuarch string) {
   if version == "" {
     fmt.Println("\nInvalid version.")
@@ -141,7 +154,12 @@ func install(version string, cpuarch string) {
   if cpuarch != "all" {
     cpuarch = arch.Validate(cpuarch)
   }
-
+  
+  if CheckVersionExceedsLatest(version) {
+	fmt.Println("Node.js v"+version+" is not yet released or available.")
+	return
+  }
+  
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
     fmt.Println("Node.js v"+version+" is only available in 32-bit.")
     return
