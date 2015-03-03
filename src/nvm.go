@@ -119,11 +119,11 @@ func update() {
 //  }
 }
 
-fun checkVersionExceedsLatest(version) bool{
+func checkVersionExceedsLatest(version string) bool{
     content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS.txt")
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
-	latest = reg.ReplaceAllString(re.FindString(content),"")
+	latest := reg.ReplaceAllString(re.FindString(content),"")
 	
 	if version < latest {
 		return false
@@ -156,7 +156,7 @@ func install(version string, cpuarch string) {
   }
   
   if(checkVersionExceedsLatest(version)) {
-	fmt.Println("Node.js v"+version+" is not yet available.")
+	fmt.Println("Node.js v"+version+" is not yet released or available.")
 	return
   }
   
