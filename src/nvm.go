@@ -125,7 +125,7 @@ func checkVersionExceedsLatest(version string) bool{
     reg := regexp.MustCompile("node-v|-x.+")
 	latest := reg.ReplaceAllString(re.FindString(content),"")
 	
-	if version < latest {
+	if version <= latest {
 		return false
 	} else {
 		return true
