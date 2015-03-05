@@ -8,7 +8,7 @@
 
 Manage multiple installations of node.js on a Windows computer.
 
-**tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm/releases)!
+**tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm/releases)! (No io.js support, _yet_... see Gitter for details)
 
 ![NVM for Windows](http://coreybutler.github.io/nvm-windows/images/installlatest.jpg)
 
