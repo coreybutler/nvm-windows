@@ -1,23 +1,55 @@
 package arch
 
 import (
-  "regexp"
+  //"regexp"
   "os"
-  "os/exec"
+  //"os/exec"
   "strings"
+  //"fmt"
+  "encoding/hex"
 )
 
-func Bit(path string) string {
-  cmd := exec.Command("file",path)
-  str, err := cmd.Output()
-  if err == nil {
-    is64, _ := regexp.MatchString("PE32\\+",string(str))
-    if is64 {
-      return "64"
-    }
-    return "32"
+func SearchBytesInFile( path string, match string, limit int) bool {
+  // Transform to byte array the string
+  toMatch, err := hex.DecodeString(match);
+  if (err != nil) {
+    return false;
   }
-  return "?"
+  
+  // Opening the file and checking if there is an arror
+  file, err := os.Open(path)
+  if err != nil {
+    return false;
+  }
+
+  // Allocate 1 byte array to perform the match
+  bit := make([]byte, 1);
+  j := 0
+  for i := 0; i < limit; i++ {
+    file.Read(bit);
+
+    if bit[0] != toMatch[j] {
+      j = 0;
+    }
+    if bit[0] == toMatch[j] {
+      j++;
+      if (j >= len(toMatch)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+func Bit(path string) string {
+  is64 := SearchBytesInFile(path, "504500006486", 400);
+  is32 := SearchBytesInFile(path, "504500004C", 400);
+  if is64 {
+    return "64";
+  } else if is32 {
+    return "32";
+  }
+  return "?";
 }
 
 func Validate(str string) (string){
