@@ -10,6 +10,7 @@ import(
   "strings"
   "strconv"
   "../arch"
+  "../file"
 )
 
 var client = &http.Client{}
@@ -81,9 +82,21 @@ func GetNodeJS(root string, v string, a string) bool {
 
 }
 
-func GetNpm(v string) bool {
+func GetNpm(root string, v string) bool {
   url := "https://github.com/npm/npm/archive/v"+v+".zip"
-  fileName := os.TempDir()+"\\"+"npm-v"+v+".zip"
+  // temp directory to download the .zip file
+  tempDir := root+"\\temp"
+
+  // if the temp directory doesn't exist, create it
+  if (!file.Exists(tempDir)) {
+    fmt.Println("Creating "+tempDir+"\n")
+    err := os.Mkdir(tempDir, os.ModePerm)
+    if err != nil {
+      fmt.Println(err)
+      os.Exit(1)
+    }
+  }
+  fileName := tempDir+"\\"+"npm-v"+v+".zip"
 
   fmt.Printf("Downloading npm version "+v+"... ")
   if Download(url,fileName) {

@@ -211,20 +211,24 @@ func install(version string, cpuarch string) {
 
     // If successful, add npm
     npmv := getNpmVersion(version)
-    success := web.GetNpm(getNpmVersion(version))
+    success := web.GetNpm(env.root, getNpmVersion(version))
     if success {
       fmt.Printf("Installing npm v"+npmv+"...")
 
+      // new temp directory under the nvm root
+      tempDir := env.root + "\\temp"
+
       // Extract npm to the temp directory
-      file.Unzip(os.TempDir()+"\\npm-v"+npmv+".zip",os.TempDir()+"\\nvm-npm")
+      file.Unzip(tempDir+"\\npm-v"+npmv+".zip",tempDir+"\\nvm-npm")
 
       // Copy the npm and npm.cmd files to the installation directory
-      os.Rename(os.TempDir()+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm",env.root+"\\v"+version+"\\npm")
-      os.Rename(os.TempDir()+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm.cmd",env.root+"\\v"+version+"\\npm.cmd")
-      os.Rename(os.TempDir()+"\\nvm-npm\\npm-"+npmv,env.root+"\\v"+version+"\\node_modules\\npm")
+      os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm",env.root+"\\v"+version+"\\npm")
+      os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm.cmd",env.root+"\\v"+version+"\\npm.cmd")
+      os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv,env.root+"\\v"+version+"\\node_modules\\npm")
 
-      // Remove the source file
-      os.RemoveAll(os.TempDir()+"\\nvm-npm")
+      // Remove the temp directory
+      // may consider keep the temp files here
+      os.RemoveAll(tempDir)
 
       fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use "+version)
     } else {
