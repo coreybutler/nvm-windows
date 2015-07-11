@@ -4,7 +4,7 @@
 
 # Node Version Manager (nvm) for Windows
 
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
 
 Manage multiple installations of node.js on a Windows computer.
 **tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm/releases)! No io.js support, since [iojs is merging back with node](http://blog.nodejs.org/2015/05/15/node-leaders-are-building-an-open-foundation/), there is no longer a need to add special support for it.
