@@ -25,7 +25,17 @@ func GetCurrentVersion() (string, string) {
     cmd := exec.Command("node","-p","console.log(process.execPath)")
     str, _ := cmd.Output()
     file := strings.Trim(regexp.MustCompile("undefined").ReplaceAllString(string(str),"")," \n\r")
-    return v, arch.Bit(file)
+	bit := arch.Bit(file)
+	if (bit == "?"){
+		cmd := exec.Command("node", "-e", "console.log(process.arch)" )
+		str, err := cmd.Output()
+		if (string(str) == "x64") {
+			bit := "64"
+		} else {
+			bit := "32"
+		}
+	}
+	return v, bit
   }
   return "Unknown",""
 }
