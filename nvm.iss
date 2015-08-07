@@ -6,7 +6,6 @@
 #define MyAppURL "http://github.com/coreybutler/nvm"
 #define MyAppExeName "nvm.exe"
 #define MyIcon "bin\nodejs.ico"
-#define ProjectRoot "C:\Users\Corey\Documents\workspace\Applications\nvm"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -25,10 +24,10 @@ DefaultDirName={userappdata}\{#MyAppShortName}
 DisableDirPage=no
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-LicenseFile={#ProjectRoot}\LICENSE
-OutputDir={#ProjectRoot}\dist\{#MyAppVersion}
+LicenseFile=LICENSE
+OutputDir=dist\{#MyAppVersion}
 OutputBaseFilename={#MyAppLCShortName}-setup
-SetupIconFile={#ProjectRoot}\{#MyIcon}
+SetupIconFile={#MyIcon}
 Compression=lzma
 SolidCompression=yes
 ChangesEnvironment=yes
@@ -44,7 +43,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "{#ProjectRoot}\bin\install.cmd"
+Source: "bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "bin\install.cmd"
 
 [Icons]
 Name: "{group}\{#MyAppShortName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{#MyIcon}"
