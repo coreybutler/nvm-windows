@@ -11,7 +11,7 @@ SET version=%L:~24,-1%
 
 REM Get the version number from the core executable
 FOR /f "tokens=*" %%i IN ('FINDSTR /n . %GOPATH%\nvm.go ^| FINDSTR ^NvmVersion^| FINDSTR ^21^') DO SET L=%%i
-SET goversion=%L:~19,-1%
+SET goversion=%L:~18,-1%
 
 IF NOT %version%==%goversion% GOTO VERSIONMISMATCH
 
