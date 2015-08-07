@@ -163,6 +163,7 @@ func install(version string, cpuarch string) {
 	if cpuarch != "all" {
 		cpuarch = arch.Validate(cpuarch)
 	}
+	version = strings.TrimPrefix(version, "v")
 
 	if CheckVersionExceedsLatest(version) {
 		fmt.Println("Node.js v" + version + " is not yet released or available.")
@@ -264,6 +265,7 @@ func uninstall(version string) {
 		help()
 		return
 	}
+	version = strings.TrimPrefix(version, "v")
 
 	// Determine if the version exists and skip if it doesn't
 	if node.IsVersionInstalled(env.root, version, "32") || node.IsVersionInstalled(env.root, version, "64") {
@@ -293,7 +295,7 @@ func use(version string, cpuarch string) {
 		v, _ := node.GetCurrentVersion()
 		version = v
 	}
-
+	version = strings.TrimPrefix(version, "v")
 	cpuarch = arch.Validate(cpuarch)
 
 	// Make sure the version is installed. If not, warn.
