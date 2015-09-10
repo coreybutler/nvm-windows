@@ -55,20 +55,60 @@ func Download(url string, target string) bool {
   return true
 }
 
-func GetNodeJS(root string, v string, a string) bool {
+func GetModernNodeUrl(v string, a string) string {
+  url := ""
+  if v != "latest" {
+    v = "v" + v
+  }
+  if a == "32" {
+    url = "http://nodejs.org/dist/"+v+"/win-x86/node.exe"
+  } else {
+    url = "http://nodejs.org/dist/"+v+"/win-x64/node.exe"
+  }
 
-  a = arch.Validate(a)
+  return url
+}
 
+func GetLegacyNodeUrl(v string, a string) string {
   url := ""
   if a == "32" {
     url = "http://nodejs.org/dist/v"+v+"/node.exe"
   } else {
     if !IsNode64bitAvailable(v) {
       fmt.Println("Node.js v"+v+" is only available in 32-bit.")
-      return false
+      return ""
     }
     url = "http://nodejs.org/dist/v"+v+"/x64/node.exe"
   }
+
+  return url
+}
+
+func GetNodeUrl(v string, a string) string {
+  url := ""
+  if v == "lastest" {
+    url = GetModernNodeUrl(v, a)
+  } else {
+    main, _, _ := ParseVersion(v)
+    if main >= 4 {
+      url = GetModernNodeUrl(v, a)
+    } else {
+      url = GetLegacyNodeUrl(v, a)
+    }
+  }
+
+  return url  
+}
+
+func GetNodeJS(root string, v string, a string) bool {
+
+  a = arch.Validate(a)
+
+  url := GetNodeUrl(v, a)
+  if url == "" {
+    return false
+  }
+
   fileName := root+"\\v"+v+"\\node"+a+".exe"
 
   fmt.Printf("Downloading node.js version "+v+" ("+a+"-bit)... ")
@@ -126,17 +166,27 @@ func GetRemoteTextFile(url string) string {
   return ""
 }
 
+func ParseVersion(v string) (int64, int64, int64) {
+  vers := strings.Fields(strings.Replace(v,"."," ",-1))
+  main, _ := strconv.ParseInt(vers[0],0,0)
+  minor, _ := strconv.ParseInt(vers[1],0,0)
+  patch, _ := strconv.ParseInt(vers[2],0,0)
+  return main, minor, patch
+}
+
 func IsNode64bitAvailable(v string) bool {
   if v == "latest" {
     return true
   }
 
   // Anything below version 8 doesn't have a 64 bit version
-  vers := strings.Fields(strings.Replace(v,"."," ",-1))
-  main, _ := strconv.ParseInt(vers[0],0,0)
-  minor, _ := strconv.ParseInt(vers[1],0,0)
+  main, minor, _ := ParseVersion(v)
   if main == 0 && minor < 8 {
     return false
+  }
+
+  if main >= 4 {
+    return true
   }
 
   // Check online to see if a 64 bit version exists

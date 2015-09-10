@@ -14,7 +14,7 @@ import (
   "./nvm/arch"
   "./nvm/file"
   "./nvm/node"
-//  "./ansi"
+  //  "./ansi"
 )
 
 const (
@@ -101,35 +101,21 @@ func main() {
         env.proxy = detail
         saveSettings()
       }
-    case "update": update()
     default: help()
   }
 }
 
-func update() {
-//  cmd := exec.Command("cmd", "/d", "echo", "testing")
-//  var output bytes.Buffer
-//  var _stderr bytes.Buffer
-//  cmd.Stdout = &output
-//  cmd.Stderr = &_stderr
-//  perr := cmd.Run()
-//  if perr != nil {
-//      fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
-//      return
-//  }
-}
-
 func CheckVersionExceedsLatest(version string) bool{
-    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS.txt")
-    re := regexp.MustCompile("node-v(.+)+msi")
-    reg := regexp.MustCompile("node-v|-x.+")
-	latest := reg.ReplaceAllString(re.FindString(content),"")
-	
-	if version <= latest {
-		return false
-	} else {
-		return true
-	}
+  content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
+  re := regexp.MustCompile("node-v(.+)+msi")
+  reg := regexp.MustCompile("node-v|-x.+")
+  latest := reg.ReplaceAllString(re.FindString(content),"")
+  
+  if version <= latest {
+    return false
+  } else {
+    return true
+  }
 }
 
 func install(version string, cpuarch string) {
@@ -155,9 +141,9 @@ func install(version string, cpuarch string) {
     cpuarch = arch.Validate(cpuarch)
   }
   
-  if CheckVersionExceedsLatest(version) {
-	fmt.Println("Node.js v"+version+" is not yet released or available.")
-	return
+  if version != "latest" && CheckVersionExceedsLatest(version) {
+    fmt.Println("Node.js v"+version+" is not yet released or available.")
+    return
   }
   
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
@@ -167,7 +153,7 @@ func install(version string, cpuarch string) {
 
   // If user specifies "latest" version, find out what version is
   if version == "latest" {
-    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS.txt")
+    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
     version = reg.ReplaceAllString(re.FindString(content),"")
@@ -241,10 +227,10 @@ func install(version string, cpuarch string) {
     // If this ever ships on Linux, it should be on bintray so it can use yum, apt-get, etc.
 
     return
-   } else {
-     fmt.Println("Version "+version+" is already installed.")
-     return
-   }
+  } else {
+   fmt.Println("Version "+version+" is already installed.")
+   return
+ }
 
 }
 
@@ -313,8 +299,8 @@ func use(version string, cpuarch string) {
     cmd.Stderr = &_stderr
     perr := cmd.Run()
     if perr != nil {
-        fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
-        return
+      fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
+      return
     }
   }
 
@@ -325,8 +311,8 @@ func use(version string, cpuarch string) {
   c.Stderr = &stderr
   err := c.Run()
   if err != nil {
-      fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-      return
+    fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+    return
   }
 
   // Use the assigned CPU architecture
@@ -466,7 +452,6 @@ func help() {
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
   fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
-//  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
   fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
   fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
   fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")

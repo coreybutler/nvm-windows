@@ -19,23 +19,24 @@ import(
 func GetCurrentVersion() (string, string) {
 
   cmd := exec.Command("node","-v")
-  str, err := cmd.Output()
+  out, err := cmd.Output()
   if err == nil {
-    v := strings.Trim(regexp.MustCompile("-.*$").ReplaceAllString(regexp.MustCompile("v").ReplaceAllString(strings.Trim(string(str)," \n\r"),""),"")," \n\r")
-    cmd := exec.Command("node","-p","console.log(process.execPath)")
-    str, _ := cmd.Output()
-    file := strings.Trim(regexp.MustCompile("undefined").ReplaceAllString(string(str),"")," \n\r")
-	bit := arch.Bit(file)
-	if (bit == "?"){
-		cmd := exec.Command("node", "-e", "console.log(process.arch)" )
-		str, err := cmd.Output()
-		if (string(str) == "x64") {
-			bit := "64"
-		} else {
-			bit := "32"
-		}
-	}
-	return v, bit
+    v := strings.TrimSpace(regexp.MustCompile("-.*$").ReplaceAllString(regexp.MustCompile("v").ReplaceAllString(strings.TrimSpace(string(out)),""),""))
+    cmd := exec.Command("node","-p","process.execPath")
+    out, _ := cmd.Output()
+    file := strings.TrimSpace(string(out))
+    bit := arch.Bit(file)
+    if (bit == "?"){
+      cmd := exec.Command("node", "-p", "process.arch" )
+      out, _ := cmd.Output()
+      str := strings.TrimSpace(string(out))
+      if (str == "x64") {
+        bit = "64"
+      } else {
+        bit = "32"
+      }
+    }
+    return v, bit
   }
   return "Unknown",""
 }
