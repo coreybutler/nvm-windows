@@ -59,26 +59,42 @@ func GetNodeJS(root string, v string, a string) bool {
 
   a = arch.Validate(a)
 
-  url := ""
+  vpre := ""
+  vers := strings.Fields(strings.Replace(v,"."," ",-1))
+  main, _ := strconv.ParseInt(vers[0],0,0)
+
   if a == "32" {
-    url = "http://nodejs.org/dist/v"+v+"/node.exe"
+    if main > 0 {
+      vpre = "win-x86/"
+    } else {
+      vpre = ""
+    }
+  } else if a == "64" {
+    if main > 0 {
+      vpre = "win-x64/"
+    } else {
+      vpre = "x64/"
+    }
+  }
+  
+  url := getNodeUrl ( v, vpre );
+
+  if url == "" {
+    //No url should mean this version/arch isn't available
+    fmt.Println("Node.js v"+v+" " + a + "bit isn't available right now.")
   } else {
-    if !IsNode64bitAvailable(v) {
-      fmt.Println("Node.js v"+v+" is only available in 32-bit.")
+   fileName := root+"\\v"+v+"\\node"+a+".exe"
+
+    fmt.Printf("Downloading node.js version "+v+" ("+a+"-bit)... ")
+
+    if Download(url,fileName) {
+      fmt.Printf("Complete\n")
+      return true
+    } else {
       return false
     }
-    url = "http://nodejs.org/dist/v"+v+"/x64/node.exe"
   }
-  fileName := root+"\\v"+v+"\\node"+a+".exe"
-
-  fmt.Printf("Downloading node.js version "+v+" ("+a+"-bit)... ")
-
-  if Download(url,fileName) {
-    fmt.Printf("Complete\n")
-    return true
-  } else {
-    return false
-  }
+  return false
 
 }
 
@@ -126,23 +142,16 @@ func GetRemoteTextFile(url string) string {
   return ""
 }
 
-func IsNode64bitAvailable(v string) bool {
-  if v == "latest" {
-    return true
-  }
-
-  // Anything below version 8 doesn't have a 64 bit version
-  vers := strings.Fields(strings.Replace(v,"."," ",-1))
-  main, _ := strconv.ParseInt(vers[0],0,0)
-  minor, _ := strconv.ParseInt(vers[1],0,0)
-  if main == 0 && minor < 8 {
-    return false
-  }
-
+func getNodeUrl (v string,  vpre string) string {
+  url := "http://nodejs.org/dist/v"+v+"/" + vpre + "/node.exe"
   // Check online to see if a 64 bit version exists
-  res, err := client.Head("http://nodejs.org/dist/v"+v+"/x64/node.exe")
+  res, err := client.Head( url )
   if err != nil {
-    return false
+    return ""
   }
-  return res.StatusCode == 200
+  if res.StatusCode == 200 {
+    return url
+  } else {
+    return ""
+  }
 }
