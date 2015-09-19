@@ -18,7 +18,7 @@ import (
 )
 
 const (
-  NvmVersion = "1.0.6"
+  NvmVersion = "1.1.0"
 )
 
 type Environment struct {
