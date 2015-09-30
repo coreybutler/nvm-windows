@@ -120,11 +120,11 @@ func update() {
 }
 
 func CheckVersionExceedsLatest(version string) bool{
-    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS.txt")
+    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
 	latest := reg.ReplaceAllString(re.FindString(content),"")
-	
+
 	if version <= latest {
 		return false
 	} else {
@@ -155,6 +155,14 @@ func install(version string, cpuarch string) {
     cpuarch = arch.Validate(cpuarch)
   }
   
+  // If user specifies "latest" version, find out what version is
+  if version == "latest" {
+    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
+    re := regexp.MustCompile("node-v(.+)+msi")
+    reg := regexp.MustCompile("node-v|-x.+")
+    version = reg.ReplaceAllString(re.FindString(content),"")
+  }
+
   if CheckVersionExceedsLatest(version) {
 	fmt.Println("Node.js v"+version+" is not yet released or available.")
 	return
@@ -163,14 +171,6 @@ func install(version string, cpuarch string) {
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
     fmt.Println("Node.js v"+version+" is only available in 32-bit.")
     return
-  }
-
-  // If user specifies "latest" version, find out what version is
-  if version == "latest" {
-    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS.txt")
-    re := regexp.MustCompile("node-v(.+)+msi")
-    reg := regexp.MustCompile("node-v|-x.+")
-    version = reg.ReplaceAllString(re.FindString(content),"")
   }
 
   // Check to see if the version is already installed

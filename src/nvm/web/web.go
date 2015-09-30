@@ -142,6 +142,23 @@ func GetRemoteTextFile(url string) string {
   return ""
 }
 
+func IsNode64bitAvailable(v string) bool {
+  if v == "latest" {
+    return true
+  }
+
+  // Anything below version 8 doesn't have a 64 bit version
+  vers := strings.Fields(strings.Replace(v,"."," ",-1))
+  main, _ := strconv.ParseInt(vers[0],0,0)
+  minor, _ := strconv.ParseInt(vers[1],0,0)
+  if main == 0 && minor < 8 {
+    return false
+  }
+
+  // TODO: fixme. Assume a 64 bit version exists
+  return true
+}
+
 func getNodeUrl (v string,  vpre string) string {
   url := "http://nodejs.org/dist/v"+v+"/" + vpre + "/node.exe"
   // Check online to see if a 64 bit version exists
