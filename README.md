@@ -50,6 +50,10 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 Please note that any global npm modules you may have installed are **not** shared between the various versions of node.js you have installed.
 Additionally, some npm modules may not be supported in the version of node you're using, so be aware of your environment as you work.
 
+### Antivirus
+
+Users have reported some problems using antivirus, specifically McAffee. It appears the antivirus software is manipulating access to the VBScript engine. See issue #133 for details and resolution.
+
 ---
 
 ## Why another version manager?
