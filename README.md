@@ -20,7 +20,7 @@ bleeding edge version without uninstalling the stable version of node, this util
 
 ### Installation & Upgrades
 
-It comes with an installer (and uninstaller), because getting it should be easy. Please note, you need to uninstall any existing versions of node.js before installing NVM for Windows.
+It comes with an installer (and uninstaller), because getting it should be easy. Please note, you need to uninstall any existing versions of node.js before installing NVM for Windows. Also delete any existing nodejs installation directories (e.g., "C:\Program Files\nodejs") that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
 [Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
 
