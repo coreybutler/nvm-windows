@@ -1,7 +1,6 @@
-- [x] I want to submit an issue!
+### My Environment
 
-### Environment
-
+- [] Windows 7 or below (not truly supported due to EOL)
 - [] Windows 8
 - [] Windows 8.1
 - [] Windows 10
@@ -9,6 +8,8 @@
 - [] Windows Server 2012
 - [] Windows Server 2012 R2
 - [] Windows Server 2016
+
+- [] My Windows installation is non-English.
 
 ### I have already...
 
@@ -18,7 +19,7 @@
 - [] searched the issues (open and closed) to make sure this isn't a duplicate.
 - [] made sure this isn't a question about how to use NVM for Windows, since [gitter](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) is used for questions and comments.
 
-### My issue is related to:
+### My issue is related to (check only those which apply):
 
 - [] settings.txt
 - [] proxy support
