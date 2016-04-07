@@ -17,7 +17,6 @@ import(
  * Returns version, architecture
  */
 func GetCurrentVersion() (string, string) {
-
   cmd := exec.Command("node","-v")
   str, err := cmd.Output()
   if err == nil {
@@ -109,24 +108,51 @@ func (s BySemanticVersion) Less(i, j int) bool {
   return v1.GTE(v2)
 }
 
+func GetAvailabeVersions() (map[string]interface{}, map[string]interface{},map[string]interface{}){
+  // Check the service to make sure the version is available
+  // modified by lzm at 4-7-2016, to chinese guys github maybe blocked at anytime.why not use the http://nodejs.org/dist/index.json?
+  //text := web.GetRemoteTextFile("https://raw.githubusercontent.com/coreybutler/nodedistro/master/nodeversions.json")
+  url := web.GetFullNodeUrl("index.json")
+  text := web.GetRemoteTextFile(url)
+  // Parse
+  var data interface{}
+  json.Unmarshal([]byte(text), &data);
+
+  //body := data.(map[string]interface{})
+  //_all := body["all"]
+  //_stable := body["stable"]
+  //_unstable := body["unstable"]
+  //allkeys := _all.(map[string]interface{})
+  //stablekeys := _stable.(map[string]interface{})
+  //unstablekeys := _unstable.(map[string]interface{})
+
+  body := data.([]interface{})
+  allkeys := make(map[string]interface{})
+  stablekeys := make(map[string]interface{})
+  unstablekeys := make(map[string]interface{})
+  for _, temp := range body {
+    item := temp.(map[string]interface{})
+    key := strings.TrimLeft(item["version"].(string), "v")
+    value := item["npm"]
+    if value != nil{
+      allkeys[key] = value.(string)
+      version,_ := semver.New(key)
+      if (version.Major!=0 && version.Major % 2 ==0) || version.Minor % 2==0{
+        stablekeys[key] = value.(string)
+      } else{
+        unstablekeys[key] = value.(string)
+      }
+    }
+  }
+  return allkeys, stablekeys, unstablekeys
+}
+
 func GetAvailable() ([]string, []string, []string) {
   all := make([]string,0)
   stable := make([]string,0)
   unstable := make([]string,0)
 
-  // Check the service to make sure the version is available
-  text := web.GetRemoteTextFile("https://raw.githubusercontent.com/coreybutler/nodedistro/master/nodeversions.json")
-
-  // Parse
-  var data interface{}
-  json.Unmarshal([]byte(text), &data);
-  body := data.(map[string]interface{})
-  _all := body["all"]
-  _stable := body["stable"]
-  _unstable := body["unstable"]
-  allkeys := _all.(map[string]interface{})
-  stablekeys := _stable.(map[string]interface{})
-  unstablekeys := _unstable.(map[string]interface{})
+  allkeys, stablekeys, unstablekeys := GetAvailabeVersions()
 
   for nodev, _ := range allkeys {
     all = append(all,nodev)

@@ -14,6 +14,8 @@ import(
 )
 
 var client = &http.Client{}
+var nodeBaseAddress = "http://nodejs.org/dist/"
+var npmBaseAddress = "https://github.com/npm/npm/archive/"
 
 func SetProxy(p string){
   if p != "" && p != "none" {
@@ -22,6 +24,29 @@ func SetProxy(p string){
   } else {
     client = &http.Client{}
   }
+}
+
+func SetMirrors(node_mirror string, npm_mirror string){
+  if node_mirror != "" && node_mirror != "none"{
+    nodeBaseAddress = node_mirror;
+    if strings.ToLower(nodeBaseAddress[0:4]) != "http" {
+      nodeBaseAddress = "http://"+nodeBaseAddress
+    }
+  }
+  if npm_mirror != "" && npm_mirror != "none"{
+    npmBaseAddress = npm_mirror;
+    if strings.ToLower(npmBaseAddress[0:4]) != "http" {
+      npmBaseAddress = "http://"+npmBaseAddress
+    }
+  }
+}
+
+func GetFullNodeUrl(path string) string{
+  return nodeBaseAddress+ path;
+}
+
+func  GetFullNpmUrl(path string) string{
+  return npmBaseAddress + path;
 }
 
 func Download(url string, target string) bool {
@@ -99,7 +124,8 @@ func GetNodeJS(root string, v string, a string) bool {
 }
 
 func GetNpm(root string, v string) bool {
-  url := "https://github.com/npm/npm/archive/v"+v+".zip"
+  //url := "https://github.com/npm/npm/archive/v"+v+".zip"
+  url := GetFullNpmUrl("v"+v+".zip")
   // temp directory to download the .zip file
   tempDir := root+"\\temp"
 
@@ -160,15 +186,12 @@ func IsNode64bitAvailable(v string) bool {
 }
 
 func getNodeUrl (v string,  vpre string) string {
-  url := "http://nodejs.org/dist/v"+v+"/" + vpre + "/node.exe"
+  //url := "http://nodejs.org/dist/v"+v+"/" + vpre + "/node.exe"
+  url := GetFullNodeUrl("v"+v+"/" + vpre + "/node.exe")
   // Check online to see if a 64 bit version exists
-  res, err := client.Head( url )
+  _, err := client.Head( url )
   if err != nil {
     return ""
   }
-  if res.StatusCode == 200 {
-    return url
-  } else {
-    return ""
-  }
+  return url;
 }
