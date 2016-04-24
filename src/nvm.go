@@ -8,7 +8,6 @@ import (
   "io/ioutil"
   "regexp"
   "bytes"
-  "encoding/json"
   "strconv"
   "./nvm/web"
   "./nvm/arch"
@@ -401,29 +400,35 @@ func list(listtype string) {
       fmt.Println("No installations recognized.")
     }
   } else {
-    _, stable, unstable := node.GetAvailable()
+    _, lts, stable, _ := node.GetAvailable()
 
     releases := 15
 
     fmt.Println("\nShowing the "+strconv.Itoa(releases)+" latest available releases.\n")
 
-    fmt.Println("      STABLE   |    UNSTABLE  ")
+    fmt.Println("        LTS    |     STABLE   ")
     fmt.Println("   ---------------------------")
 
     for i := 0; i < releases; i++ {
-      str := "v"+stable[i]
-      for ii := 10-len(str); ii > 0; ii-- {
-        str = " "+str
+      str := "          "
+      if len(lts) > i {
+          str = "v"+lts[i]
+          for ii := 10-len(str); ii > 0; ii-- {
+            str = " "+str
+          }
       }
-      str = str+"  |  "
-      str2 := "v"+unstable[i]
-      for ii := 10-len(str2); ii > 0; ii-- {
-        str2 = " "+str2
+
+      str2 := ""
+      if len(stable) > i {
+        str2 = "v"+stable[i]
+        for ii := 10-len(str2); ii > 0; ii-- {
+          str2 = " "+str2
+        }
       }
-      fmt.Println("   "+str+str2)
+      fmt.Println("   "+str + "  |  " + str2)
     }
 
-    fmt.Println("\nFor a complete list, visit http://coreybutler.github.io/nodedistro")
+    fmt.Println("\nFor a complete list, visit https://nodejs.org/download/release")
   }
 }
 
@@ -478,17 +483,9 @@ func help() {
 // Given a node.js version, returns the associated npm version
 func getNpmVersion(nodeversion string) string {
 
-  // Get raw text
-  text := web.GetRemoteTextFile("https://raw.githubusercontent.com/coreybutler/nodedistro/master/nodeversions.json")
+  _, _, _, npm := node.GetAvailable()
 
-  // Parse
-  var data interface{}
-  json.Unmarshal([]byte(text), &data);
-  body := data.(map[string]interface{})
-  all := body["all"]
-  npm := all.(map[string]interface{})
-
-  return npm[nodeversion].(string)
+  return npm[nodeversion]
 }
 
 func updateRootDir(path string) {
