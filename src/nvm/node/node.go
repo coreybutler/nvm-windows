@@ -6,7 +6,6 @@ import(
   "regexp"
   "io/ioutil"
   "encoding/json"
-  "sort"
   "../arch"
   "../file"
   "../web"
@@ -71,7 +70,7 @@ func IsVersionInstalled(root string, version string, cpu string) bool {
 
 func IsVersionAvailable(v string) bool {
   // Check the service to make sure the version is available
-  avail, _, _ := GetAvailable()
+  avail, _, _, _ := GetAvailable()
 
   for _, b := range avail {
     if b == v {
@@ -109,38 +108,37 @@ func (s BySemanticVersion) Less(i, j int) bool {
   return v1.GTE(v2)
 }
 
-func GetAvailable() ([]string, []string, []string) {
+func GetAvailable() ([]string, []string, []string, map[string]string) {
   all := make([]string,0)
+  lts := make([]string,0)
   stable := make([]string,0)
-  unstable := make([]string,0)
+  npm := make(map[string]string)
 
   // Check the service to make sure the version is available
-  text := web.GetRemoteTextFile("https://raw.githubusercontent.com/coreybutler/nodedistro/master/nodeversions.json")
+  text := web.GetRemoteTextFile("https://nodejs.org/download/release/index.json")
 
   // Parse
-  var data interface{}
+  var data = make([]map[string]interface{}, 0)
   json.Unmarshal([]byte(text), &data);
-  body := data.(map[string]interface{})
-  _all := body["all"]
-  _stable := body["stable"]
-  _unstable := body["unstable"]
-  allkeys := _all.(map[string]interface{})
-  stablekeys := _stable.(map[string]interface{})
-  unstablekeys := _unstable.(map[string]interface{})
 
-  for nodev, _ := range allkeys {
-    all = append(all,nodev)
-  }
-  for nodev, _ := range stablekeys {
-    stable = append(stable,nodev)
-  }
-  for nodev, _ := range unstablekeys {
-    unstable = append(unstable,nodev)
+  for _,element := range data {
+
+    var version = element["version"].(string)[1:]
+    all = append(all, version)
+
+    if val, ok := element["npm"].(string); ok {
+      npm[version] = val
+    }
+
+    switch v := element["lts"].(type) {
+    case bool:
+      if v == false {
+        stable = append(stable, version)
+      }
+    case string:
+      lts = append(lts, version)
+    }
   }
 
-  sort.Sort(BySemanticVersion(all))
-  sort.Sort(BySemanticVersion(stable))
-  sort.Sort(BySemanticVersion(unstable))
-
-  return all, stable, unstable
+  return all, lts, stable, npm
 }
