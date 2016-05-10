@@ -14,7 +14,7 @@ import(
 )
 
 var client = &http.Client{}
-var nodeBaseAddress = "http://nodejs.org/dist/"
+var nodeBaseAddress = "https://nodejs.org/dist/"
 var npmBaseAddress = "https://github.com/npm/npm/archive/"
 
 func SetProxy(p string){

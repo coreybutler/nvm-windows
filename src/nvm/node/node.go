@@ -6,7 +6,6 @@ import(
   "regexp"
   "io/ioutil"
   "encoding/json"
-  "sort"
   "../arch"
   "../file"
   "../web"
@@ -70,7 +69,7 @@ func IsVersionInstalled(root string, version string, cpu string) bool {
 
 func IsVersionAvailable(v string) bool {
   // Check the service to make sure the version is available
-  avail, _, _ := GetAvailable()
+  avail, _, _, _ := GetAvailable()
 
   for _, b := range avail {
     if b == v {
@@ -108,65 +107,37 @@ func (s BySemanticVersion) Less(i, j int) bool {
   return v1.GTE(v2)
 }
 
-func GetAvailabeVersions() (map[string]interface{}, map[string]interface{},map[string]interface{}){
-  // Check the service to make sure the version is available
-  // modified by lzm at 4-7-2016, to chinese guys github maybe blocked at anytime.why not use the http://nodejs.org/dist/index.json?
-  //text := web.GetRemoteTextFile("https://raw.githubusercontent.com/coreybutler/nodedistro/master/nodeversions.json")
+func GetAvailable() ([]string, []string, []string, map[string]string) {
+  all := make([]string,0)
+  lts := make([]string,0)
+  stable := make([]string,0)
+  npm := make(map[string]string)
   url := web.GetFullNodeUrl("index.json")
+  // Check the service to make sure the version is available
   text := web.GetRemoteTextFile(url)
+
   // Parse
-  var data interface{}
+  var data = make([]map[string]interface{}, 0)
   json.Unmarshal([]byte(text), &data);
 
-  //body := data.(map[string]interface{})
-  //_all := body["all"]
-  //_stable := body["stable"]
-  //_unstable := body["unstable"]
-  //allkeys := _all.(map[string]interface{})
-  //stablekeys := _stable.(map[string]interface{})
-  //unstablekeys := _unstable.(map[string]interface{})
+  for _,element := range data {
 
-  body := data.([]interface{})
-  allkeys := make(map[string]interface{})
-  stablekeys := make(map[string]interface{})
-  unstablekeys := make(map[string]interface{})
-  for _, temp := range body {
-    item := temp.(map[string]interface{})
-    key := strings.TrimLeft(item["version"].(string), "v")
-    value := item["npm"]
-    if value != nil{
-      allkeys[key] = value.(string)
-      version,_ := semver.New(key)
-      if (version.Major!=0 && version.Major % 2 ==0) || version.Minor % 2==0{
-        stablekeys[key] = value.(string)
-      } else{
-        unstablekeys[key] = value.(string)
+    var version = element["version"].(string)[1:]
+    all = append(all, version)
+
+    if val, ok := element["npm"].(string); ok {
+      npm[version] = val
+    }
+
+    switch v := element["lts"].(type) {
+    case bool:
+      if v == false {
+        stable = append(stable, version)
       }
+    case string:
+      lts = append(lts, version)
     }
   }
-  return allkeys, stablekeys, unstablekeys
-}
 
-func GetAvailable() ([]string, []string, []string) {
-  all := make([]string,0)
-  stable := make([]string,0)
-  unstable := make([]string,0)
-
-  allkeys, stablekeys, unstablekeys := GetAvailabeVersions()
-
-  for nodev, _ := range allkeys {
-    all = append(all,nodev)
-  }
-  for nodev, _ := range stablekeys {
-    stable = append(stable,nodev)
-  }
-  for nodev, _ := range unstablekeys {
-    unstable = append(unstable,nodev)
-  }
-
-  sort.Sort(BySemanticVersion(all))
-  sort.Sort(BySemanticVersion(stable))
-  sort.Sort(BySemanticVersion(unstable))
-
-  return all, stable, unstable
+  return all, lts, stable, npm
 }

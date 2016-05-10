@@ -407,29 +407,35 @@ func list(listtype string) {
       fmt.Println("No installations recognized.")
     }
   } else {
-    _, stable, unstable := node.GetAvailable()
+    _, lts, stable, _ := node.GetAvailable()
 
     releases := len(stable)
 
     fmt.Println("\nShowing the "+strconv.Itoa(releases)+" latest available releases.\n")
 
-    fmt.Println("      STABLE   |    UNSTABLE  ")
+    fmt.Println("        LTS    |     STABLE   ")
     fmt.Println("   ---------------------------")
 
     for i := 0; i < releases; i++ {
-      str := "v"+stable[i]
-      for ii := 10-len(str); ii > 0; ii-- {
-        str = " "+str
+      str := "          "
+      if len(lts) > i {
+          str = "v"+lts[i]
+          for ii := 10-len(str); ii > 0; ii-- {
+            str = " "+str
+          }
       }
-      str = str+"  |  "
-      str2 := "v"+unstable[i]
-      for ii := 10-len(str2); ii > 0; ii-- {
-        str2 = " "+str2
+
+      str2 := ""
+      if len(stable) > i {
+        str2 = "v"+stable[i]
+        for ii := 10-len(str2); ii > 0; ii-- {
+          str2 = " "+str2
+        }
       }
-      fmt.Println("   "+str+str2)
+      fmt.Println("   "+str + "  |  " + str2)
     }
 
-    //fmt.Println("\nFor a complete list, visit http://coreybutler.github.io/nodedistro")
+    fmt.Println("\nFor a complete list, visit https://nodejs.org/download/release")
   }
 }
 
@@ -471,7 +477,7 @@ func help() {
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
   fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
-  fmt.Println("  nvm node_mirror [url]        : Set a mirror to http://nodejs.org/dist/. Leave [url] blank to use default url.")
+  fmt.Println("  nvm node_mirror [url]        : Set a mirror to https://nodejs.org/dist/. Leave [url] blank to use default url.")
   fmt.Println("  nvm npm_mirror [url]         : Set a mirror to https://github.com/npm/npm/archive/. Leave [url] blank to default url.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 //  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
@@ -485,8 +491,10 @@ func help() {
 
 // Given a node.js version, returns the associated npm version
 func getNpmVersion(nodeversion string) string {
-  npm, _,_ := node.GetAvailabeVersions()
-  return npm[nodeversion].(string)
+
+  _, _, _, npm := node.GetAvailable()
+
+  return npm[nodeversion]
 }
 
 func updateRootDir(path string) {
