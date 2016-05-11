@@ -16,7 +16,6 @@ import(
  * Returns version, architecture
  */
 func GetCurrentVersion() (string, string) {
-
   cmd := exec.Command("node","-v")
   str, err := cmd.Output()
   if err == nil {
@@ -113,9 +112,9 @@ func GetAvailable() ([]string, []string, []string, map[string]string) {
   lts := make([]string,0)
   stable := make([]string,0)
   npm := make(map[string]string)
-
+  url := web.GetFullNodeUrl("index.json")
   // Check the service to make sure the version is available
-  text := web.GetRemoteTextFile("https://nodejs.org/download/release/index.json")
+  text := web.GetRemoteTextFile(url)
 
   // Parse
   var data = make([]map[string]interface{}, 0)
