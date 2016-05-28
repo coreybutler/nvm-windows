@@ -25,9 +25,9 @@ It comes with an installer (and uninstaller), because getting it should be easy.
 You should also delete the existing npm install location (e.g. "C:\Users\<user>\AppData\Roaming\npm") so that the nvm install location will be correctly used instead. After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
 
 `nvm use 4.4.0`
-`npm install gulp -g`
+`npm install gulp-cli -g`
 `nvm use 0.10.33`
-`npm install gulp -g`
+`npm install gulp-cli -g`
 
 [Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
 
