@@ -53,7 +53,7 @@ func main() {
 
   // Capture any additional arguments
   if len(args) > 2 {
-    detail = strings.ToLower(args[2])
+    detail = args[2]
   }
   if len(args) > 3 {
     procarch = args[3]
