@@ -2,6 +2,22 @@
 [1.1]: http://i.imgur.com/wWzX9uB.png (Tweet about NVM for Windows)
 [1]: https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb
 
+## NOTICE: SEEKING CORE CONTRIBUTORS & MAINTAINERS
+
+_Are you multilingual?_
+
+I am particularly interested in finding people who can speak something other than English. Several problems have come up with non-latin character sets (Chinese, Japanese, Arabic, etc). I am also interested in producing language packs/translations for the installers.
+
+_Are you outside of the US/UK/Canada?_
+
+Custom mirroring capabilities are available in the master branch, but I would like to work with folks in different geographic regions to assure node is accessible everywhere.
+
+_Other (Anywhere)_
+
+The core concepts of this version manager are pretty simple, so the core code base is pretty focused/simple. I've done some work to make this project available on all operating systems. The only reason it's been so slow to release is anticipation of an explosion of new installers (chocolatey, homebrew, rpm, .deb, .msi, etc). I've partnered up with BitRock to simplify creation of some of these, but the BitRock installers don't support all of these.
+
+Of course, I would also love to have additional maintainers. If you're new to Go, that's OK - I was too, and that's what code reviews are for.
+
 # Node Version Manager (nvm) for Windows
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
