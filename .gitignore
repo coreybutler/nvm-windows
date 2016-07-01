@@ -29,3 +29,6 @@ bin/*.exe
 !bin/buildtools/*
 bin/*.zip
 bin/nvm/*
+
+!.gitignore
+

@@ -2,13 +2,29 @@
 [1.1]: http://i.imgur.com/wWzX9uB.png (Tweet about NVM for Windows)
 [1]: https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb
 
+## NOTICE: SEEKING CORE CONTRIBUTORS & MAINTAINERS
+
+_Are you multilingual?_
+
+I am particularly interested in finding people who can speak something other than English. Several problems have come up with non-latin character sets (Chinese, Japanese, Arabic, etc). I am also interested in producing language packs/translations for the installers.
+
+_Are you outside of the US/UK/Canada?_
+
+Custom mirroring capabilities are available in the master branch, but I would like to work with folks in different geographic regions to assure node is accessible everywhere.
+
+_Other (Anywhere)_
+
+The core concepts of this version manager are pretty simple, so the core code base is pretty focused/simple. I've done some work to make this project available on all operating systems. The only reason it's been so slow to release is anticipation of an explosion of new installers (chocolatey, homebrew, rpm, .deb, .msi, etc). I've partnered up with BitRock to simplify creation of some of these, but the BitRock installers don't support all of these.
+
+Of course, I would also love to have additional maintainers. If you're new to Go, that's OK - I was too, and that's what code reviews are for.
+
 # Node Version Manager (nvm) for Windows
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
 
 Manage multiple installations of node.js on a Windows computer.
-**tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm/releases)! No io.js support, since [iojs is merging back with node](http://blog.nodejs.org/2015/05/15/node-leaders-are-building-an-open-foundation/), there is no longer a need to add special support for it.
 
+**tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm/releases)! This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. However, node 4+ is supported.
 
 ![NVM for Windows](http://coreybutler.github.io/nvm-windows/images/installlatest.jpg)
 
@@ -21,6 +37,13 @@ bleeding edge version without uninstalling the stable version of node, this util
 ### Installation & Upgrades
 
 It comes with an installer (and uninstaller), because getting it should be easy. Please note, you need to uninstall any existing versions of node.js before installing NVM for Windows.
+
+You should also delete the existing npm install location (e.g. "C:\Users\<user>\AppData\Roaming\npm") so that the nvm install location will be correctly used instead. After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
+
+`nvm use 4.4.0`
+`npm install gulp-cli -g`
+`nvm use 0.10.33`
+`npm install gulp-cli -g`
 
 [Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
 
@@ -49,6 +72,10 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 
 Please note that any global npm modules you may have installed are **not** shared between the various versions of node.js you have installed.
 Additionally, some npm modules may not be supported in the version of node you're using, so be aware of your environment as you work.
+
+### Antivirus
+
+Users have reported some problems using antivirus, specifically McAffee. It appears the antivirus software is manipulating access to the VBScript engine. See [issue #133](https://github.com/coreybutler/nvm-windows/issues/133) for details and resolution.
 
 ---
 
@@ -106,7 +133,7 @@ MIT.
 
 ## Thanks
 
-Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to [@vkbansal](https://github.com/vkbansal), who has actively provided feedback throughout the releases.
+Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to [@vkbansal](https://github.com/vkbansal), who has actively provided feedback throughout the releases. Thanks also go to [@rainabba](https://github.com/rainabba) and [@sullivanpt](https://github.com/sullivanpt) for getting Node v4 support integrated.
 
 ## Alternatives
 

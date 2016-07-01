@@ -8,7 +8,6 @@ import (
   "io/ioutil"
   "regexp"
   "bytes"
-  "encoding/json"
   "strconv"
   "./nvm/web"
   "./nvm/arch"
@@ -26,6 +25,8 @@ type Environment struct {
   root            string
   symlink         string
   arch            string
+  node_mirror     string
+  npm_mirror      string
   proxy           string
   originalpath    string
   originalversion string
@@ -36,6 +37,8 @@ var env = &Environment{
   root: "",
   symlink: os.Getenv("NVM_SYMLINK"),
   arch: os.Getenv("PROCESSOR_ARCHITECTURE"),
+  node_mirror: "",
+  npm_mirror: "",
   proxy: "none",
   originalpath: "",
   originalversion: "",
@@ -50,7 +53,7 @@ func main() {
 
   // Capture any additional arguments
   if len(args) > 2 {
-    detail = strings.ToLower(args[2])
+    detail = args[2]
   }
   if len(args) > 3 {
     procarch = args[3]
@@ -120,7 +123,9 @@ func update() {
 }
 
 func CheckVersionExceedsLatest(version string) bool{
-    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
+    //content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
+    url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
+    content := web.GetRemoteTextFile(url)
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
 	latest := reg.ReplaceAllString(re.FindString(content),"")
@@ -157,7 +162,8 @@ func install(version string, cpuarch string) {
   
   // If user specifies "latest" version, find out what version is
   if version == "latest" {
-    content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
+    url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
+    content := web.GetRemoteTextFile(url)
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
     version = reg.ReplaceAllString(re.FindString(content),"")
@@ -401,29 +407,35 @@ func list(listtype string) {
       fmt.Println("No installations recognized.")
     }
   } else {
-    _, stable, unstable := node.GetAvailable()
+    _, lts, stable, _ := node.GetAvailable()
 
-    releases := 15
+    releases := len(stable)
 
     fmt.Println("\nShowing the "+strconv.Itoa(releases)+" latest available releases.\n")
 
-    fmt.Println("      STABLE   |    UNSTABLE  ")
+    fmt.Println("        LTS    |     STABLE   ")
     fmt.Println("   ---------------------------")
 
     for i := 0; i < releases; i++ {
-      str := "v"+stable[i]
-      for ii := 10-len(str); ii > 0; ii-- {
-        str = " "+str
+      str := "          "
+      if len(lts) > i {
+          str = "v"+lts[i]
+          for ii := 10-len(str); ii > 0; ii-- {
+            str = " "+str
+          }
       }
-      str = str+"  |  "
-      str2 := "v"+unstable[i]
-      for ii := 10-len(str2); ii > 0; ii-- {
-        str2 = " "+str2
+
+      str2 := ""
+      if len(stable) > i {
+        str2 = "v"+stable[i]
+        for ii := 10-len(str2); ii > 0; ii-- {
+          str2 = " "+str2
+        }
       }
-      fmt.Println("   "+str+str2)
+      fmt.Println("   "+str + "  |  " + str2)
     }
 
-    fmt.Println("\nFor a complete list, visit http://coreybutler.github.io/nodedistro")
+    fmt.Println("\nFor a complete list, visit https://nodejs.org/download/release")
   }
 }
 
@@ -465,6 +477,8 @@ func help() {
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
   fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
+  fmt.Println("  nvm node_mirror [url]        : Set a mirror to https://nodejs.org/dist/. Leave [url] blank to use default url.")
+  fmt.Println("  nvm npm_mirror [url]         : Set a mirror to https://github.com/npm/npm/archive/. Leave [url] blank to default url.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 //  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
   fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
@@ -478,17 +492,9 @@ func help() {
 // Given a node.js version, returns the associated npm version
 func getNpmVersion(nodeversion string) string {
 
-  // Get raw text
-  text := web.GetRemoteTextFile("https://raw.githubusercontent.com/coreybutler/nodedistro/master/nodeversions.json")
+  _, _, _, npm := node.GetAvailable()
 
-  // Parse
-  var data interface{}
-  json.Unmarshal([]byte(text), &data);
-  body := data.(map[string]interface{})
-  all := body["all"]
-  npm := all.(map[string]interface{})
-
-  return npm[nodeversion].(string)
+  return npm[nodeversion]
 }
 
 func updateRootDir(path string) {
@@ -505,6 +511,7 @@ func updateRootDir(path string) {
 
 func saveSettings() {
   content := "root: "+strings.Trim(env.root," \n\r")+"\r\narch: "+strings.Trim(env.arch," \n\r")+"\r\nproxy: "+strings.Trim(env.proxy," \n\r")+"\r\noriginalpath: "+strings.Trim(env.originalpath," \n\r")+"\r\noriginalversion: "+strings.Trim(env.originalversion," \n\r")
+  content = content + "node_mirror: "+strings.Trim(env.node_mirror," \n\r")+ "npm_mirror: "+strings.Trim(env.npm_mirror," \n\r")
   ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 
@@ -525,6 +532,10 @@ func Setup() {
       env.originalversion = strings.Trim(regexp.MustCompile("originalversion:").ReplaceAllString(line,"")," \r\n")
     } else if strings.Contains(line,"arch:"){
       env.arch = strings.Trim(regexp.MustCompile("arch:").ReplaceAllString(line,"")," \r\n")
+    } else if strings.Contains(line, "node_mirror:"){
+      env.node_mirror = strings.Trim(regexp.MustCompile("node_mirror:").ReplaceAllString(line,"")," \r\n")
+    } else if strings.Contains(line, "npm_mirror:"){
+      env.npm_mirror = strings.Trim(regexp.MustCompile("npm_mirror:").ReplaceAllString(line,"")," \r\n")
     } else if strings.Contains(line,"proxy:"){
       env.proxy = strings.Trim(regexp.MustCompile("proxy:").ReplaceAllString(line,"")," \r\n")
       if env.proxy != "none" && env.proxy != "" {
@@ -535,7 +546,7 @@ func Setup() {
       }
     }
   }
-
+  web.SetMirrors(env.node_mirror, env.npm_mirror)
   env.arch = arch.Validate(env.arch)
 
   // Make sure the directories exist
