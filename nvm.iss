@@ -306,7 +306,6 @@ end;
 
 [Run]
 Filename: "{cmd}"; Parameters: "/C ""mklink /D ""{code:getSymLink}"" ""{code:getCurrentVersion}"""" "; Check: isNodeAlreadyInUse; Flags: runhidden;
-Filename: "{cmd}"; Parameters: "/K ""set PATH={app};%PATH% && cls && nvm"""; Flags: runasoriginaluser postinstall skipifsilent;
 
 [UninstallDelete]
 Type: files; Name: "{app}\nvm.exe";

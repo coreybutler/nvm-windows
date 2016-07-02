@@ -168,9 +168,11 @@ func install(version string, cpuarch string) {
     version = reg.ReplaceAllString(re.FindString(content),"")
   }
 
+  version = cleanVersion(version)
+
   if CheckVersionExceedsLatest(version) {
-	fmt.Println("Node.js v"+version+" is not yet released or available.")
-	return
+  	fmt.Println("Node.js v"+version+" is not yet released or available.")
+  	return
   }
 
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
@@ -310,8 +312,6 @@ func use(version string, cpuarch string) {
   }
 
   cpuarch = arch.Validate(cpuarch)
-
-  re := regexp.MustCompile("\\d+.\\d+.\\d+")
 
   version = cleanVersion(version)
 

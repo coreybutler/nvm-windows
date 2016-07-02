@@ -1,7 +1,7 @@
 @echo off
 SET INNOSETUP=%CD%\nvm.iss
 SET ORIG=%CD%
-SET GOPATH=%CD%\src
+REM SET GOPATH=%CD%\src
 SET GOBIN=%CD%\bin
 SET GOARCH=386
 SET version=1.1.1
