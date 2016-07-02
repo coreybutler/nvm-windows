@@ -8,16 +8,15 @@ import (
   "io/ioutil"
   "regexp"
   "bytes"
-  "strconv"
   "./nvm/web"
   "./nvm/arch"
   "./nvm/file"
   "./nvm/node"
-//  "./ansi"
+  "github.com/olekukonko/tablewriter"
 )
 
 const (
-  NvmVersion = "1.1.0"
+  NvmVersion = "1.1.1"
 )
 
 type Environment struct {
@@ -159,7 +158,7 @@ func install(version string, cpuarch string) {
   if cpuarch != "all" {
     cpuarch = arch.Validate(cpuarch)
   }
-  
+
   // If user specifies "latest" version, find out what version is
   if version == "latest" {
     url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
@@ -173,7 +172,7 @@ func install(version string, cpuarch string) {
 	fmt.Println("Node.js v"+version+" is not yet released or available.")
 	return
   }
-  
+
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
     fmt.Println("Node.js v"+version+" is only available in 32-bit.")
     return
@@ -262,6 +261,8 @@ func uninstall(version string) {
     return
   }
 
+  version = cleanVersion(version)
+
   // Determine if the version exists and skip if it doesn't
   if node.IsVersionInstalled(env.root,version,"32") || node.IsVersionInstalled(env.root,version,"64") {
     fmt.Printf("Uninstalling node v"+version+"...")
@@ -283,8 +284,25 @@ func uninstall(version string) {
   return
 }
 
-func use(version string, cpuarch string) {
+func cleanVersion(version string) string {
+  re := regexp.MustCompile("\\d+.\\d+.\\d+")
+  matched := re.FindString(version)
 
+  if len(matched) == 0 {
+    re = regexp.MustCompile("\\d+.\\d+")
+    matched = re.FindString(version)
+    if len(matched) == 0 {
+      matched = version + ".0.0"
+    } else {
+      matched = matched + ".0"
+    }
+    fmt.Println(matched)
+  }
+
+  return matched
+}
+
+func use(version string, cpuarch string) {
   if version == "32" || version == "64" {
     cpuarch = version
     v, _ := node.GetCurrentVersion()
@@ -292,6 +310,10 @@ func use(version string, cpuarch string) {
   }
 
   cpuarch = arch.Validate(cpuarch)
+
+  re := regexp.MustCompile("\\d+.\\d+.\\d+")
+
+  version = cleanVersion(version)
 
   // Make sure the version is installed. If not, warn.
   if !node.IsVersionInstalled(env.root,version,cpuarch) {
@@ -407,35 +429,56 @@ func list(listtype string) {
       fmt.Println("No installations recognized.")
     }
   } else {
-    _, lts, stable, _ := node.GetAvailable()
+    _, lts, current, stable, unstable, _ := node.GetAvailable()
 
-    releases := len(stable)
+    releases := 20
 
-    fmt.Println("\nShowing the "+strconv.Itoa(releases)+" latest available releases.\n")
-
-    fmt.Println("        LTS    |     STABLE   ")
-    fmt.Println("   ---------------------------")
-
+    data := make([][]string, releases, releases + 5)
     for i := 0; i < releases; i++ {
-      str := "          "
-      if len(lts) > i {
-          str = "v"+lts[i]
-          for ii := 10-len(str); ii > 0; ii-- {
-            str = " "+str
-          }
-      }
+      release := make([]string, 4, 6)
 
-      str2 := ""
-      if len(stable) > i {
-        str2 = "v"+stable[i]
-        for ii := 10-len(str2); ii > 0; ii-- {
-          str2 = " "+str2
+      release[0] = ""
+      release[1] = ""
+      release[2] = ""
+      release[3] = ""
+
+      if len(current) > i {
+        if len(current[i]) > 0 {
+          release[0] = current[i]
         }
       }
-      fmt.Println("   "+str + "  |  " + str2)
+
+      if len(lts) > i {
+        if len(lts[i]) > 0 {
+          release[1] = lts[i]
+        }
+      }
+
+      if len(stable) > i {
+        if len(stable[i]) > 0 {
+          release[2] = stable[i]
+        }
+      }
+
+      if len(unstable) > i {
+        if len(unstable[i]) > 0 {
+          release[3] = unstable[i]
+        }
+      }
+
+      data[i] = release
     }
 
-    fmt.Println("\nFor a complete list, visit https://nodejs.org/download/release")
+    fmt.Println("")
+    table := tablewriter.NewWriter(os.Stdout)
+    table.SetHeader([]string{"   Current  ", "    LTS     ", " Old Stable ", "Old Unstable"})
+    table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+    table.SetAlignment(tablewriter.ALIGN_CENTER)
+    table.SetCenterSeparator("|")
+    table.AppendBulk(data) // Add Bulk Data
+    table.Render()
+
+    fmt.Println("\nThis is a partial list. For a complete list, visit https://nodejs.org/download/release")
   }
 }
 
@@ -477,8 +520,8 @@ func help() {
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
   fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
-  fmt.Println("  nvm node_mirror [url]        : Set a mirror to https://nodejs.org/dist/. Leave [url] blank to use default url.")
-  fmt.Println("  nvm npm_mirror [url]         : Set a mirror to https://github.com/npm/npm/archive/. Leave [url] blank to default url.")
+  fmt.Println("  nvm node_mirror [url]        : Set the node mirror. Defaults to https://nodejs.org/dist/. Leave [url] blank to use default url.")
+  fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/npm/archive/. Leave [url] blank to default url.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 //  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
   fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
@@ -492,7 +535,7 @@ func help() {
 // Given a node.js version, returns the associated npm version
 func getNpmVersion(nodeversion string) string {
 
-  _, _, _, npm := node.GetAvailable()
+  _, _, _, _, _, npm := node.GetAvailable()
 
   return npm[nodeversion]
 }

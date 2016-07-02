@@ -69,7 +69,7 @@ func IsVersionInstalled(root string, version string, cpu string) bool {
 
 func IsVersionAvailable(v string) bool {
   // Check the service to make sure the version is available
-  avail, _, _, _ := GetAvailable()
+  avail, _, _, _, _, _ := GetAvailable()
 
   for _, b := range avail {
     if b == v {
@@ -107,12 +107,73 @@ func (s BySemanticVersion) Less(i, j int) bool {
   return v1.GTE(v2)
 }
 
-func GetAvailable() ([]string, []string, []string, map[string]string) {
+// Identifies a version as "LTS"
+func isLTS(element map[string]interface{}) bool {
+  switch datatype := element["lts"].(type) {
+    case bool:
+      return datatype
+    case string:
+      return true
+  }
+  return false
+}
+
+// Identifies a version as "current"
+func isCurrent(element map[string]interface{}) bool {
+  if isLTS(element) {
+    return false
+  }
+
+  version, _ := semver.New(element["version"].(string)[1:])
+  benchmark, _ := semver.New("1.0.0")
+
+  if version.LT(benchmark) {
+    return false
+  }
+
+  return version.Major%2 == 0
+}
+
+// Identifies a stable old version.
+func isStable(element map[string]interface{}) bool {
+  if isCurrent(element) {
+    return false
+  }
+
+  version, _ := semver.New(element["version"].(string)[1:])
+
+  if (version.Major != 0) {
+    return false
+  }
+
+  return version.Minor%2 == 0
+}
+
+// Identifies an unstable old version.
+func isUnstable(element map[string]interface{}) bool {
+  if isStable(element) {
+    return false
+  }
+
+  version, _ := semver.New(element["version"].(string)[1:])
+
+  if (version.Major != 0) {
+    return false
+  }
+
+  return version.Minor%2 != 0
+}
+
+// Retrieve the remotely available versions
+func GetAvailable() ([]string, []string, []string, []string, []string, map[string]string) {
   all := make([]string,0)
   lts := make([]string,0)
+  current := make([]string,0)
   stable := make([]string,0)
+  unstable := make([]string,0)
   npm := make(map[string]string)
   url := web.GetFullNodeUrl("index.json")
+
   // Check the service to make sure the version is available
   text := web.GetRemoteTextFile(url)
 
@@ -120,7 +181,7 @@ func GetAvailable() ([]string, []string, []string, map[string]string) {
   var data = make([]map[string]interface{}, 0)
   json.Unmarshal([]byte(text), &data);
 
-  for _,element := range data {
+  for _, element := range data {
 
     var version = element["version"].(string)[1:]
     all = append(all, version)
@@ -129,15 +190,16 @@ func GetAvailable() ([]string, []string, []string, map[string]string) {
       npm[version] = val
     }
 
-    switch v := element["lts"].(type) {
-    case bool:
-      if v == false {
-        stable = append(stable, version)
-      }
-    case string:
+    if isLTS(element) {
       lts = append(lts, version)
+    } else if isCurrent(element) {
+      current = append(current, version)
+    } else if isStable(element) {
+      stable = append(stable, version)
+    } else if isUnstable(element) {
+      unstable = append(unstable, version)
     }
   }
 
-  return all, lts, stable, npm
+  return all, lts, current, stable, unstable, npm
 }

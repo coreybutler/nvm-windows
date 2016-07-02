@@ -1,8 +1,8 @@
 #define MyAppName "NVM for Windows"
 #define MyAppShortName "nvm"
 #define MyAppLCShortName "nvm"
-#define MyAppVersion "1.1.0"
-#define MyAppPublisher "Ecor Ventures, LLC"
+#define MyAppVersion "1.1.1"
+#define MyAppPublisher "Ecor Ventures LLC"
 #define MyAppURL "http://github.com/coreybutler/nvm"
 #define MyAppExeName "nvm.exe"
 #define MyIcon "bin\nodejs.ico"
@@ -35,7 +35,7 @@ ChangesEnvironment=yes
 DisableProgramGroupPage=yes
 ArchitecturesInstallIn64BitMode=x64 ia64
 UninstallDisplayIcon={app}\{#MyIcon}
-AppCopyright=Copyright (C) 2014 Corey Butler.
+AppCopyright=Copyright (C) 2016 Corey Butler and contributors.
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
