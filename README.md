@@ -24,7 +24,7 @@ Of course, I would also love to have additional maintainers. If you're new to Go
 
 Manage multiple installations of node.js on a Windows computer.
 
-**tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm/releases)! This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. However, node 4+ is supported.
+**tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm-windows/releases)! This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. However, node 4+ is supported.
 
 ![NVM for Windows](http://coreybutler.github.io/nvm-windows/images/installlatest.jpg)
 
@@ -81,7 +81,7 @@ Users have reported some problems using antivirus, specifically McAffee. It appe
 
 ## Why another version manager?
 
-There are several version managers for node.js. Tools like [nvm](https://github.com/creationix/nvm) and [n](https://github.com/visionmedia/n)
+There are several version managers for node.js. Tools like [nvm](https://github.com/creationix/nvm) and [n](https://github.com/tj/n)
 only run on Mac OSX and Linux. Windows users are left in the cold? No. [nvmw](https://github.com/hakobera/nvmw) and [nodist](https://github.com/marcelklehr/nodist)
 are both designed for Windows. So, why another version manager for Windows?
 
@@ -95,7 +95,7 @@ just good practice.
 
 ## What's the big difference?
 
-First and foremost, this version of nvm has no dependency on node. It's written in [Go](http://golang.org/), which is a much more structured
+First and foremost, this version of nvm has no dependency on node. It's written in [Go](https://golang.org/), which is a much more structured
 approach than hacking around a limited `.bat` file. It does not rely on having an existing node installation. Plus, should the need arise, Go
 offers potential for creating a Mac/Linux version on the same code base with a substanially easier migration path than converting a bunch of
 batch to shell logic. `bat > sh, it crazy, right?`
@@ -109,7 +109,7 @@ the node installation directory you want to use. This is a straightforward appro
 realize just how much of a pain symlinks are on Windows. This is why it hasn't happened before.
 
 In order to create/modify a symlink, you must be running as an admin, and you must get around Windows UAC (that annoying prompt). Luckily, this is
-a challenge I already solved with some helper scripts in [node-windows](http://github.com/coreybutler/node-windows). As a result, NVM for Windows
+a challenge I already solved with some helper scripts in [node-windows](https://github.com/coreybutler/node-windows). As a result, NVM for Windows
 maintains a single symlink that is put in the system `PATH` during installation only. Switching to different versions of node is a matter of
 switching the symlink target. As a result, this utility does **not** require you to run `nvm use x.x.x` every time you open a console window.
 When you _do_ run `nvm use x.x.x`, the active version of node is automatically updated across all open console windows. It also persists
@@ -119,12 +119,12 @@ NVM for Windows comes with an installer, courtesy of a byproduct of my work on [
 
 Overall, this project brings together some ideas, a few battle-hardened pieces of other modules, and support for newer versions of node.
 
-I also wrote a simple [data feed](http://github.com/coreybutler/nodedistro) containing a list of node.js versions and their associated npm version.
+I also wrote a simple [data feed](https://github.com/coreybutler/nodedistro) containing a list of node.js versions and their associated npm version.
 This is how NVM for Windows recognizes the "latest" stable version. It's free for anyone to use.
 
 ## Motivation
 
-I needed it, plain and simple. Additionally, it's apparent that [support for multiple versions](https://github.com/joyent/node/issues/8075) is not
+I needed it, plain and simple. Additionally, it's apparent that [support for multiple versions](https://github.com/nodejs/node-v0.x-archive/issues/8075) is not
 coming to node core, or even something they care about. It was also an excuse to play with Go.
 
 ## License
