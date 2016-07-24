@@ -2,6 +2,10 @@
 [1.1]: http://i.imgur.com/wWzX9uB.png (Tweet about NVM for Windows)
 [1]: https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb
 
+## A note on Antivirus
+
+Several users have noticed this app being flagged as a false positive by different antivirus apps like Windows Defender, Kaspersky, MalwareBytes, etc. It turns out these antivirus vendors are flagging the signature of the entire Go programming language.... basically everything written in Go is marked as a virus. See [golang/go#16292](https://github.com/golang/go/issues/16292). Details about how NVM4W is dealing with this are available in [issue #182](https://github.com/coreybutler/nvm-windows/issues/182). 
+
 ## NOTICE: SEEKING CORE CONTRIBUTORS & MAINTAINERS
 
 _Are you multilingual?_
