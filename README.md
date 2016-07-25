@@ -131,6 +131,10 @@ This is how NVM for Windows recognizes the "latest" stable version. It's free fo
 I needed it, plain and simple. Additionally, it's apparent that [support for multiple versions](https://github.com/nodejs/node-v0.x-archive/issues/8075) is not
 coming to node core, or even something they care about. It was also an excuse to play with Go.
 
+## Why Go? Why not Node?
+
+I chose Go because it is cross-platform, felt like less overhead than Java, has been around longer than most people think, and I wanted to experiment with it. I've been asked why I didn't write it with Node. Trying to write a tool with the tool you're trying to install doesn't make sense to me. As a result, my project requirements for this were simple... something that's not Node. Node will continue to evolve and change. If you need a reminder of that, io.js. Or consider all the breaking changes between 4.x.x and 6.x.x. These are inevitable in the world of software.
+
 ## License
 
 MIT.
