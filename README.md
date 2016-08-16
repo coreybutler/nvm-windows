@@ -6,7 +6,7 @@
 
 Several users have noticed this app being flagged as a false positive by different antivirus apps. It turns out these antivirus vendors are flagging the signature of the entire Go programming language.... basically everything written in Go is marked as a virus. See [golang/go#16292](https://github.com/golang/go/issues/16292). Details about how NVM4W is dealing with this are available in [issue #182](https://github.com/coreybutler/nvm-windows/issues/182).
 
-**Thanks to several users who have submitted false positive reports, this issue is gradually going away. The latest definitions for Windows Defender and Avast! have both whitelisted the app.**
+**Thanks to several users who have submitted false positive reports, this issue is gradually going away. The latest definitions for Windows Defender and Avast!, and MalwareBytes have all whitelisted the app.**
 
 ## NOTICE: SEEKING CORE CONTRIBUTORS & MAINTAINERS
 
