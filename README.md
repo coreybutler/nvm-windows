@@ -147,7 +147,6 @@ Thanks to everyone who has submitted issues on and off Github, made suggestions,
 
 ## Alternatives
 
-- [nvmw](https://github.com/hakobera/nvmw) - Windows Only
 - [nodist](https://github.com/marcelklehr/nodist) - Windows Only
 - [nvm](https://github.com/creationix/nvm) - Mac/Linux Only
 - [n](https://github.com/visionmedia/n) - Mac/Linux Only
