@@ -32,3 +32,4 @@ bin/nvm/*
 
 !.gitignore
 
+nvm.iss
