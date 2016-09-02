@@ -569,20 +569,21 @@ func Setup() {
 
   // Process each line and extract the value
   for _, line := range lines {
-    if strings.Contains(line,"root:") {
-      env.root = strings.Trim(regexp.MustCompile("root:").ReplaceAllString(line,"")," \r\n")
-    } else if strings.Contains(line,"originalpath:") {
-      env.originalpath = strings.Trim(regexp.MustCompile("originalpath:").ReplaceAllString(line,"")," \r\n")
-    } else if strings.Contains(line,"originalversion:") {
-      env.originalversion = strings.Trim(regexp.MustCompile("originalversion:").ReplaceAllString(line,"")," \r\n")
-    } else if strings.Contains(line,"arch:"){
-      env.arch = strings.Trim(regexp.MustCompile("arch:").ReplaceAllString(line,"")," \r\n")
-    } else if strings.Contains(line, "node_mirror:"){
-      env.node_mirror = strings.Trim(regexp.MustCompile("node_mirror:").ReplaceAllString(line,"")," \r\n")
-    } else if strings.Contains(line, "npm_mirror:"){
-      env.npm_mirror = strings.Trim(regexp.MustCompile("npm_mirror:").ReplaceAllString(line,"")," \r\n")
-    } else if strings.Contains(line,"proxy:"){
-      env.proxy = strings.Trim(regexp.MustCompile("proxy:").ReplaceAllString(line,"")," \r\n")
+    line = strings.Trim(line, " \r\n")
+    if strings.HasPrefix(line, "root:") {
+      env.root = strings.TrimSpace(regexp.MustCompile("^root:").ReplaceAllString(line, ""))
+    } else if strings.HasPrefix(line, "originalpath:") {
+      env.originalpath = strings.TrimSpace(regexp.MustCompile("^originalpath:").ReplaceAllString(line, ""))
+    } else if strings.HasPrefix(line, "originalversion:") {
+      env.originalversion = strings.TrimSpace(regexp.MustCompile("^originalversion:").ReplaceAllString(line, ""))
+    } else if strings.HasPrefix(line, "arch:") {
+      env.arch = strings.TrimSpace(regexp.MustCompile("^arch:").ReplaceAllString(line, ""))
+    } else if strings.HasPrefix(line, "node_mirror:") {
+      env.node_mirror = strings.TrimSpace(regexp.MustCompile("^node_mirror:").ReplaceAllString(line, ""))
+    } else if strings.HasPrefix(line, "npm_mirror:") {
+      env.npm_mirror = strings.TrimSpace(regexp.MustCompile("^npm_mirror:").ReplaceAllString(line, ""))
+    } else if strings.HasPrefix(line, "proxy:") {
+      env.proxy = strings.TrimSpace(regexp.MustCompile("^proxy:").ReplaceAllString(line, ""))
       if env.proxy != "none" && env.proxy != "" {
         if strings.ToLower(env.proxy[0:4]) != "http" {
           env.proxy = "http://"+env.proxy
@@ -591,6 +592,7 @@ func Setup() {
       }
     }
   }
+
   web.SetMirrors(env.node_mirror, env.npm_mirror)
   env.arch = arch.Validate(env.arch)
 
