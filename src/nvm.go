@@ -324,8 +324,8 @@ func use(version string, cpuarch string) {
       }
     }
     if cpuarch == "64" {
-      if node.IsVersionInstalled(env.root,version,"64") {
-        fmt.Println("\nDid you mean node v"+version+" (64-bit)?\nIf so, type \"nvm use "+version+" 64\" to use it.")
+      if node.IsVersionInstalled(env.root,version,"32") {
+        fmt.Println("\nDid you mean node v"+version+" (32-bit)?\nIf so, type \"nvm use "+version+" 32\" to use it.")
       }
     }
     return
