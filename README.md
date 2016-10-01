@@ -76,6 +76,8 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 - `nvm root <path>`: Set the directory where nvm should store different versions of node.js. If `<path>` is not set, the current root will be displayed.
 - `nvm version`: Displays the current running version of NVM for Windows.
 
+- set environment NODE_MIRROR and NPM_MIRROR to change the mirror
+
 ### Gotcha!
 
 Please note that any global npm modules you may have installed are **not** shared between the various versions of node.js you have installed.
