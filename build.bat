@@ -1,6 +1,6 @@
 @echo off
-SET INNOSETUP=%CD%\nvm.iss
-SET ORIG=%CD%
+SET INNOSETUP=%~dp0\nvm.iss
+SET ORIG=%~dp0
 REM SET GOPATH=%CD%\src
 SET GOBIN=%CD%\bin
 SET GOARCH=386
@@ -20,41 +20,41 @@ SET DIST=%CD%\dist\%version%
 
 REM Build the executable
 echo Building NVM for Windows
-REM rm %GOBIN%\nvm.exe
+REM del %GOBIN%\nvm.exe
 REM cd %GOPATH%
 echo "=========================================>"
 REM echo %GOBIN%
 REM goxc -arch="386" -os="windows" -n="nvm" -d="%GOBIN%" -o="%GOBIN%\nvm{{.Ext}}" -tasks-=package
 
 REM cd %ORIG%
-REM rm %GOBIN%\src.exe
-REM rm %GOPATH%\src.exe
-REM rm %GOPATH%\nvm.exe
+REM del %GOBIN%\src.exe
+REM del %GOPATH%\src.exe
+REM del %GOPATH%\nvm.exe
 
 REM Clean the dist directory
-rm -rf "%DIST%"
+rmdir /S /Q "%DIST%"
 mkdir "%DIST%"
 
 echo Creating distribution in %DIST%
 
 if exist src\nvm.exe (
-  rm src\nvm.exe
+  del src\nvm.exe
 )
 
 echo "Building nvm.exe...."
 
 go build src\nvm.go
-mv nvm.exe %GOBIN%
+move nvm.exe %GOBIN%
 
 echo Building "noinstall" zip...
 for /d %%a in (%GOBIN%) do (buildtools\zip -j -9 -r "%DIST%\nvm-noinstall.zip" "%CD%\LICENSE" "%%a\*" -x "%GOBIN%\nodejs.ico")
 
 echo "Building the primary installer..."
-buildtools\iscc %INNOSETUP% /o%DIST%
+buildtools\iscc %INNOSETUP% "/o%DIST%" "/dProjectRoot=%ORIG%"
 buildtools\zip -j -9 -r "%DIST%\nvm-setup.zip" "%DIST%\nvm-setup.exe"
 
 echo "Distribution created. Now cleaning up...."
-rm %GOBIN%/nvm.exe
+del "%GOBIN%\nvm.exe"
 
 echo "Done."
 @echo on
