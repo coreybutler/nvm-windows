@@ -359,21 +359,23 @@ func use(version string, cpuarch string) {
 
   // Use the assigned CPU architecture
   cpuarch = arch.Validate(cpuarch)
-  e32 := file.Exists(env.root+"\\v"+version+"\\node32.exe")
-  e64 := file.Exists(env.root+"\\v"+version+"\\node64.exe")
-  used := file.Exists(env.root+"\\v"+version+"\\node.exe")
-  if (e32 || e64) {
-    if used {
-      if e32 {
-        os.Rename(env.root+"\\v"+version+"\\node.exe",env.root+"\\v"+version+"\\node64.exe")
-        os.Rename(env.root+"\\v"+version+"\\node32.exe",env.root+"\\v"+version+"\\node.exe")
-      } else {
-        os.Rename(env.root+"\\v"+version+"\\node.exe",env.root+"\\v"+version+"\\node32.exe")
-        os.Rename(env.root+"\\v"+version+"\\node64.exe",env.root+"\\v"+version+"\\node.exe")
-      }
-    } else if e32 || e64 {
-      os.Rename(env.root+"\\v"+version+"\\node"+cpuarch+".exe",env.root+"\\v"+version+"\\node.exe")
+  nodepath   := env.root+"\\v"+version+"\\node.exe"
+  node32path := env.root+"\\v"+version+"\\node32.exe"
+  node64path := env.root+"\\v"+version+"\\node64.exe"
+  node32exists := file.Exists(node32path)
+  node64exists := file.Exists(node64path)
+  nodeexists   := file.Exists(nodepath)
+  if node32exists && cpuarch == "32" { // user wants 32, but node.exe is 64
+    if nodeexists {
+      os.Rename(nodepath, node64path) // node.exe -> node64.exe
     }
+    os.Rename(node32path, nodepath) // node32.exe -> node.exe
+  }
+  if node64exists && cpuarch == "64" { // user wants 64, but node.exe is 32
+    if nodeexists {
+      os.Rename(nodepath, node32path) // node.exe -> node32.exe
+    }
+    os.Rename(node64path, nodepath) // node64.exe -> node.exe
   }
   fmt.Println("Now using node v"+version+" ("+cpuarch+"-bit)")
 }
