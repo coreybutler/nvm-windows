@@ -104,9 +104,8 @@ just good practice.
 ## What's the big difference?
 
 First and foremost, this version of nvm has no dependency on node. It's written in [Go](https://golang.org/), which is a much more structured
-approach than hacking around a limited `.bat` file. It does not rely on having an existing node installation. Plus, should the need arise, Go
-offers potential for creating a Mac/Linux version on the same code base with a substanially easier migration path than converting a bunch of
-batch to shell logic. `bat > sh, it crazy, right?`
+approach than hacking around a limited `.bat` file. It does not rely on having an existing node installation. Go
+offers the ability to create a Mac/Linux version on the same code base. In fact, this is already underway.
 
 The control mechanism is also quite different. There are two general ways to support multiple node installations with hot switching capabilities.
 The first is to modify the system `PATH` any time you switch versions, or bypass it by using a `.bat` file to mimic the node executable and redirect
