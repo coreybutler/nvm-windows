@@ -1,3 +1,40 @@
+# switch
+Switch is a Node.js Version Management utility.
+**Key Features:**
+- [ ] Installation
+- [ ] Switching
+- [ ] Hooks
+  - [ ] Pre-Install
+  - [ ] Post-Install
+  - [ ] Pre-Use
+  - [ ] Post-Use
+- [ ] Shared Global npm Modules (optional)
+- [ ] Download Mirror Support
+- [ ] Daemon
+  - [ ] Web Dashboard
+  - [ ] Notifications? (new Node versions)
+- [ ] Install Shortcuts
+  - [ ] lts
+  - [ ] latest
+  - [ ] MAJOR (ex: `6` installs `6.9.1`)
+  - [ ] MINOR (ex: `6.9` installs `6.9.1`)
+- [ ] npm fallback
+- [ ] Automatic Updates
+**Available For:**
+- [ ] Windows 8/8.1/10
+  - [ ] GUI, .msi, silent installer
+  - [ ] Chocolatey
+- [ ] macOS
+  - [ ] dmg/app
+  - [ ] homebrew
+- [ ] Linux
+  - [ ] rpm
+  - [ ] yum
+  - [ ] apt-get
+  - [ ] apk
+- [ ] Docker
+- [ ] IBMi?
+
 [![Tweet This!][1.1] Tweet This!][1]
 [1.1]: http://i.imgur.com/wWzX9uB.png (Tweet about NVM for Windows)
 [1]: https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb
