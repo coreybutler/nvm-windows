@@ -202,56 +202,29 @@ func install(version string, cpuarch string) {
 
 		// Make the output directories
 		os.Mkdir(env.root+"\\v"+version, os.ModeDir)
-		os.Mkdir(env.root+"\\v"+version+"\\node_modules", os.ModeDir)
 
 		// Download node
 		if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "32") {
+			os.Mkdir(env.root+"\\v"+version+"\\32-bit", os.ModeDir)
+			os.Mkdir(env.root+"\\v"+version+"\\32-bit\\node_modules", os.ModeDir)
 			success := web.GetNodeJS(env.root, version, "32")
 			if !success {
-				os.RemoveAll(env.root + "\\v" + version + "\\node_modules")
+				os.RemoveAll(env.root + "\\v" + version + "\\32-bit\\node_modules")
 				fmt.Println("Could not download node.js v" + version + " 32-bit executable.")
 				return
 			}
+			installNpm(version, "32")
 		}
 		if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "64") {
+			os.Mkdir(env.root+"\\v"+version+"\\64-bit", os.ModeDir)
+			os.Mkdir(env.root+"\\v"+version+"\\64-bit\\node_modules", os.ModeDir)
 			success := web.GetNodeJS(env.root, version, "64")
 			if !success {
-				os.RemoveAll(env.root + "\\v" + version + "\\node_modules")
+				os.RemoveAll(env.root + "\\v" + version + "\\64-bit\\node_modules")
 				fmt.Println("Could not download node.js v" + version + " 64-bit executable.")
 				return
 			}
-		}
-
-		if file.Exists(env.root + "\\v" + version + "\\node_modules\\npm") {
-			return
-		}
-
-		// If successful, add npm
-		npmv := getNpmVersion(version)
-		success := web.GetNpm(env.root, getNpmVersion(version))
-		if success {
-			fmt.Printf("Installing npm v" + npmv + "...")
-
-			// new temp directory under the nvm root
-			tempDir := env.root + "\\temp"
-
-			// Extract npm to the temp directory
-			file.Unzip(tempDir+"\\npm-v"+npmv+".zip", tempDir+"\\nvm-npm")
-
-			// Copy the npm and npm.cmd files to the installation directory
-			os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm", env.root+"\\v"+version+"\\npm")
-			os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm.cmd", env.root+"\\v"+version+"\\npm.cmd")
-			os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv, env.root+"\\v"+version+"\\node_modules\\npm")
-
-			// Remove the temp directory
-			// may consider keep the temp files here
-			os.RemoveAll(tempDir)
-
-			fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
-		} else {
-			fmt.Println("Could not download npm for node v" + version + ".")
-			fmt.Println("Please visit https://github.com/npm/npm/releases/tag/v" + npmv + " to download npm.")
-			fmt.Println("It should be extracted to " + env.root + "\\v" + version)
+			installNpm(version, "64")
 		}
 
 		// If this is ever shipped for Mac, it should use homebrew.
@@ -263,6 +236,40 @@ func install(version string, cpuarch string) {
 		return
 	}
 
+}
+
+func installNpm(version string, bits string) {
+	if file.Exists(env.root + "\\v" + version + "\\" + bits + "-bit\\node_modules\\npm") {
+		return
+	}
+
+	// If successful, add npm
+	npmv := getNpmVersion(version)
+	success := web.GetNpm(env.root, getNpmVersion(version))
+	if success {
+		fmt.Printf("Installing npm v" + npmv + "...")
+
+		// new temp directory under the nvm root
+		tempDir := env.root + "\\temp"
+
+		// Extract npm to the temp directory
+		file.Unzip(tempDir+"\\npm-v"+npmv+".zip", tempDir+"\\nvm-npm")
+
+		// Copy the npm and npm.cmd files to the installation directory
+		os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm", env.root+"\\v"+version+"\\"+bits+"-bit\\npm")
+		os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm.cmd", env.root+"\\v"+version+"\\"+bits+"-bit\\npm.cmd")
+		os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv, env.root+"\\v"+version+"\\"+bits+"-bit\\node_modules\\npm")
+
+		// Remove the temp directory
+		// may consider keep the temp files here
+		os.RemoveAll(tempDir)
+
+		fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
+	} else {
+		fmt.Println("Could not download npm for node v" + version + ".")
+		fmt.Println("Please visit https://github.com/npm/npm/releases/tag/v" + npmv + " to download npm.")
+		fmt.Println("It should be extracted to " + env.root + "\\v" + version + "\\" + bits + "-bit")
+	}
 }
 
 func uninstall(version string) {
@@ -356,36 +363,51 @@ func use(version string, cpuarch string) {
 		}
 	}
 
-	c := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "mklink", "/D", env.symlink, env.root+"\\v"+version)
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	c.Stdout = &out
-	c.Stderr = &stderr
-	err := c.Run()
-	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-		return
-	}
+	if node.IsUsingOldLayout(env.root, version) {
+		c := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "mklink", "/D", env.symlink, env.root+"\\v"+version)
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		c.Stdout = &out
+		c.Stderr = &stderr
+		err := c.Run()
+		if err != nil {
+			fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+			return
+		}
 
-	// Use the assigned CPU architecture
-	cpuarch = arch.Validate(cpuarch)
-	nodepath := env.root + "\\v" + version + "\\node.exe"
-	node32path := env.root + "\\v" + version + "\\node32.exe"
-	node64path := env.root + "\\v" + version + "\\node64.exe"
-	node32exists := file.Exists(node32path)
-	node64exists := file.Exists(node64path)
-	nodeexists := file.Exists(nodepath)
-	if node32exists && cpuarch == "32" { // user wants 32, but node.exe is 64
-		if nodeexists {
-			os.Rename(nodepath, node64path) // node.exe -> node64.exe
+		// Use the assigned CPU architecture
+		cpuarch = arch.Validate(cpuarch)
+		nodepath := env.root + "\\v" + version + "\\node.exe"
+		node32path := env.root + "\\v" + version + "\\node32.exe"
+		node64path := env.root + "\\v" + version + "\\node64.exe"
+		node32exists := file.Exists(node32path)
+		node64exists := file.Exists(node64path)
+		nodeexists := file.Exists(nodepath)
+		if node32exists && cpuarch == "32" { // user wants 32, but node.exe is 64
+			if nodeexists {
+				os.Rename(nodepath, node64path) // node.exe -> node64.exe
+			}
+			os.Rename(node32path, nodepath) // node32.exe -> node.exe
 		}
-		os.Rename(node32path, nodepath) // node32.exe -> node.exe
-	}
-	if node64exists && cpuarch == "64" { // user wants 64, but node.exe is 32
-		if nodeexists {
-			os.Rename(nodepath, node32path) // node.exe -> node32.exe
+		if node64exists && cpuarch == "64" { // user wants 64, but node.exe is 32
+			if nodeexists {
+				os.Rename(nodepath, node32path) // node.exe -> node32.exe
+			}
+			os.Rename(node64path, nodepath) // node64.exe -> node.exe
 		}
-		os.Rename(node64path, nodepath) // node64.exe -> node.exe
+	} else {
+		cpuarch = arch.Validate(cpuarch)
+
+		c := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "mklink", "/D", env.symlink, env.root+"\\v"+version+"\\"+cpuarch+"-bit")
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		c.Stdout = &out
+		c.Stderr = &stderr
+		err := c.Run()
+		if err != nil {
+			fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+			return
+		}
 	}
 	fmt.Println("Now using node v" + version + " (" + cpuarch + "-bit)")
 }

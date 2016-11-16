@@ -109,7 +109,7 @@ func GetNodeJS(root string, v string, a string) bool {
 		//No url should mean this version/arch isn't available
 		fmt.Println("Node.js v" + v + " " + a + "bit isn't available right now.")
 	} else {
-		fileName := root + "\\v" + v + "\\node" + a + ".exe"
+		fileName := root + "\\v" + v + "\\" + a + "-bit\\node.exe"
 
 		fmt.Printf("Downloading node.js version " + v + " (" + a + "-bit)... ")
 
