@@ -85,8 +85,8 @@ func GetNodeJS(root string, v string, a string) bool {
   a = arch.Validate(a)
 
   vpre := ""
-  vers := strings.Fields(strings.Replace(v,"."," ",-1))
-  main, _ := strconv.ParseInt(vers[0],0,0)
+  vers := strings.Fields(strings.Replace(v, ".", " ", -1))
+  main, _ := strconv.ParseInt(vers[0], 0, 0)
 
   if a == "32" {
     if main > 0 {
@@ -101,18 +101,18 @@ func GetNodeJS(root string, v string, a string) bool {
       vpre = "x64/"
     }
   }
-  
-  url := getNodeUrl ( v, vpre );
+
+  url := getNodeUrl (v, vpre)
 
   if url == "" {
     //No url should mean this version/arch isn't available
-    fmt.Println("Node.js v"+v+" " + a + "bit isn't available right now.")
+    fmt.Println("Node.js v" + v + " " + a + "bit isn't available right now.")
   } else {
-   fileName := root+"\\v"+v+"\\node"+a+".exe"
+    fileName := root + "\\v" + v + "\\" + a + "-bit\\node.exe"
 
-    fmt.Printf("Downloading node.js version "+v+" ("+a+"-bit)... ")
+    fmt.Printf("Downloading node.js version " + v + " (" + a + "-bit)... ")
 
-    if Download(url,fileName) {
+    if Download(url, fileName) {
       fmt.Printf("Complete\n")
       return true
     } else {

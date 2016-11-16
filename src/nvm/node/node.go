@@ -43,16 +43,19 @@ func GetCurrentVersion() (string, string) {
 }
 
 func IsVersionInstalled(root string, version string, cpu string) bool {
-  e32 := file.Exists(root+"\\v"+version+"\\node32.exe")
-  e64 := file.Exists(root+"\\v"+version+"\\node64.exe")
-  used := file.Exists(root+"\\v"+version+"\\node.exe")
+  e32 := file.Exists(root+"\\v"+version+"\\node32.exe") ||
+    file.Exists(root+"\\v"+version+"\\32-bit\\node.exe")
+  e64 := file.Exists(root+"\\v"+version+"\\node64.exe") ||
+    file.Exists(root+"\\v"+version+"\\64-bit\\node.exe")
+  used := file.Exists(root + "\\v" + version + "\\node.exe")
+
   if cpu == "all" {
     return ((e32 || e64) && used) || e32 && e64
   }
-  if file.Exists(root+"\\v"+version+"\\node"+cpu+".exe") {
+  if file.Exists(root + "\\v" + version + "\\node" + cpu + ".exe") {
     return true
   }
-  if ((e32||e64) && used) || (e32 && e64) {
+  if ((e32 || e64) && used) || (e32 && e64) {
     return true
   }
   if !e32 && !e64 && used && arch.Validate(cpu) == arch.Bit(root+"\\v"+version+"\\node.exe") {
@@ -65,6 +68,12 @@ func IsVersionInstalled(root string, version string, cpu string) bool {
     return e64
   }
   return false
+}
+
+func IsUsingOldLayout(root string, version string) bool {
+  return file.Exists(root+"\\v"+version+"\\node32.exe") ||
+    file.Exists(root+"\\v"+version+"\\node64.exe") ||
+    file.Exists(root+"\\v"+version+"\\node.exe")
 }
 
 func IsVersionAvailable(v string) bool {
