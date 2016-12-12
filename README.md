@@ -24,17 +24,20 @@ Of course, I would also love to have additional maintainers. If you're new to Go
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
 
+![Issues](https://img.shields.io/github/issues/coreybutler/nvm-windows.svg)
+![Stars](https://img.shields.io/github/stars/coreybutler/nvm-windows.svg)
+
 Manage multiple installations of node.js on a Windows computer.
 
 **tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm-windows/releases)! This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. However, node 4+ is supported.
 
-![NVM for Windows](http://coreybutler.github.io/nvm-windows/images/installlatest.jpg)
+![NVM for Windows](http://i.imgur.com/BNlcbi4.png)
 
 There are situations where the ability to switch between different versions of Node.js can be very
 useful. For example, if you want to test a module you're developing with the latest
 bleeding edge version without uninstalling the stable version of node, this utility can help.
 
-![Switch between stable and unstable versions.](http://coreybutler.github.io/nvm-windows/images/use.jpg)
+![Switch between stable and unstable versions.](http://i.imgur.com/zHEz8Oq.png)
 
 ### Installation & Upgrades
 
@@ -49,7 +52,7 @@ You should also delete the existing npm install location (e.g. "C:\Users\<user>\
 
 [Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
 
-![NVM for Windows Installer](http://coreybutler.github.io/nvm-windows/images/installer.jpg)
+![NVM for Windows Installer](http://i.imgur.com/x8EzjSC.png)
 
 **To upgrade**, run the new installer. It will safely overwrite the files it needs to update without touching your node.js installations.
 Make sure you use the same installation and symlink folder. If you originally installed to the default locations, you just need to click
