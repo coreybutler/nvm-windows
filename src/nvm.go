@@ -148,7 +148,7 @@ func install(version string, cpuarch string) {
 
   if cpuarch != "" {
     if cpuarch != "32" && cpuarch != "64" && cpuarch != "all" {
-      fmt.Println("\"" + cpuarch + "\" is not a valid CPU architecture. Must be 32 or 64.")
+      fmt.Println("\""+cpuarch+"\" is not a valid CPU architecture. Must be 32 or 64.")
       return
     }
   } else {
@@ -165,56 +165,56 @@ func install(version string, cpuarch string) {
     content := web.GetRemoteTextFile(url)
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
-    version = reg.ReplaceAllString(re.FindString(content), "")
+    version = reg.ReplaceAllString(re.FindString(content),"")
   }
 
   version = cleanVersion(version)
 
   if CheckVersionExceedsLatest(version) {
-    fmt.Println("Node.js v" + version + " is not yet released or available.")
-    return
+  	fmt.Println("Node.js v"+version+" is not yet released or available.")
+  	return
   }
 
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
-    fmt.Println("Node.js v" + version + " is only available in 32-bit.")
+    fmt.Println("Node.js v"+version+" is only available in 32-bit.")
     return
   }
 
   // Check to see if the version is already installed
-  if !node.IsVersionInstalled(env.root, version, cpuarch) {
+  if !node.IsVersionInstalled(env.root,version,cpuarch) {
 
-    if !node.IsVersionAvailable(version) {
-      fmt.Println("Version " + version + " is not available. If you are attempting to download a \"just released\" version,")
+    if !node.IsVersionAvailable(version){
+      fmt.Println("Version "+version+" is not available. If you are attempting to download a \"just released\" version,")
       fmt.Println("it may not be recognized by the nvm service yet (updated hourly). If you feel this is in error and")
       fmt.Println("you know the version exists, please visit http://github.com/coreybutler/nodedistro and submit a PR.")
       return
     }
 
     // Make the output directories
-    os.Mkdir(env.root+"\\v"+version, os.ModeDir)
+    os.Mkdir(env.root+"\\v"+version,os.ModeDir)
 
     // Download node
-    if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "32") {
+    if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root,version,"32") {
       os.Mkdir(env.root+"\\v"+version+"\\32-bit", os.ModeDir)
       os.Mkdir(env.root+"\\v"+version+"\\32-bit\\node_modules", os.ModeDir)
-      success := web.GetNodeJS(env.root, version, "32")
+      success := web.GetNodeJS(env.root,version,"32")
       if !success {
         os.RemoveAll(env.root + "\\v" + version + "\\32-bit\\node_modules")
-        fmt.Println("Could not download node.js v" + version + " 32-bit executable.")
+        fmt.Println("Could not download node.js v"+version+" 32-bit executable.")
         return
       }
-      installNpm(version, "32")
+	  installNpm(version, "32")
     }
-    if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "64") {
+    if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root,version,"64") {
       os.Mkdir(env.root+"\\v"+version+"\\64-bit", os.ModeDir)
       os.Mkdir(env.root+"\\v"+version+"\\64-bit\\node_modules", os.ModeDir)
-      success := web.GetNodeJS(env.root, version, "64")
+      success := web.GetNodeJS(env.root,version,"64")
       if !success {
         os.RemoveAll(env.root + "\\v" + version + "\\64-bit\\node_modules")
-        fmt.Println("Could not download node.js v" + version + " 64-bit executable.")
+        fmt.Println("Could not download node.js v"+version+" 64-bit executable.")
         return
       }
-      installNpm(version, "64")
+	  installNpm(version, "64")
     }
 
     // If this is ever shipped for Mac, it should use homebrew.
@@ -239,8 +239,8 @@ func installNpm(version string, bits string) {
   if success {
     fmt.Printf("Installing npm v" + npmv + "...")
 
-    // new temp directory under the nvm root
-    tempDir := env.root + "\\temp"
+	// new temp directory under the nvm root
+	tempDir := env.root + "\\temp"
 
     // Extract npm to the temp directory
     file.Unzip(tempDir+"\\npm-v"+npmv+".zip", tempDir+"\\nvm-npm")
@@ -255,11 +255,11 @@ func installNpm(version string, bits string) {
     os.RemoveAll(tempDir)
 
     fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
-  } else {
+   } else {
     fmt.Println("Could not download npm for node v" + version + ".")
     fmt.Println("Please visit https://github.com/npm/npm/releases/tag/v" + npmv + " to download npm.")
     fmt.Println("It should be extracted to " + env.root + "\\v" + version + "\\" + bits + "-bit")
-  }
+   }
 }
 
 func uninstall(version string) {
@@ -323,16 +323,16 @@ func use(version string, cpuarch string) {
   version = cleanVersion(version)
 
   // Make sure the version is installed. If not, warn.
-  if !node.IsVersionInstalled(env.root, version, cpuarch) {
-    fmt.Println("node v" + version + " (" + cpuarch + "-bit) is not installed.")
+  if !node.IsVersionInstalled(env.root,version,cpuarch) {
+    fmt.Println("node v"+version+" ("+cpuarch+"-bit) is not installed.")
     if cpuarch == "32" {
-      if node.IsVersionInstalled(env.root, version, "64") {
-        fmt.Println("\nDid you mean node v" + version + " (64-bit)?\nIf so, type \"nvm use " + version + " 64\" to use it.")
+      if node.IsVersionInstalled(env.root,version,"64") {
+        fmt.Println("\nDid you mean node v"+version+" (64-bit)?\nIf so, type \"nvm use "+version+" 64\" to use it.")
       }
     }
     if cpuarch == "64" {
-      if node.IsVersionInstalled(env.root, version, "32") {
-        fmt.Println("\nDid you mean node v" + version + " (32-bit)?\nIf so, type \"nvm use " + version + " 32\" to use it.")
+      if node.IsVersionInstalled(env.root,version,"32") {
+        fmt.Println("\nDid you mean node v"+version+" (32-bit)?\nIf so, type \"nvm use "+version+" 32\" to use it.")
       }
     }
     return
@@ -348,8 +348,8 @@ func use(version string, cpuarch string) {
     cmd.Stderr = &_stderr
     perr := cmd.Run()
     if perr != nil {
-      fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
-      return
+        fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
+        return
     }
   }
 
@@ -399,7 +399,7 @@ func use(version string, cpuarch string) {
       return
     }
   }
-  fmt.Println("Now using node v" + version + " (" + cpuarch + "-bit)")
+  fmt.Println("Now using node v"+version+" ("+cpuarch+"-bit)")
 }
 
 func useArchitecture(a string) {
