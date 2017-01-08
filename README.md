@@ -1,3 +1,5 @@
+**NOTICE:** This is not the same thing as [nvm](https://github.com/creationix/nvm), which is a completely separate project for Mac/Linux only.
+
 [![Tweet This!][1.1] Tweet This!][1]
 [1.1]: http://i.imgur.com/wWzX9uB.png (Tweet about NVM for Windows)
 [1]: https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb
@@ -142,9 +144,3 @@ MIT.
 ## Thanks
 
 Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to [@vkbansal](https://github.com/vkbansal), who has actively provided feedback throughout the releases. Thanks also go to [@rainabba](https://github.com/rainabba) and [@sullivanpt](https://github.com/sullivanpt) for getting Node v4 support integrated.
-
-## Alternatives
-
-- [nodist](https://github.com/marcelklehr/nodist) - Windows Only
-- [nvm](https://github.com/creationix/nvm) - Mac/Linux Only
-- [n](https://github.com/visionmedia/n) - Mac/Linux Only
