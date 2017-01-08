@@ -1,10 +1,12 @@
 @echo off
 SET INNOSETUP=%CD%\nvm.iss
+SET INNOSETUP_TEMPLATE=%INNOSETUP%.template
 SET ORIG=%CD%
 REM SET GOPATH=%CD%\src
 SET GOBIN=%CD%\bin
 SET GOARCH=386
 SET version=1.1.1
+set NVM_BUILD_ROOT=%CD%
 
 REM Get the version number from the setup file
 REM for /f "tokens=*" %%i in ('findstr /n . %INNOSETUP% ^| findstr ^4:#define') do set L=%%i
@@ -48,6 +50,18 @@ mv nvm.exe %GOBIN%
 
 echo Building "noinstall" zip...
 for /d %%a in (%GOBIN%) do (buildtools\zip -j -9 -r "%DIST%\nvm-noinstall.zip" "%CD%\LICENSE" "%%a\*" -x "%GOBIN%\nodejs.ico")
+
+echo "Creating an actual Inno Setup Script file (%INNOSETUP%) using %INNOSETUP_TEMPLATE%..."
+if exist %INNOSETUP% (
+  rm %INNOSETUP%
+)
+
+setlocal enabledelayedexpansion
+
+for /f "delims=" %%L in (%INNOSETUP_TEMPLATE%) do (
+      echo %%L >> %INNOSETUP%
+)
+endlocal
 
 echo "Building the primary installer..."
 buildtools\iscc %INNOSETUP% /o%DIST%
