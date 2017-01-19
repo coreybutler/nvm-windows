@@ -16,6 +16,8 @@ import(
 var client = &http.Client{}
 var nodeBaseAddress = "https://nodejs.org/dist/"
 var npmBaseAddress = "https://github.com/npm/npm/archive/"
+var defaultNodeBaseAddress = "https://nodejs.org/dist/"
+var defaultNpmBaseAddress ="https://github.com/npm/npm/archive/"
 
 func SetProxy(p string){
   if p != "" && p != "none" {
@@ -32,13 +34,17 @@ func SetMirrors(node_mirror string, npm_mirror string){
     if strings.ToLower(nodeBaseAddress[0:4]) != "http" {
       nodeBaseAddress = "http://"+nodeBaseAddress
     }
+  }else if node_mirror==""{
+    nodeBaseAddress =defaultNodeBaseAddress
   }
   if npm_mirror != "" && npm_mirror != "none"{
     npmBaseAddress = npm_mirror;
     if strings.ToLower(npmBaseAddress[0:4]) != "http" {
       npmBaseAddress = "http://"+npmBaseAddress
     }
-  }
+  }else if npm_mirror==""{
+   npmBaseAddress = defaultNpmBaseAddress
+ }
 }
 
 func GetFullNodeUrl(path string) string{
@@ -101,7 +107,7 @@ func GetNodeJS(root string, v string, a string) bool {
       vpre = "x64/"
     }
   }
-  
+
   url := getNodeUrl ( v, vpre );
 
   if url == "" {
