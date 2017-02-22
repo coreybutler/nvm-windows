@@ -131,7 +131,7 @@ func isCurrent(element map[string]interface{}) bool {
     return false
   }
 
-  return version.Major%2 == 0
+  return version.Major%2 == 1
 }
 
 // Identifies a stable old version.

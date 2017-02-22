@@ -16,7 +16,7 @@ import (
 )
 
 const (
-  NvmVersion = "1.1.1"
+  NvmVersion = "1.1.2"
 )
 
 type Environment struct {
@@ -29,6 +29,7 @@ type Environment struct {
   proxy           string
   originalpath    string
   originalversion string
+  verifyssl       bool
 }
 
 var env = &Environment{
@@ -41,6 +42,7 @@ var env = &Environment{
   proxy: "none",
   originalpath: "",
   originalversion: "",
+  verifyssl: true,
 }
 
 func main() {
@@ -55,7 +57,9 @@ func main() {
     detail = args[2]
   }
   if len(args) > 3 {
-    procarch = args[3]
+    if (args[3] == "32" || args[3] == "64") {
+      procarch = args[3]
+    }
   }
   if len(args) < 2 {
     help()
@@ -122,11 +126,11 @@ func update() {
 }
 
 func CheckVersionExceedsLatest(version string) bool{
-    //content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
-    url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
-    content := web.GetRemoteTextFile(url)
-    re := regexp.MustCompile("node-v(.+)+msi")
-    reg := regexp.MustCompile("node-v|-x.+")
+  //content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
+  url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
+  content := web.GetRemoteTextFile(url)
+  re := regexp.MustCompile("node-v(.+)+msi")
+  reg := regexp.MustCompile("node-v|-x.+")
 	latest := reg.ReplaceAllString(re.FindString(content),"")
 
 	if version <= latest {
@@ -137,6 +141,13 @@ func CheckVersionExceedsLatest(version string) bool{
 }
 
 func install(version string, cpuarch string) {
+  args := os.Args
+  lastarg := args[len(args) - 1]
+
+  if lastarg == "--insecure" {
+    env.verifyssl = false
+  }
+
   if version == "" {
     fmt.Println("\nInvalid version.")
     fmt.Println(" ")
@@ -194,6 +205,11 @@ func install(version string, cpuarch string) {
     os.Mkdir(env.root+"\\v"+version,os.ModeDir)
     os.Mkdir(env.root+"\\v"+version+"\\node_modules",os.ModeDir)
 
+    // Warn the user if they're attempting to install without verifying the remote SSL cert
+    if !env.verifyssl {
+      fmt.Println("\nWARNING: The remote SSL certificate will not be validated during the download process.\n")
+    }
+
     // Download node
     if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root,version,"32") {
       success := web.GetNodeJS(env.root,version,"32");
@@ -244,9 +260,11 @@ func install(version string, cpuarch string) {
       fmt.Println("It should be extracted to "+env.root+"\\v"+version)
     }
 
+    // Reset the SSL verification
+    env.verifyssl = true
+
     // If this is ever shipped for Mac, it should use homebrew.
     // If this ever ships on Linux, it should be on bintray so it can use yum, apt-get, etc.
-
     return
    } else {
      fmt.Println("Version "+version+" is already installed.")
@@ -517,7 +535,8 @@ func help() {
   fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest stable version.")
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
   fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
-  fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
+  fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
+    fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
   fmt.Println("  nvm on                       : Enable node.js version management.")
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
@@ -588,7 +607,7 @@ func Setup() {
         if strings.ToLower(env.proxy[0:4]) != "http" {
           env.proxy = "http://"+env.proxy
         }
-        web.SetProxy(env.proxy)
+        web.SetProxy(env.proxy, env.verifyssl)
       }
     }
   }

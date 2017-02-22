@@ -7,6 +7,7 @@ import(
   "os"
   "io"
   "io/ioutil"
+  "crypto/tls"
   "strings"
   "strconv"
   "../arch"
@@ -17,12 +18,12 @@ var client = &http.Client{}
 var nodeBaseAddress = "https://nodejs.org/dist/"
 var npmBaseAddress = "https://github.com/npm/npm/archive/"
 
-func SetProxy(p string){
+func SetProxy(p string, verifyssl bool){
   if p != "" && p != "none" {
     proxyUrl, _ := url.Parse(p)
-    client = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
+    client = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl), TLSClientConfig: &tls.Config{InsecureSkipVerify: verifyssl}}}
   } else {
-    client = &http.Client{}
+    client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: verifyssl}}}
   }
 }
 
@@ -101,7 +102,7 @@ func GetNodeJS(root string, v string, a string) bool {
       vpre = "x64/"
     }
   }
-  
+
   url := getNodeUrl ( v, vpre );
 
   if url == "" {
