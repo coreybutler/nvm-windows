@@ -108,6 +108,10 @@ func main() {
         saveSettings()
       }
     case "update": update()
+    case "node_mirror":
+      SetNodeMirror(detail)
+    case "npm_mirror":
+      SetNpmMirror(detail)
     default: help()
   }
 }
@@ -575,7 +579,7 @@ func updateRootDir(path string) {
 
 func saveSettings() {
   content := "root: "+strings.Trim(env.root," \n\r")+"\r\narch: "+strings.Trim(env.arch," \n\r")+"\r\nproxy: "+strings.Trim(env.proxy," \n\r")+"\r\noriginalpath: "+strings.Trim(env.originalpath," \n\r")+"\r\noriginalversion: "+strings.Trim(env.originalversion," \n\r")
-  content = content + "node_mirror: "+strings.Trim(env.node_mirror," \n\r")+ "npm_mirror: "+strings.Trim(env.npm_mirror," \n\r")
+  content = content + "\r\nnode_mirror: "+strings.Trim(env.node_mirror," \n\r")+ "\r\nnpm_mirror: "+strings.Trim(env.npm_mirror," \n\r")
   ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 
@@ -620,5 +624,43 @@ func Setup() {
   if e != nil {
     fmt.Println(env.root+" could not be found or does not exist. Exiting.")
     return
+  }
+}
+
+func SetNodeMirror(node_mirror string) {
+  reg := regexp.MustCompile("^((https|http|ftp|rtsp|mms)?:\\/\\/)?(([0-9a-z_!~*\\'().&=+$%-]+: )?[0-9a-z_!~*\\'().&=+$%-]+@)?(([0-9]{1,3}\\.){3}[0-9]{1,3}|([0-9a-z_!~*\\'()-]+\\.)*([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\\.[a-z]{2,6})(:[0-9]{1,4})?((\\/?)|(\\/[0-9a-z_!~*\\'().;?:@&=+$,%#-]+)+\\/?)$")
+  if node_mirror==""||reg.MatchString(node_mirror){
+    if node_mirror==""{
+      fmt.Println("node_mirror change to default")
+    }else{
+      if !strings.HasSuffix(node_mirror, "/"){
+        node_mirror+="/"
+      }
+      fmt.Println("node_mirror change to "+node_mirror)
+    }
+    env.node_mirror=node_mirror
+    web.SetMirrors(env.node_mirror, env.npm_mirror)
+    saveSettings()
+  }else{
+    fmt.Println("\""+node_mirror+"\" is a invalid url")
+  }
+}
+
+func SetNpmMirror(npm_mirror string) {
+  reg := regexp.MustCompile("^((https|http|ftp|rtsp|mms)?:\\/\\/)?(([0-9a-z_!~*\\'().&=+$%-]+: )?[0-9a-z_!~*\\'().&=+$%-]+@)?(([0-9]{1,3}\\.){3}[0-9]{1,3}|([0-9a-z_!~*\\'()-]+\\.)*([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\\.[a-z]{2,6})(:[0-9]{1,4})?((\\/?)|(\\/[0-9a-z_!~*\\'().;?:@&=+$,%#-]+)+\\/?)$")
+  if npm_mirror==""||reg.MatchString(npm_mirror){
+    if npm_mirror==""{
+      fmt.Println("npm_mirror change to default")
+    }else{
+      if !strings.HasSuffix(npm_mirror, "/"){
+        npm_mirror+="/"
+      }
+      fmt.Println("npm_mirror change to "+npm_mirror)
+    }
+    env.npm_mirror=npm_mirror
+    web.SetMirrors(env.node_mirror, env.npm_mirror)
+    saveSettings()
+  }else{
+    fmt.Println("\""+npm_mirror+"\" is a invalid url")
   }
 }
