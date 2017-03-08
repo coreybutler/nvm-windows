@@ -5,10 +5,12 @@ import(
   "net/http"
   "net/url"
   "os"
+  "os/signal"
   "io"
   "io/ioutil"
+	"strings"
+	"syscall"
   "crypto/tls"
-  "strings"
   "strconv"
   "../arch"
   "../file"
@@ -50,7 +52,7 @@ func  GetFullNpmUrl(path string) string{
   return npmBaseAddress + path;
 }
 
-func Download(url string, target string) bool {
+func Download(url string, target string, version string) bool {
 
   output, err := os.Create(target)
   if err != nil {
@@ -63,12 +65,28 @@ func Download(url string, target string) bool {
     fmt.Println("Error while downloading", url, "-", err)
   }
   defer response.Body.Close()
-
+  c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("Download interrupted.Rolling back...")
+		output.Close()
+		response.Body.Close()
+		var err error
+		if strings.Contains(target, "node") {
+			err = os.RemoveAll(os.Getenv("NVM_HOME") + "\\v" + version)
+		} else {
+			err = os.Remove(target)
+		}
+		if err != nil {
+			fmt.Println("Error while rolling back", err)
+		}
+		os.Exit(1)
+	}()
   _, err = io.Copy(output, response.Body)
   if err != nil {
     fmt.Println("Error while downloading", url, "-", err)
   }
-
   if response.Status[0:3] != "200" {
     fmt.Println("Download failed. Rolling Back.")
     err := os.Remove(target)
@@ -111,9 +129,9 @@ func GetNodeJS(root string, v string, a string) bool {
   } else {
    fileName := root+"\\v"+v+"\\node"+a+".exe"
 
-    fmt.Printf("Downloading node.js version "+v+" ("+a+"-bit)... ")
+    fmt.Println("Downloading node.js version "+v+" ("+a+"-bit)... ")
 
-    if Download(url,fileName) {
+    if Download(url,fileName,v) {
       fmt.Printf("Complete\n")
       return true
     } else {
@@ -142,7 +160,7 @@ func GetNpm(root string, v string) bool {
   fileName := tempDir+"\\"+"npm-v"+v+".zip"
 
   fmt.Printf("Downloading npm version "+v+"... ")
-  if Download(url,fileName) {
+  if Download(url,fileName,v) {
     fmt.Printf("Complete\n")
     return true
   } else {
