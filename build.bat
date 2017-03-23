@@ -52,7 +52,8 @@ for /d %%a in (%GOBIN%) do (buildtools\zip -j -9 -r "%DIST%\nvm-noinstall.zip" "
 echo "Building the primary installer..."
 buildtools\iscc %INNOSETUP% /o%DIST%
 buildtools\zip -j -9 -r "%DIST%\nvm-setup.zip" "%DIST%\nvm-setup.exe"
-
+echo "Generating Checksums for release files..."
+for /r %i in (*.zip *.exe) do checksum -file %i -t sha256 >> %i.sha256.txt
 echo "Distribution created. Now cleaning up...."
 rm %GOBIN%/nvm.exe
 
