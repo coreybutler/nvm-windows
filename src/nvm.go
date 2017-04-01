@@ -345,7 +345,7 @@ func use(version string, cpuarch string) {
   if version == "auto" {
     v, err := useLib.AutoUse(node.GetInstalled(env.root))
     if err != nil {
-      fmt.Println("\nCould not auto find version, got:")
+      fmt.Println("\nCould not auto complete version, error received:")
       fmt.Println(err)
       return
     }

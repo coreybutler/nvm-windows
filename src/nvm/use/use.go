@@ -22,8 +22,7 @@ func packageJsonMatch(available semver.Versions) (string, error) {
   semRange, e := semver.ParseRange(engineRangeRaw)
 
   if e != nil {
-    // TODO: Error Handling
-    return "", nil
+    return "", e
   }
 
   minimum, err := getMaxVersion(available, semRange)
