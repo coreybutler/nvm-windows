@@ -343,8 +343,13 @@ func use(version string, cpuarch string) {
   }
 
   if version == "auto" {
-    fmt.Println("Trying to auto match version...")
-    useLib.AutoUse(node.GetInstalled(env.root))
+    v, err := useLib.AutoUse(node.GetInstalled(env.root))
+    if err != nil {
+      fmt.Println("\nCould not auto find version, got:")
+      fmt.Println(err)
+      return
+    }
+    version = v
   }
 
   cpuarch = arch.Validate(cpuarch)
