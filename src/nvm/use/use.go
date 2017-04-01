@@ -16,8 +16,7 @@ func packageJsonMatch(available semver.Versions) (string, error) {
   fmt.Println("\nRange Specified: ", engineRangeRaw)
 
   if engineRangeRaw == "*" {
-    fmt.Println("Wildcard Activated. This needs to be written!")
-    return "", nil
+    return available[semver.Versions.Len(available) - 1].String(), nil
   }
 
   semRange, e := semver.ParseRange(engineRangeRaw)
