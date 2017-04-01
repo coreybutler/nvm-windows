@@ -12,6 +12,7 @@ import (
   "./nvm/arch"
   "./nvm/file"
   "./nvm/node"
+  useLib "./nvm/use"
   "github.com/olekukonko/tablewriter"
 )
 
@@ -339,6 +340,11 @@ func use(version string, cpuarch string) {
     cpuarch = version
     v, _ := node.GetCurrentVersion()
     version = v
+  }
+
+  if version == "auto" {
+    fmt.Println("Trying to auto match version...")
+    useLib.AutoUse(node.GetInstalled(env.root))
   }
 
   cpuarch = arch.Validate(cpuarch)
