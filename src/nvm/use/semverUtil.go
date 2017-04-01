@@ -29,12 +29,12 @@ func stringToVersion(versions []string) ([]semver.Version) {
   return results
 }
 
-func getMinimumVersion(semVersions []semver.Version, semRange semver.Range) (semver.Version, error) {
+func getMaxVersion(sortedSemVersions []semver.Version, semRange semver.Range) (semver.Version, error) {
   var valid semver.Version
 
-  for _, value := range semVersions {
-    if semRange(value) {
-      return value, nil
+  for i := semver.Versions.Len(sortedSemVersions) - 1; i >= 0; i-- {
+    if semRange(sortedSemVersions[i]) {
+      return sortedSemVersions[i], nil
     }
   }
 

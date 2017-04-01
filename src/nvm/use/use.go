@@ -27,13 +27,14 @@ func packageJsonMatch(available semver.Versions) (string, error) {
     return "", nil
   }
 
-  minimum, err := getMinimumVersion(available, semRange)
+  minimum, err := getMaxVersion(available, semRange)
 
   return minimum.String(), err
 }
 
 func AutoUse(available []string) (string, error) {
   availableVersions := stringToVersion(available)
+  semver.Sort(availableVersions)
   version, e := packageJsonMatch(availableVersions)
 
   if e != nil {
