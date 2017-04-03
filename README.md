@@ -1,8 +1,6 @@
 **NOTICE:** This is not the same thing as [nvm](https://github.com/creationix/nvm), which is a completely separate project for Mac/Linux only.
 
-[![Tweet This!][1.1] Tweet This!][1]
-[1.1]: http://i.imgur.com/wWzX9uB.png (Tweet about NVM for Windows)
-[1]: https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb
+Like this project? Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb).
 
 [Become a Patron](https://patreon.com/coreybutler)
 
@@ -10,7 +8,9 @@
 
 _Are you multilingual?_
 
-I am particularly interested in finding people who can speak something other than English. Several problems have come up with non-latin character sets (Chinese, Japanese, Arabic, etc). I am also interested in producing language packs/translations for the installers.
+I am particularly interested in finding people who can speak something other than English. Several problems have come up with non-latin character sets (Chinese, Japanese, Arabic, etc). I am also interested in producing language packs/translations for the installers. If you are interested in translating, please [signup here](https://coreybutler.typeform.com/to/ybqT6F).
+
+**I am seeking donations to help pay for a lingohub.com account** to make life easier for translators! Please consider becoming a [becoming a patron](https://patreon.com/coreybutler) to support this.
 
 _Are you outside of the US/UK/Canada?_
 
