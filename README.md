@@ -22,7 +22,7 @@ Of course, I would also love to have additional maintainers. If you're new to Go
 
 # Node Version Manager (nvm) for Windows
 
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
 
 ![Issues](https://img.shields.io/github/issues/coreybutler/nvm-windows.svg)
 ![Stars](https://img.shields.io/github/stars/coreybutler/nvm-windows.svg)
