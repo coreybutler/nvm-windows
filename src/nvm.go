@@ -16,7 +16,7 @@ import (
 )
 
 const (
-  NvmVersion = "1.1.3"
+  NvmVersion = "1.2.0"
 )
 
 type Environment struct {
@@ -339,10 +339,12 @@ func use(version string, cpuarch string) {
   if version == "" {
     lines, err := file.ReadLines(".nvmrc")
     if err != nil {
-        fmt.Println(fmt.Sprint(err) + ", continue normally.")
-    }
-    if len(lines) > 0 {
-      version = string(lines[0])
+      fmt.Println("No .nvmrc found, continuing normally.")
+    } else {
+      if len(lines) > 0 {
+        version = string(lines[0])
+        fmt.Println("Found .nvmrc with version <"+ version +">")
+      }
     }
   }
 
