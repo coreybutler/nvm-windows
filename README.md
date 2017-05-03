@@ -63,7 +63,7 @@ Make sure you use the same installation and symlink folder. If you originally in
 NVM for Windows is a command line tool. Simply type `nvm` in the console for help. The basic commands are:
 
 - `nvm arch [32|64]`: Show if node is running in 32 or 64 bit mode. Specify 32 or 64 to override the default architecture.
-- `nvm install <version> [arch]`: The version can be a node.js version or "latest" for the latest stable version. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set `[arch]` to "all" to install 32 AND 64 bit versions.
+- `nvm install [version] [arch]`: The version can be a node.js version or "latest" for the latest stable version. Optionally specify the version otherwise it will check wheter there is a .nvmrc file. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set `[arch]` to "all" to install 32 AND 64 bit versions.
 - `nvm list [available]`: List the node.js installations. Type `available` at the end to show a list of versions available for download.
 - `nvm on`: Enable node.js version management.
 - `nvm off`: Disable node.js version management (does not uninstall anything).

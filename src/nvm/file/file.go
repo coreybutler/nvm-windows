@@ -1,6 +1,7 @@
 package file
 
 import(
+  "fmt"
   "archive/zip"
   "bufio"
   "log"
@@ -72,4 +73,21 @@ func ReadLines(path string) ([]string, error) {
 func Exists(filename string) bool {
   _, err := os.Stat(filename);
   return err == nil
+}
+
+func CheckNvmrc(version string) string {
+  if version != "" {
+      return version
+  }
+
+  lines, err := ReadLines(".nvmrc")
+
+  if err != nil {
+    fmt.Println("No .nvmrc found, continuing normally.")
+  } else if len(lines) > 0 {
+    version = string(lines[0])
+    fmt.Println("Found .nvmrc with version <"+ version +">")
+  }
+
+  return version
 }

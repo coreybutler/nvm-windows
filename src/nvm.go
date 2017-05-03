@@ -153,6 +153,9 @@ func CheckVersionExceedsLatest(version string) bool{
 }
 
 func install(version string, cpuarch string) {
+
+  version = file.CheckNvmrc(version)
+
   args := os.Args
   lastarg := args[len(args) - 1]
 
@@ -336,17 +339,7 @@ func cleanVersion(version string) string {
 
 func use(version string, cpuarch string) {
   
-  if version == "" {
-    lines, err := file.ReadLines(".nvmrc")
-    if err != nil {
-      fmt.Println("No .nvmrc found, continuing normally.")
-    } else {
-      if len(lines) > 0 {
-        version = string(lines[0])
-        fmt.Println("Found .nvmrc with version <"+ version +">")
-      }
-    }
-  }
+  version = file.CheckNvmrc(version)
 
   if version == "32" || version == "64" {
     cpuarch = version
@@ -557,7 +550,7 @@ func help() {
   fmt.Println("\nUsage:")
   fmt.Println(" ")
   fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
-  fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest stable version.")
+  fmt.Println("  nvm install [version] [arch] : The version can be a node.js version or \"latest\" for the latest stable version. Optionally specify the version otherwise it will check wheter there is a .nvmrc file.")
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
   fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
   fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
@@ -570,7 +563,7 @@ func help() {
   fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/npm/archive/. Leave [url] blank to default url.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 //  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
-  fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
+  fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify the version otherwise it will check wheter there is a .nvmrc file. Optionally specify 32/64bit architecture.")
   fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
   fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
   fmt.Println("                                 If <path> is not set, the current root will be displayed.")
