@@ -335,6 +335,17 @@ func cleanVersion(version string) string {
 }
 
 func use(version string, cpuarch string) {
+  
+  if version == "" {
+    lines, err := file.ReadLines(".nvmrc")
+    if err != nil {
+        fmt.Println(fmt.Sprint(err) + ", continue normally.")
+    }
+    if len(lines) > 0 {
+      version = string(lines[0])
+    }
+  }
+
   if version == "32" || version == "64" {
     cpuarch = version
     v, _ := node.GetCurrentVersion()
