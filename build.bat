@@ -4,7 +4,7 @@ SET ORIG=%CD%
 REM SET GOPATH=%CD%\src
 SET GOBIN=%CD%\bin
 SET GOARCH=386
-SET version=1.1.3
+SET version=1.2.0
 
 REM Get the version number from the setup file
 REM for /f "tokens=*" %%i in ('findstr /n . %INNOSETUP% ^| findstr ^4:#define') do set L=%%i
@@ -32,19 +32,19 @@ REM rm %GOPATH%\src.exe
 REM rm %GOPATH%\nvm.exe
 
 REM Clean the dist directory
-rm -rf "%DIST%"
+del /S /Q "%DIST%"
 mkdir "%DIST%"
 
 echo Creating distribution in %DIST%
 
 if exist src\nvm.exe (
-  rm src\nvm.exe
+  del "src\nvm.exe"
 )
 
 echo "Building nvm.exe...."
 
 go build src\nvm.go
-mv nvm.exe %GOBIN%
+move nvm.exe "%GOBIN%"
 
 echo Building "noinstall" zip...
 for /d %%a in (%GOBIN%) do (buildtools\zip -j -9 -r "%DIST%\nvm-noinstall.zip" "%CD%\LICENSE" "%%a\*" -x "%GOBIN%\nodejs.ico")
@@ -55,7 +55,7 @@ buildtools\zip -j -9 -r "%DIST%\nvm-setup.zip" "%DIST%\nvm-setup.exe"
 echo "Generating Checksums for release files..."
 for /r %i in (*.zip *.exe) do checksum -file %i -t sha256 >> %i.sha256.txt
 echo "Distribution created. Now cleaning up...."
-rm %GOBIN%/nvm.exe
+del %GOBIN%/nvm.exe
 
 echo "Done."
 @echo on
