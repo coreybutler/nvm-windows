@@ -12,6 +12,7 @@ import (
   "./nvm/arch"
   "./nvm/file"
   "./nvm/node"
+  "strconv"
   "github.com/olekukonko/tablewriter"
 )
 
@@ -144,12 +145,19 @@ func CheckVersionExceedsLatest(version string) bool{
   re := regexp.MustCompile("node-v(.+)+msi")
   reg := regexp.MustCompile("node-v|-x.+")
 	latest := reg.ReplaceAllString(re.FindString(content),"")
-
-	if version <= latest {
-		return false
-	} else {
-		return true
+	var vArr = strings.Split(version,".")
+	var lArr = strings.Split(latest, ".")
+	for index := range lArr {
+	lat,_ := strconv.Atoi(lArr[index])
+	ver,_ := strconv.Atoi(vArr[index])
+  //Should check for valid input (checking for conversion errors) but this tool is made to trust the user
+		if ver < lat {
+      return false
+		} else if ver > lat {
+      return true
+    }
 	}
+  return false
 }
 
 func install(version string, cpuarch string) {
@@ -197,7 +205,6 @@ func install(version string, cpuarch string) {
   	fmt.Println("Node.js v"+version+" is not yet released or available.")
   	return
   }
-
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
     fmt.Println("Node.js v"+version+" is only available in 32-bit.")
     return
