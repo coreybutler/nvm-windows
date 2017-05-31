@@ -9,7 +9,8 @@ import(
   "../arch"
   "../file"
   "../web"
-  "../semver"
+  // "../semver"
+  "github.com/blang/semver"
 )
 
 /**
@@ -102,8 +103,8 @@ func (s BySemanticVersion) Swap(i, j int) {
     s[i], s[j] = s[j], s[i]
 }
 func (s BySemanticVersion) Less(i, j int) bool {
-  v1, _ := semver.New(s[i])
-  v2, _ := semver.New(s[j])
+  v1, _ := semver.Make(s[i])
+  v2, _ := semver.Make(s[j])
   return v1.GTE(v2)
 }
 
@@ -124,14 +125,15 @@ func isCurrent(element map[string]interface{}) bool {
     return false
   }
 
-  version, _ := semver.New(element["version"].(string)[1:])
-  benchmark, _ := semver.New("1.0.0")
+  version, _ := semver.Make(element["version"].(string)[1:])
+  benchmark, _ := semver.Make("1.0.0")
 
   if version.LT(benchmark) {
     return false
   }
 
-  return version.Major%2 == 1
+  return true
+  // return version.Major%2 == 1
 }
 
 // Identifies a stable old version.
@@ -140,7 +142,7 @@ func isStable(element map[string]interface{}) bool {
     return false
   }
 
-  version, _ := semver.New(element["version"].(string)[1:])
+  version, _ := semver.Make(element["version"].(string)[1:])
 
   if (version.Major != 0) {
     return false
@@ -155,7 +157,7 @@ func isUnstable(element map[string]interface{}) bool {
     return false
   }
 
-  version, _ := semver.New(element["version"].(string)[1:])
+  version, _ := semver.Make(element["version"].(string)[1:])
 
   if (version.Major != 0) {
     return false
