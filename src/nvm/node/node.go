@@ -80,28 +80,56 @@ func IsVersionAvailable(v string) bool {
   return false
 }
 
+func reverseStringArray(str []string) []string {
+	for i := 0; i < len(str)/2; i++ {
+		j := len(str) - i - 1
+		str[i], str[j] = str[j], str[i]
+	}
+
+	return str
+}
+
 func GetInstalled(root string) []string {
-  list := make([]string,0)
+  list := make([]semver.Version,0)
   files, _ := ioutil.ReadDir(root)
+
   for i := len(files) - 1; i >= 0; i-- {
     if files[i].IsDir() {
       isnode, _ := regexp.MatchString("v",files[i].Name())
+
       if isnode {
-        list = append(list,files[i].Name())
+        currentVersionString := strings.Replace(files[i].Name(), "v", "", 1)
+        currentVersion, _ := semver.Make(currentVersionString)
+
+        list = append(list, currentVersion)
       }
     }
   }
-  return list
+
+  semver.Sort(list)
+
+  loggableList := make([]string,0)
+
+  for _, version := range list {
+    loggableList = append(loggableList, "v" + version.String())
+  }
+
+  loggableList = reverseStringArray(loggableList)
+
+  return loggableList
 }
 
 // Sorting
 type BySemanticVersion []string
+
 func (s BySemanticVersion) Len() int {
     return len(s)
 }
+
 func (s BySemanticVersion) Swap(i, j int) {
     s[i], s[j] = s[j], s[i]
 }
+
 func (s BySemanticVersion) Less(i, j int) bool {
   v1, _ := semver.Make(s[i])
   v2, _ := semver.Make(s[j])

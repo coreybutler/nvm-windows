@@ -17,7 +17,7 @@ import (
 )
 
 const (
-  NvmVersion = "1.1.5"
+  NvmVersion = "1.1.6"
 )
 
 type Environment struct {
@@ -446,6 +446,7 @@ func list(listtype string) {
     inuse, a := node.GetCurrentVersion()
 
     v := node.GetInstalled(env.root)
+
     for i := 0; i < len(v); i++ {
       version := v[i]
       isnode, _ := regexp.MatchString("v",version)
