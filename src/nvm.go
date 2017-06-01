@@ -13,6 +13,7 @@ import (
   "./nvm/file"
   "./nvm/node"
   "strconv"
+  "filepath"
   "github.com/olekukonko/tablewriter"
 )
 
@@ -33,10 +34,13 @@ type Environment struct {
   verifyssl       bool
 }
 
+var home = filepath.Clean(os.Getenv("NVM_HOME")+"\\settings.txt")
+var symlink = filepath.Clean(os.Getenv("NVM_SYMLINK"))
+
 var env = &Environment{
-  settings: os.Getenv("NVM_HOME")+"\\settings.txt",
+  settings: home,
   root: "",
-  symlink: os.Getenv("NVM_SYMLINK"),
+  symlink: symlink,
   arch: os.Getenv("PROCESSOR_ARCHITECTURE"),
   node_mirror: "",
   npm_mirror: "",
@@ -115,13 +119,13 @@ func main() {
   }
 }
 
-func setNodeMirror(detail string) {
-	env.node_mirror = detail
+func setNodeMirror(uri string) {
+	env.node_mirror = uri
 	saveSettings()
 }
 
-func setNpmMirror(detail string) {
-	env.npm_mirror = detail
+func setNpmMirror(uri string) {
+	env.npm_mirror = uri
 	saveSettings()
 }
 
@@ -221,8 +225,8 @@ func install(version string, cpuarch string) {
     }
 
     // Make the output directories
-    os.Mkdir(env.root+"\\v"+version,os.ModeDir)
-    os.Mkdir(env.root+"\\v"+version+"\\node_modules",os.ModeDir)
+    os.Mkdir(filepath.Join(env.root, "v"+version), os.ModeDir)
+    os.Mkdir(filepath.Join(env.root, "v"+version, "node_modules"), os.ModeDir)
 
     // Warn the user if they're attempting to install without verifying the remote SSL cert
     if !env.verifyssl {
@@ -233,7 +237,7 @@ func install(version string, cpuarch string) {
     if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root,version,"32") {
       success := web.GetNodeJS(env.root,version,"32");
       if !success {
-        os.RemoveAll(env.root+"\\v"+version+"\\node_modules")
+        os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
         fmt.Println("Could not download node.js v"+version+" 32-bit executable.")
         return
       }
@@ -241,13 +245,13 @@ func install(version string, cpuarch string) {
     if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root,version,"64") {
       success := web.GetNodeJS(env.root,version,"64");
       if !success {
-        os.RemoveAll(env.root+"\\v"+version+"\\node_modules")
+        os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
         fmt.Println("Could not download node.js v"+version+" 64-bit executable.")
         return
       }
     }
 
-    if file.Exists(env.root+"\\v"+version+"\\node_modules\\npm") {
+    if file.Exists(filepath.Join(env.root, "v"+version, "node_modules", "npm")) {
       return
     }
 
@@ -258,15 +262,15 @@ func install(version string, cpuarch string) {
       fmt.Printf("Installing npm v"+npmv+"...")
 
       // new temp directory under the nvm root
-      tempDir := env.root + "\\temp"
+      tempDir := filepath.Join(env.root, "temp")
 
       // Extract npm to the temp directory
-      file.Unzip(tempDir+"\\npm-v"+npmv+".zip",tempDir+"\\nvm-npm")
+      file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip", tempDir, "nvm-npm"))
 
       // Copy the npm and npm.cmd files to the installation directory
-      os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm",env.root+"\\v"+version+"\\npm")
-      os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv+"\\bin\\npm.cmd",env.root+"\\v"+version+"\\npm.cmd")
-      os.Rename(tempDir+"\\nvm-npm\\npm-"+npmv,env.root+"\\v"+version+"\\node_modules\\npm")
+      os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin", "npm"),filepath.Join(env.root, "v"+version, "npm"))
+      os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin", "npm.cmd"),filepath.Join(env.root, "v"+version, "npm.cmd"))
+      os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv),filepath.Join(env.root, "v"+version, "node_modules", "npm"))
 
       // Remove the temp directory
       // may consider keep the temp files here
@@ -307,13 +311,13 @@ func uninstall(version string) {
     fmt.Printf("Uninstalling node v"+version+"...")
     v, _ := node.GetCurrentVersion()
     if v == version {
-      cmd := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "rmdir", env.symlink)
+      cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "rmdir", env.symlink)
       cmd.Run()
     }
-    e := os.RemoveAll(env.root+"\\v"+version)
+    e := os.RemoveAll(filepath.Join(env.root, "v"+version))
     if e != nil {
       fmt.Println("Error removing node v"+version)
-      fmt.Println("Manually remove "+env.root+"\\v"+version+".")
+      fmt.Println("Manually remove " + filepath.Join(env.root, "v"+version) + ".")
     } else {
       fmt.Printf(" done")
     }
@@ -371,7 +375,7 @@ func use(version string, cpuarch string) {
   // Create or update the symlink
   sym, _ := os.Stat(env.symlink)
   if sym != nil {
-    cmd := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "rmdir", env.symlink)
+    cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "rmdir", env.symlink)
     var output bytes.Buffer
     var _stderr bytes.Buffer
     cmd.Stdout = &output
@@ -383,7 +387,7 @@ func use(version string, cpuarch string) {
     }
   }
 
-  c := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "mklink", "/D", env.symlink, env.root+"\\v"+version)
+  c := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "mklink", "/D", env.symlink, filepath.Join(env.root, "v"+version))
   var out bytes.Buffer
   var stderr bytes.Buffer
   c.Stdout = &out
@@ -396,9 +400,9 @@ func use(version string, cpuarch string) {
 
   // Use the assigned CPU architecture
   cpuarch = arch.Validate(cpuarch)
-  nodepath   := env.root+"\\v"+version+"\\node.exe"
-  node32path := env.root+"\\v"+version+"\\node32.exe"
-  node64path := env.root+"\\v"+version+"\\node64.exe"
+  nodepath   := filepath.Join(env.root, "v"+version, "node.exe")
+  node32path := filepath.Join(env.root, "v"+version, "node32.exe")
+  node64path := filepath.Join(env.root, "v"+version, "node64.exe")
   node32exists := file.Exists(node32path)
   node64exists := file.Exists(node64path)
   nodeexists   := file.Exists(nodepath)
@@ -542,7 +546,7 @@ func enable() {
 }
 
 func disable() {
-  cmd := exec.Command(env.root+"\\elevate.cmd", "cmd", "/C", "rmdir", env.symlink)
+  cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "rmdir", env.symlink)
   cmd.Run()
   fmt.Println("nvm disabled")
 }
@@ -588,7 +592,7 @@ func updateRootDir(path string) {
     return
   }
 
-  env.root = path
+  env.root = filepath.Clean(path)
   saveSettings()
   fmt.Println("\nRoot has been set to "+path)
 }
@@ -610,9 +614,9 @@ func Setup() {
   for _, line := range lines {
     line = strings.Trim(line, " \r\n")
     if strings.HasPrefix(line, "root:") {
-      env.root = strings.TrimSpace(regexp.MustCompile("^root:").ReplaceAllString(line, ""))
+      env.root = filepath.Clean(strings.TrimSpace(regexp.MustCompile("^root:").ReplaceAllString(line, "")))
     } else if strings.HasPrefix(line, "originalpath:") {
-      env.originalpath = strings.TrimSpace(regexp.MustCompile("^originalpath:").ReplaceAllString(line, ""))
+      env.originalpath = filepath.Clean(strings.TrimSpace(regexp.MustCompile("^originalpath:").ReplaceAllString(line, "")))
     } else if strings.HasPrefix(line, "originalversion:") {
       env.originalversion = strings.TrimSpace(regexp.MustCompile("^originalversion:").ReplaceAllString(line, ""))
     } else if strings.HasPrefix(line, "arch:") {
