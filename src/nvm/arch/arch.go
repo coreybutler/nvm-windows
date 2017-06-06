@@ -38,6 +38,9 @@ func SearchBytesInFile( path string, match string, limit int) bool {
       }
     }
   }
+  if err == nil {
+    file.Close()
+  }
   return false;
 }
 
