@@ -75,6 +75,8 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 - `nvm node_mirror <node_mirror_url>`: Set the node mirror.People in China can use *https://npm.taobao.org/mirrors/node/*
 - `nvm npm_mirror <npm_mirror_url>`: Set the npm mirror.People in China can use *https://npm.taobao.org/mirrors/npm/*
 
+- set environment NODE_MIRROR and NPM_MIRROR to change the mirror
+
 ### Gotcha!
 
 Please note that any global npm modules you may have installed are **not** shared between the various versions of node.js you have installed.
