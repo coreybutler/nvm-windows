@@ -13,7 +13,7 @@ import (
   "./nvm/file"
   "./nvm/node"
   "strconv"
-  "filepath"
+  "path/filepath"
   "github.com/olekukonko/tablewriter"
 )
 
@@ -265,7 +265,7 @@ func install(version string, cpuarch string) {
       tempDir := filepath.Join(env.root, "temp")
 
       // Extract npm to the temp directory
-      file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip", tempDir, "nvm-npm"))
+      file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
 
       // Copy the npm and npm.cmd files to the installation directory
       os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin", "npm"),filepath.Join(env.root, "v"+version, "npm"))
@@ -373,21 +373,32 @@ func use(version string, cpuarch string) {
   }
 
   // Create or update the symlink
-  sym, _ := os.Stat(env.symlink)
+  var elevateCommandPath = filepath.Join(env.root, "elevate.cmd")
+  var symlinkPath = env.symlink
+  var nodeVersionPath = filepath.Join(env.root, "v"+version)
+
+  sym, _ := os.Stat(symlinkPath)
   if sym != nil {
-    cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "rmdir", env.symlink)
+    fmt.Println("Attempting to remove existing node link via command line.")
+    cmd := exec.Command(elevateCommandPath, "cmd", "/C", "rmdir", symlinkPath)
     var output bytes.Buffer
     var _stderr bytes.Buffer
     cmd.Stdout = &output
     cmd.Stderr = &_stderr
     perr := cmd.Run()
     if perr != nil {
-        fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
+      fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
+      fmt.Println("Attempting to remove existing node link via system.")
+      osRemErr := os.Remove(symlinkPath)
+      if osRemErr != nil {
+        fmt.Println(fmt.Sprint(osRemErr)) // FIXME: Could os.Stderr be used to give more details as to why it failed?
         return
+      }
     }
   }
 
-  c := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "mklink", "/D", env.symlink, filepath.Join(env.root, "v"+version))
+  fmt.Println("Attempting to add node link for v" + version + " via command line.")
+  c := exec.Command(elevateCommandPath, "cmd", "/C", "mklink", "/D", symlinkPath, nodeVersionPath)
   var out bytes.Buffer
   var stderr bytes.Buffer
   c.Stdout = &out
@@ -395,7 +406,12 @@ func use(version string, cpuarch string) {
   err := c.Run()
   if err != nil {
       fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-      return
+      fmt.Println("Attempting to add node link for v" + version + " via system")
+      osMkErr := os.Symlink(nodeVersionPath, symlinkPath)
+      if osMkErr != nil {
+        fmt.Println(fmt.Sprint(osMkErr)) // FIXME // FIXME: Could os.Stderr be used to give more details as to why it failed?
+        return
+      }
   }
 
   // Use the assigned CPU architecture
