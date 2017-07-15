@@ -379,8 +379,7 @@ func use(version string, cpuarch string) {
 
   sym, _ := os.Stat(symlinkPath)
   if sym != nil {
-    fmt.Println("Attempting to remove existing node link via command line.")
-    cmd := exec.Command(elevateCommandPath, "cmd", "/C", "rmdir", symlinkPath)
+    cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "rmdir", filepath.Clean(env.symlink))
     var output bytes.Buffer
     var _stderr bytes.Buffer
     cmd.Stdout = &output
@@ -397,8 +396,7 @@ func use(version string, cpuarch string) {
     }
   }
 
-  fmt.Println("Attempting to add node link for v" + version + " via command line.")
-  c := exec.Command(elevateCommandPath, "cmd", "/C", "mklink", "/D", symlinkPath, nodeVersionPath)
+  c := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
   var out bytes.Buffer
   var stderr bytes.Buffer
   c.Stdout = &out
