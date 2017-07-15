@@ -13,7 +13,7 @@ import (
   "./nvm/file"
   "./nvm/node"
   "strconv"
-  "filepath"
+  "path/filepath"
   "github.com/olekukonko/tablewriter"
 )
 
@@ -265,7 +265,7 @@ func install(version string, cpuarch string) {
       tempDir := filepath.Join(env.root, "temp")
 
       // Extract npm to the temp directory
-      file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip", tempDir, "nvm-npm"))
+      file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
 
       // Copy the npm and npm.cmd files to the installation directory
       os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin", "npm"),filepath.Join(env.root, "v"+version, "npm"))
