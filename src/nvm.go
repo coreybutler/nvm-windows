@@ -195,7 +195,7 @@ func install(version string, cpuarch string) {
   }
 
   // If user specifies "latest" version, find out what version is
-  if version == "latest" {
+  if (version == "latest" || version == "stable") {
     url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
     content := web.GetRemoteTextFile(url)
     re := regexp.MustCompile("node-v(.+)+msi")
