@@ -268,9 +268,19 @@ func install(version string, cpuarch string) {
       file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
 
       // Copy the npm and npm.cmd files to the installation directory
-      os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin", "npm"),filepath.Join(env.root, "v"+version, "npm"))
-      os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin", "npm.cmd"),filepath.Join(env.root, "v"+version, "npm.cmd"))
-      os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv),filepath.Join(env.root, "v"+version, "node_modules", "npm"))
+      tempNpmBin := filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin")
+
+      // Standard npm support
+      os.Rename(filepath.Join(tempNpmBin, "npm"), filepath.Join(env.root, "v"+version, "npm"))
+      os.Rename(filepath.Join(tempNpmBin, "npm.cmd"),filepath.Join(env.root, "v"+version, "npm.cmd"))
+
+      // npx support
+      if _, err := os.Stat(filepath.Join(tempNpmBin, "npx")); err == nil {
+        os.Rename(filepath.Join(tempNpmBin, "npx"), filepath.Join(env.root, "v"+version, "npx"))
+        os.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(env.root, "v"+version, "npx.cmd"))
+      }
+
+      os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
 
       // Remove the temp directory
       // may consider keep the temp files here
