@@ -2,7 +2,7 @@
 
 Like this project? Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). Better yet, [become a Patron](https://patreon.com/coreybutler)!
 
-## NOTICE: SEEKING CORE CONTRIBUTORS & MAINTAINERS
+## NOTICE: STILL SEEKING CORE CONTRIBUTORS & MAINTAINERS
 
 _Are you multilingual?_
 
@@ -83,6 +83,12 @@ Additionally, some npm modules may not be supported in the version of node you'r
 ### Antivirus
 
 Users have reported some problems using antivirus, specifically McAffee. It appears the antivirus software is manipulating access to the VBScript engine. See [issue #133](https://github.com/coreybutler/nvm-windows/issues/133) for details and resolution.
+
+### Using Yarn
+
+**tldr;** `npm i -g yarn`
+
+See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how-do-i-use-yarn-with-nvm-windows) for details.
 
 ---
 
