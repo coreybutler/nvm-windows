@@ -14,6 +14,7 @@ import(
   "strconv"
   "../arch"
   "../file"
+  "encoding/json"
 )
 
 var client = &http.Client{}
@@ -185,6 +186,24 @@ func GetRemoteTextFile(url string) string {
   }
   os.Exit(1)
   return ""
+}
+
+type Versions []struct {
+  Version string
+}
+
+func GetNodeVersions() Versions {
+  content := GetRemoteTextFile(GetFullNodeUrl("index.json"))
+  dec := json.NewDecoder(strings.NewReader(content))
+
+  var versions Versions
+  err := dec.Decode(&versions)
+  if err != nil {
+    fmt.Print(err)
+    os.Exit(1)
+  }
+
+  return versions
 }
 
 func IsNode64bitAvailable(v string) bool {
