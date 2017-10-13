@@ -367,7 +367,40 @@ func cleanVersion(version string) string {
     }
   }
 
-  return matched
+  return strings.TrimLeft(matched, "v")
+}
+
+func cleanVersionInstalled(version string) string {
+  re := regexp.MustCompile("\\d+\\.\\d+\\.\\d+")
+  matched := re.FindString(version)
+
+  if len(matched) == 0 {
+    versions := node.GetInstalled(env.root)
+
+    sem := regexp.MustCompile("(\\d+)")
+    smVersion :=  sem.FindAllString(version, 3)
+    //If given major version only
+    if len(smVersion) == 1 {
+      for i := 0; i < len(versions); i++ {
+        result := sem.FindAllString(versions[i], 3)
+        if smVersion[0] == result[0] {
+          matched = versions[i]
+          break
+        }
+      }
+      //If given major-minor version
+    } else {
+      for i := 0; i < len(versions); i++ {
+        result := sem.FindAllString(versions[i], 3)
+        if smVersion[0] == result[0] && smVersion[1] == result[1] {
+          matched = versions[i]
+          break
+        }
+      }
+    }
+  }
+
+  return strings.TrimLeft(matched, "v")
 }
 
 func use(version string, cpuarch string) {
@@ -379,7 +412,7 @@ func use(version string, cpuarch string) {
 
   cpuarch = arch.Validate(cpuarch)
 
-  version = cleanVersion(version)
+  version = cleanVersionInstalled(version)
 
   // Make sure the version is installed. If not, warn.
   if !node.IsVersionInstalled(env.root,version,cpuarch) {
