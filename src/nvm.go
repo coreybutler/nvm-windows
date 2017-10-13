@@ -338,18 +338,33 @@ func uninstall(version string) {
 }
 
 func cleanVersion(version string) string {
-  re := regexp.MustCompile("\\d+.\\d+.\\d+")
+  re := regexp.MustCompile("\\d+\\.\\d+\\.\\d+")
   matched := re.FindString(version)
 
   if len(matched) == 0 {
-    re = regexp.MustCompile("\\d+.\\d+")
-    matched = re.FindString(version)
-    if len(matched) == 0 {
-      matched = version + ".0.0"
+    versions := web.GetNodeVersions()
+
+    sem := regexp.MustCompile("(\\d+)")
+    smVersion :=  sem.FindAllString(version, 3)
+    //If given major version only
+    if len(smVersion) == 1 {
+      for i := 0; i < len(versions); i++ {
+        result := sem.FindAllString(versions[i].Version, 3)
+        if smVersion[0] == result[0] {
+          matched = versions[i].Version
+          break
+        }
+      }
+    //If given major-minor version
     } else {
-      matched = matched + ".0"
+      for i := 0; i < len(versions); i++ {
+        result := sem.FindAllString(versions[i].Version, 3)
+        if smVersion[0] == result[0] && smVersion[1] == result[1] {
+          matched = versions[i].Version
+          break
+        }
+      }
     }
-    fmt.Println(matched)
   }
 
   return matched
