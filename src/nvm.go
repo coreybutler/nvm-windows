@@ -348,6 +348,7 @@ func cleanVersion(version string) string {
     smVersion :=  sem.FindAllString(version, 3)
     //If given major version only
     if len(smVersion) == 1 {
+      matched = version + ".0.0"
       for i := 0; i < len(versions); i++ {
         result := sem.FindAllString(versions[i].Version, 3)
         if smVersion[0] == result[0] {
@@ -357,6 +358,7 @@ func cleanVersion(version string) string {
       }
     //If given major-minor version
     } else {
+      matched = version + ".0"
       for i := 0; i < len(versions); i++ {
         result := sem.FindAllString(versions[i].Version, 3)
         if smVersion[0] == result[0] && smVersion[1] == result[1] {
@@ -381,6 +383,7 @@ func cleanVersionInstalled(version string) string {
     smVersion :=  sem.FindAllString(version, 3)
     //If given major version only
     if len(smVersion) == 1 {
+      matched = version + ".0.0"
       for i := 0; i < len(versions); i++ {
         result := sem.FindAllString(versions[i], 3)
         if smVersion[0] == result[0] {
@@ -390,6 +393,7 @@ func cleanVersionInstalled(version string) string {
       }
       //If given major-minor version
     } else {
+      matched = version + ".0"
       for i := 0; i < len(versions); i++ {
         result := sem.FindAllString(versions[i], 3)
         if smVersion[0] == result[0] && smVersion[1] == result[1] {
