@@ -23,6 +23,8 @@ const (
 
 type Environment struct {
   settings        string
+  pversion        string
+  pcpuarch           string
   root            string
   symlink         string
   arch            string
@@ -47,6 +49,8 @@ var env = &Environment{
   proxy: "none",
   originalpath: "",
   originalversion: "",
+  pversion:"",
+  pcpuarch:"",
   verifyssl: true,
 }
 
@@ -76,6 +80,7 @@ func main() {
     case "install": install(detail,procarch)
     case "uninstall": uninstall(detail)
     case "use": use(detail,procarch)
+    case "toggle": toggle()
     case "list": list(detail)
     case "ls": list(detail)
     case "on": enable()
@@ -340,7 +345,7 @@ func uninstall(version string) {
 func cleanVersion(version string) string {
   re := regexp.MustCompile("\\d+.\\d+.\\d+")
   matched := re.FindString(version)
-
+  
   if len(matched) == 0 {
     re = regexp.MustCompile("\\d+.\\d+")
     matched = re.FindString(version)
@@ -360,8 +365,10 @@ func use(version string, cpuarch string) {
     cpuarch = version
     v, _ := node.GetCurrentVersion()
     version = v
-  }
 
+
+  }
+  pversion, pcpuarch := node.GetCurrentVersion()
   cpuarch = arch.Validate(cpuarch)
 
   version = cleanVersion(version)
@@ -428,16 +435,37 @@ func use(version string, cpuarch string) {
     }
     os.Rename(node64path, nodepath) // node64.exe -> node.exe
   }
+  env.pversion = pversion
+  env.pcpuarch = pcpuarch
+  saveSettings()
   fmt.Println("Now using node v"+version+" ("+cpuarch+"-bit)")
 }
 
+
+
+func toggle(){
+  var pversion = env.pversion
+  var pcpuarch = env.pcpuarch
+  if(len(pversion) <= 0  && len(pcpuarch)<=0){
+    fmt.Println("You haven't used any version previously!!")
+    version, cpuarch := node.GetCurrentVersion()
+    fmt.Println("Using node v"+version+" ("+cpuarch+"-bit)")
+  }else{
+     fmt.Println("Last used version: "+pversion+" ("+pcpuarch+"-bit)")
+     use(pversion,pcpuarch);
+  }
+ 
+}
 func useArchitecture(a string) {
   if strings.ContainsAny("32",os.Getenv("PROCESSOR_ARCHITECTURE")) {
     fmt.Println("This computer only supports 32-bit processing.")
     return
   }
   if a == "32" || a == "64" {
+    pversion, pcpuarch := node.GetCurrentVersion()
     env.arch = a
+    env.pversion = pversion
+    env.pcpuarch = pcpuarch
     saveSettings()
     fmt.Println("Set to "+a+"-bit mode")
   } else {
@@ -581,6 +609,7 @@ func help() {
 //  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
   fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
   fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
+  fmt.Println("  nvm toggle                   : Switch to previously used version.")
   fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
   fmt.Println("                                 If <path> is not set, the current root will be displayed.")
   fmt.Println("  nvm version                  : Displays the current running version of nvm for Windows. Aliased as v.")
@@ -608,8 +637,8 @@ func updateRootDir(path string) {
 }
 
 func saveSettings() {
-	content := "root: " + strings.Trim(env.root, " \n\r") + "\r\narch: " + strings.Trim(env.arch, " \n\r") + "\r\nproxy: " + strings.Trim(env.proxy, " \n\r") + "\r\noriginalpath: " + strings.Trim(env.originalpath, " \n\r") + "\r\noriginalversion: " + strings.Trim(env.originalversion, " \n\r")
-	content = content + "\r\nnode_mirror: " + strings.Trim(env.node_mirror, " \n\r") + "\r\nnpm_mirror: " + strings.Trim(env.npm_mirror, " \n\r")
+	content := "root: " + strings.Trim(env.root, " \n\r") + "\r\narch: " + strings.Trim(env.arch, " \n\r") + "\r\nproxy: " + strings.Trim(env.proxy, " \n\r") + "\r\noriginalpath: " + strings.Trim(env.originalpath, " \n\r") 
+	content = content + "\r\nnode_mirror: " + strings.Trim(env.node_mirror, " \n\r") + "\r\nnpm_mirror: " + strings.Trim(env.npm_mirror, " \n\r") + "\r\npversion: " + strings.Trim(env.pversion, " \n\r")+ "\r\npcpuarch: " + strings.Trim(env.pcpuarch, " \n\r")
   ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 
@@ -643,7 +672,12 @@ func Setup() {
         }
         web.SetProxy(env.proxy, env.verifyssl)
       }
+    } else if strings.HasPrefix(line,"pversion:"){
+      env.pversion = strings.TrimSpace(regexp.MustCompile("^pversion:").ReplaceAllString(line, ""))
+    } else if strings.HasPrefix(line,"pcpuarch:"){
+      env.pcpuarch = strings.TrimSpace(regexp.MustCompile("^pcpuarch:").ReplaceAllString(line, ""))
     }
+
   }
 
   web.SetMirrors(env.node_mirror, env.npm_mirror)
