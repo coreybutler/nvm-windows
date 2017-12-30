@@ -435,9 +435,12 @@ func use(version string, cpuarch string) {
     }
     os.Rename(node64path, nodepath) // node64.exe -> node.exe
   }
-  env.pversion = pversion
-  env.pcpuarch = pcpuarch
-  saveSettings()
+  if(env.pversion != pversion || env.pcpuarch != pcpuarch ){
+     env.pversion = pversion
+     env.pcpuarch = pcpuarch
+     saveSettings()
+  }
+ 
   fmt.Println("Now using node v"+version+" ("+cpuarch+"-bit)")
 }
 
