@@ -2,3 +2,5 @@ root: C:\Users\Corey\AppData\Roaming\nvm
 path: C:\Program Files\nodejs
 arch: 64
 proxy: none
+pversion: 
+pcpuarch: 
