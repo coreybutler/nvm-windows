@@ -280,8 +280,7 @@ func install(version string, cpuarch string) {
         os.Rename(filepath.Join(tempNpmBin, "npx"), filepath.Join(env.root, "v"+version, "npx"))
         os.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(env.root, "v"+version, "npx.cmd"))
       }
-
-      time.Sleep(10000*time.Millisecond)
+      
       err := os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
       if err != nil {
         // sometimes Windows can take some time to enable access to large amounts of files after unzip, use exponential backoff to wait until it is ready
