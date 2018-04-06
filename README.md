@@ -44,12 +44,12 @@ bleeding edge version without uninstalling the stable version of node, this util
 It comes with an installer (and uninstaller), because getting it should be easy. Please note, you need to uninstall any existing versions of node.js before installing NVM for Windows. Also delete any existing nodejs installation directories (e.g., "C:\Program Files\nodejs") that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
 You should also delete the existing npm install location (e.g. "C:\Users\<user>\AppData\Roaming\npm") so that the nvm install location will be correctly used instead. After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
-
-`nvm use 4.4.0`
-`npm install gulp-cli -g`
-`nvm use 0.10.33`
-`npm install gulp-cli -g`
-
+```
+nvm use 4.4.0
+npm install gulp-cli -g
+nvm use 0.10.33
+npm install gulp-cli -g
+```
 [Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
 
 ![NVM for Windows Installer](http://i.imgur.com/x8EzjSC.png)
