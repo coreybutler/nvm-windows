@@ -84,9 +84,7 @@ begin
   // Move the existing node.js installation directory to the nvm root & update the path
   RenameFile(np,ExpandConstant('{app}')+'\'+nv);
 
-  RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'Path', path);
+  RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
 
   StringChangeEx(path,np+'\','',True);
   StringChangeEx(path,np,'',True);
@@ -200,30 +198,18 @@ begin
   MsgBox('Removing NVM for Windows will remove the nvm command and all versions of node.js, including global npm modules.', mbInformation, MB_OK);
 
   // Remove the symlink
-  RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'NVM_SYMLINK', nvm_symlink);
+  RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'NVM_SYMLINK', nvm_symlink);
   RemoveDir(nvm_symlink);
 
   // Clean the registry
-  RegDeleteValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'NVM_HOME')
-  RegDeleteValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'NVM_SYMLINK')
-  RegDeleteValue(HKEY_CURRENT_USER,
-    'Environment',
-    'NVM_HOME')
-  RegDeleteValue(HKEY_CURRENT_USER,
-    'Environment',
-    'NVM_SYMLINK')
+  RegDeleteValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'NVM_HOME')
+  RegDeleteValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'NVM_SYMLINK')
+  RegDeleteValue(HKEY_CURRENT_USER, 'Environment', 'NVM_HOME')
+  RegDeleteValue(HKEY_CURRENT_USER, 'Environment', 'NVM_SYMLINK')
   RegDeleteValue(HKEY_USERS, '.DEFAULT\Environment', 'NVM_HOME')
   RegDeleteValue(HKEY_USERS, '.DEFAULT\Environment', 'NVM_SYMLINK')
 
-  RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'Path', path);
+  RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
 
   StringChangeEx(path,'%NVM_HOME%','',True);
   StringChangeEx(path,'%NVM_SYMLINK%','',True);
@@ -258,9 +244,7 @@ begin
     RegWriteExpandStringValue(HKEY_USERS, '.DEFAULT\Environment', 'NVM_SYMLINK', SymlinkPage.Values[0]);
 
     // Update system and user PATH if needed
-    RegQueryStringValue(HKEY_LOCAL_MACHINE,
-      'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-      'Path', path);
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
     if Pos('%NVM_HOME%',path) = 0 then begin
       path := path+';%NVM_HOME%';
       StringChangeEx(path,';;',';',True);
