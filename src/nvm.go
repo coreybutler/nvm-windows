@@ -1,21 +1,22 @@
 package main
 
 import (
+  "bytes"
   "fmt"
+  "io/ioutil"
   "log"
   "os"
   "os/exec"
-  "strings"
-  "io/ioutil"
+  "path/filepath"
   "regexp"
-  "bytes"
+  "strconv"
+  "strings"
+  "syscall"
   "time"
   "./nvm/web"
   "./nvm/arch"
   "./nvm/file"
   "./nvm/node"
-  "strconv"
-  "path/filepath"
   "github.com/olekukonko/tablewriter"
 )
 
@@ -57,7 +58,7 @@ func main() {
   detail := ""
   procarch := arch.Validate(env.arch)
 
-  Setup()
+  setup()
 
   // Capture any additional arguments
   if len(args) > 2 {
@@ -114,13 +115,16 @@ func main() {
         env.proxy = detail
         saveSettings()
       }
-    case "update": update()
+    //case "update": update()
     case "node_mirror": setNodeMirror(detail)
     case "npm_mirror": setNpmMirror(detail)
     default: help()
   }
 }
 
+// ===============================================================
+// BEGIN | CLI functions
+// ===============================================================
 func setNodeMirror(uri string) {
 	env.node_mirror = uri
 	saveSettings()
@@ -131,40 +135,20 @@ func setNpmMirror(uri string) {
 	saveSettings()
 }
 
+/*
 func update() {
-//  cmd := exec.Command("cmd", "/d", "echo", "testing")
-//  var output bytes.Buffer
-//  var _stderr bytes.Buffer
-//  cmd.Stdout = &output
-//  cmd.Stderr = &_stderr
-//  perr := cmd.Run()
-//  if perr != nil {
-//      fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
-//      return
-//  }
+  cmd := exec.Command("cmd", "/d", "echo", "testing")
+  var output bytes.Buffer
+  var _stderr bytes.Buffer
+  cmd.Stdout = &output
+  cmd.Stderr = &_stderr
+  perr := cmd.Run()
+  if perr != nil {
+      fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
+      return
+  }
 }
-
-func CheckVersionExceedsLatest(version string) bool{
-  //content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
-  url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
-  content := web.GetRemoteTextFile(url)
-  re := regexp.MustCompile("node-v(.+)+msi")
-  reg := regexp.MustCompile("node-v|-x.+")
-	latest := reg.ReplaceAllString(re.FindString(content),"")
-	var vArr = strings.Split(version,".")
-	var lArr = strings.Split(latest, ".")
-	for index := range lArr {
-	lat,_ := strconv.Atoi(lArr[index])
-	ver,_ := strconv.Atoi(vArr[index])
-  //Should check for valid input (checking for conversion errors) but this tool is made to trust the user
-		if ver < lat {
-      return false
-		} else if ver > lat {
-      return true
-    }
-	}
-  return false
-}
+*/
 
 func install(version string, cpuarch string) {
   args := os.Args
@@ -213,7 +197,7 @@ func install(version string, cpuarch string) {
     version = cleanVersion(version)
   }
 
-  if CheckVersionExceedsLatest(version) {
+  if checkVersionExceedsLatest(version) {
   	fmt.Println("Node.js v"+version+" is not yet released or available.")
   	return
   }
@@ -381,24 +365,6 @@ func findLatestSubVersion(version string) string {
 	return latest
 }
 
-func cleanVersion(version string) string {
-  re := regexp.MustCompile("\\d+.\\d+.\\d+")
-  matched := re.FindString(version)
-
-  if len(matched) == 0 {
-    re = regexp.MustCompile("\\d+.\\d+")
-    matched = re.FindString(version)
-    if len(matched) == 0 {
-      matched = version + ".0.0"
-    } else {
-      matched = matched + ".0"
-    }
-    fmt.Println(matched)
-  }
-
-  return matched
-}
-
 func use(version string, cpuarch string) {
   if version == "32" || version == "64" {
     cpuarch = version
@@ -426,29 +392,21 @@ func use(version string, cpuarch string) {
     return
   }
 
-  // Create or update the symlink
+  // Remove symlink if it already exists
   sym, _ := os.Stat(env.symlink)
   if sym != nil {
-    cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "rmdir", filepath.Clean(env.symlink))
-    var output bytes.Buffer
-    var _stderr bytes.Buffer
-    cmd.Stdout = &output
-    cmd.Stderr = &_stderr
-    perr := cmd.Run()
-    if perr != nil {
-        fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
+    if !runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`,
+      filepath.Join(env.root, "elevate.cmd"),
+      filepath.Clean(env.symlink))) {
         return
     }
   }
 
-  c := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
-  var out bytes.Buffer
-  var stderr bytes.Buffer
-  c.Stdout = &out
-  c.Stderr = &stderr
-  err := c.Run()
-  if err != nil {
-      fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+  // Create new symlink
+  if !runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`,
+    filepath.Join(env.root, "elevate.cmd"),
+    filepath.Clean(env.symlink),
+    filepath.Join(env.root, "v"+version))) {
       return
   }
 
@@ -473,20 +431,6 @@ func use(version string, cpuarch string) {
     os.Rename(node64path, nodepath) // node64.exe -> node.exe
   }
   fmt.Println("Now using node v"+version+" ("+cpuarch+"-bit)")
-}
-
-func useArchitecture(a string) {
-  if strings.ContainsAny("32",os.Getenv("PROCESSOR_ARCHITECTURE")) {
-    fmt.Println("This computer only supports 32-bit processing.")
-    return
-  }
-  if a == "32" || a == "64" {
-    env.arch = a
-    saveSettings()
-    fmt.Println("Set to "+a+"-bit mode")
-  } else {
-    fmt.Println("Cannot set architecture to "+a+". Must be 32 or 64 are acceptable values.")
-  }
 }
 
 func list(listtype string) {
@@ -614,7 +558,7 @@ func help() {
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
   fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
   fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
-    fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
+  fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
   fmt.Println("  nvm on                       : Enable node.js version management.")
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
@@ -630,12 +574,56 @@ func help() {
   fmt.Println("  nvm version                  : Displays the current running version of nvm for Windows. Aliased as v.")
   fmt.Println(" ")
 }
+// ===============================================================
+// END | CLI functions
+// ===============================================================
+
+// ===============================================================
+// BEGIN | Utility functions
+// ===============================================================
+func checkVersionExceedsLatest(version string) bool{
+  //content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
+  url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
+  content := web.GetRemoteTextFile(url)
+  re := regexp.MustCompile("node-v(.+)+msi")
+  reg := regexp.MustCompile("node-v|-x.+")
+  latest := reg.ReplaceAllString(re.FindString(content),"")
+  var vArr = strings.Split(version,".")
+  var lArr = strings.Split(latest, ".")
+  for index := range lArr {
+    lat,_ := strconv.Atoi(lArr[index])
+    ver,_ := strconv.Atoi(vArr[index])
+    //Should check for valid input (checking for conversion errors) but this tool is made to trust the user
+    if ver < lat {
+      return false
+    } else if ver > lat {
+      return true
+    }
+  }
+  return false
+}
+
+func cleanVersion(version string) string {
+  re := regexp.MustCompile("\\d+.\\d+.\\d+")
+  matched := re.FindString(version)
+
+  if len(matched) == 0 {
+    re = regexp.MustCompile("\\d+.\\d+")
+    matched = re.FindString(version)
+    if len(matched) == 0 {
+      matched = version + ".0.0"
+    } else {
+      matched = matched + ".0"
+    }
+    fmt.Println(matched)
+  }
+
+  return matched
+}
 
 // Given a node.js version, returns the associated npm version
 func getNpmVersion(nodeversion string) string {
-
   _, _, _, _, _, npm := node.GetAvailable()
-
   return npm[nodeversion]
 }
 
@@ -651,13 +639,54 @@ func updateRootDir(path string) {
   fmt.Println("\nRoot has been set to "+path)
 }
 
+func runElevated(command string) bool {
+  c := exec.Command("cmd") // dummy executable that actually needs to exist but we'll overwrite using .SysProcAttr
+
+  // Based on the official docs, syscall.SysProcAttr.CmdLine doesn't exist.
+  // But it does and is vital:
+  // https://github.com/golang/go/issues/15566#issuecomment-333274825
+  // https://medium.com/@felixge/killing-a-child-process-and-all-of-its-children-in-go-54079af94773
+  c.SysProcAttr = &syscall.SysProcAttr{CmdLine: command}
+
+  var stderr bytes.Buffer
+  c.Stderr = &stderr
+
+  err := c.Run()
+  if err != nil {
+    fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+    return false
+  }
+
+  return true
+}
+
 func saveSettings() {
 	content := "root: " + strings.Trim(env.root, " \n\r") + "\r\narch: " + strings.Trim(env.arch, " \n\r") + "\r\nproxy: " + strings.Trim(env.proxy, " \n\r") + "\r\noriginalpath: " + strings.Trim(env.originalpath, " \n\r") + "\r\noriginalversion: " + strings.Trim(env.originalversion, " \n\r")
 	content = content + "\r\nnode_mirror: " + strings.Trim(env.node_mirror, " \n\r") + "\r\nnpm_mirror: " + strings.Trim(env.npm_mirror, " \n\r")
   ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 
-func Setup() {
+// NOT USED?
+/*
+func useArchitecture(a string) {
+  if strings.ContainsAny("32",os.Getenv("PROCESSOR_ARCHITECTURE")) {
+    fmt.Println("This computer only supports 32-bit processing.")
+    return
+  }
+  if a == "32" || a == "64" {
+    env.arch = a
+    saveSettings()
+    fmt.Println("Set to "+a+"-bit mode")
+  } else {
+    fmt.Println("Cannot set architecture to "+a+". Must be 32 or 64 are acceptable values.")
+  }
+}
+*/
+// ===============================================================
+// END | Utility functions
+// ===============================================================
+
+func setup() {
   lines, err := file.ReadLines(env.settings)
   if err != nil {
     fmt.Println("\nERROR",err)
