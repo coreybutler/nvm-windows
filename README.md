@@ -90,8 +90,6 @@ Users have reported some problems using antivirus, specifically McAffee. It appe
 
 See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how-do-i-use-yarn-with-nvm-windows) for details.
 
----
-
 ### Build from source
 
 - Install go from http://golang.org
@@ -102,6 +100,8 @@ See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how
 - Execute `go get github.com/olekukonko/tablewriter`
 - Check the `dist`directory for generated setup program. 
 
+
+---
 
 
 
