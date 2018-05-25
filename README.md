@@ -98,6 +98,7 @@ See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how
 - Fire up a Windows command prompt and change directory to project dir
 - Execute `go get github.com/blang/semver`
 - Execute `go get github.com/olekukonko/tablewriter`
+- Execute `build.bat`
 - Check the `dist`directory for generated setup program. 
 
 
