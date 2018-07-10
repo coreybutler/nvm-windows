@@ -34,10 +34,12 @@ func SearchBytesInFile( path string, match string, limit int) bool {
     if bit[0] == toMatch[j] {
       j++;
       if (j >= len(toMatch)) {
+        file.Close();
         return true;
       }
     }
   }
+  file.Close();
   return false;
 }
 
