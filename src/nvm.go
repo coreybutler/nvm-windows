@@ -16,6 +16,7 @@ import (
   "strconv"
   "path/filepath"
   "github.com/olekukonko/tablewriter"
+  "github.com/otiai10/copy"
 )
 
 const (
@@ -281,12 +282,12 @@ func install(version string, cpuarch string) {
         os.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(env.root, "v"+version, "npx.cmd"))
       }
       
-      err := os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
+      err := copy.Copy(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
       if err != nil {
         // sometimes Windows can take some time to enable access to large amounts of files after unzip, use exponential backoff to wait until it is ready
         for _, i := range [5]int{1, 2, 4, 8, 16} {
           time.Sleep(time.Duration(i)*time.Second)
-          err = os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
+          err = copy.Copy(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
           if err == nil { break }
         }
       }
