@@ -4,7 +4,7 @@ SET ORIG=%CD%
 REM SET GOPATH=%CD%\src
 SET GOBIN=%CD%\bin
 SET GOARCH=386
-SET version=1.1.6
+SET version=1.1.7
 
 REM Get the version number from the setup file
 REM for /f "tokens=*" %%i in ('findstr /n . %INNOSETUP% ^| findstr ^4:#define') do set L=%%i
