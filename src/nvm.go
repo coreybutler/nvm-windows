@@ -204,7 +204,13 @@ func install(version string, cpuarch string) {
     version = reg.ReplaceAllString(re.FindString(content),"")
   }
 
-  version = cleanVersion(version)
+  // if the user specifies only the major version number then install the latest
+  // version of the major version number
+  if len(version) == 1 {
+    version = findLatestSubVersion(version)
+  } else {
+    version = cleanVersion(version)
+  }
 
   if CheckVersionExceedsLatest(version) {
   	fmt.Println("Node.js v"+version+" is not yet released or available.")
@@ -348,6 +354,15 @@ func uninstall(version string) {
     fmt.Println("node v"+version+" is not installed. Type \"nvm list\" to see what is installed.")
   }
   return
+}
+
+func findLatestSubVersion(version string) string {
+	url := web.GetFullNodeUrl("latest-v" + version + ".x" + "/SHASUMS256.txt")
+	content := web.GetRemoteTextFile(url)
+	re := regexp.MustCompile("node-v(.+)+msi")
+	reg := regexp.MustCompile("node-v|-x.+")
+	latest := reg.ReplaceAllString(re.FindString(content), "")
+	return latest
 }
 
 func cleanVersion(version string) string {
