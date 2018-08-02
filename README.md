@@ -90,7 +90,21 @@ Users have reported some problems using antivirus, specifically McAffee. It appe
 
 See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how-do-i-use-yarn-with-nvm-windows) for details.
 
+### Build from source
+
+- Install go from http://golang.org
+- Download source / Git Clone the repo
+- Change GOARCH to amd64 in build.bat if you feel like building a 64-bit executable
+- Fire up a Windows command prompt and change directory to project dir
+- Execute `go get github.com/blang/semver`
+- Execute `go get github.com/olekukonko/tablewriter`
+- Execute `build.bat`
+- Check the `dist`directory for generated setup program. 
+
+
 ---
+
+
 
 ## Why another version manager?
 
