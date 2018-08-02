@@ -18,7 +18,8 @@ import(
 
 var client = &http.Client{}
 var nodeBaseAddress = "https://nodejs.org/dist/"
-var npmBaseAddress = "https://github.com/npm/npm/archive/"
+var npmBaseAddress = "https://github.com/npm/cli/archive/"
+// var oldNpmBaseAddress = "https://github.com/npm/npm/archive/"
 
 func SetProxy(p string, verifyssl bool){
   if p != "" && p != "none" {
@@ -143,7 +144,6 @@ func GetNodeJS(root string, v string, a string) bool {
 }
 
 func GetNpm(root string, v string) bool {
-  //url := "https://github.com/npm/npm/archive/v"+v+".zip"
   url := GetFullNpmUrl("v"+v+".zip")
   // temp directory to download the .zip file
   tempDir := root+"\\temp"

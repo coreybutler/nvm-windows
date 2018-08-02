@@ -2,6 +2,7 @@ package main
 
 import (
   "fmt"
+  "log"
   "os"
   "os/exec"
   "strings"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-  NvmVersion = "1.1.6"
+  NvmVersion = "1.1.7"
 )
 
 type Environment struct {
@@ -272,10 +273,19 @@ func install(version string, cpuarch string) {
       tempDir := filepath.Join(env.root, "temp")
 
       // Extract npm to the temp directory
-      file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
+      err := file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
 
       // Copy the npm and npm.cmd files to the installation directory
-      tempNpmBin := filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin")
+      tempNpmBin := filepath.Join(tempDir, "nvm-npm", "cli-"+npmv, "bin")
+
+      // Support npm < 6.2.0
+      if file.Exists(tempNpmBin) == false {
+        tempNpmBin = filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin")
+      }
+
+      if file.Exists(tempNpmBin) == false {
+        log.Fatal("Failed to extract npm. Could not find " + tempNpmBin)
+      }
 
       // Standard npm support
       os.Rename(filepath.Join(tempNpmBin, "npm"), filepath.Join(env.root, "v"+version, "npm"))
@@ -286,14 +296,20 @@ func install(version string, cpuarch string) {
         os.Rename(filepath.Join(tempNpmBin, "npx"), filepath.Join(env.root, "v"+version, "npx"))
         os.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(env.root, "v"+version, "npx.cmd"))
       }
-      
-      err := os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
-      if err != nil {
+
+      npmSourcePath := filepath.Join(tempDir, "nvm-npm", "npm-"+npmv)
+
+      if file.Exists(npmSourcePath) == false {
+        npmSourcePath = filepath.Join(tempDir, "nvm-npm", "cli-"+npmv)
+      }
+
+      moveNpmErr := os.Rename(npmSourcePath, filepath.Join(env.root, "v"+version, "node_modules", "npm"))
+      if moveNpmErr != nil {
         // sometimes Windows can take some time to enable access to large amounts of files after unzip, use exponential backoff to wait until it is ready
         for _, i := range [5]int{1, 2, 4, 8, 16} {
           time.Sleep(time.Duration(i)*time.Second)
-          err = os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
-          if err == nil { break }
+          moveNpmErr = os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
+          if moveNpmErr == nil { break }
         }
       }
 
@@ -308,7 +324,7 @@ func install(version string, cpuarch string) {
       }
     } else {
       fmt.Println("Could not download npm for node v"+version+".")
-      fmt.Println("Please visit https://github.com/npm/npm/releases/tag/v"+npmv+" to download npm.")
+      fmt.Println("Please visit https://github.com/npm/cli/releases/tag/v"+npmv+" to download npm.")
       fmt.Println("It should be extracted to "+env.root+"\\v"+version)
     }
 
@@ -604,7 +620,7 @@ func help() {
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
   fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
   fmt.Println("  nvm node_mirror [url]        : Set the node mirror. Defaults to https://nodejs.org/dist/. Leave [url] blank to use default url.")
-  fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/npm/archive/. Leave [url] blank to default url.")
+  fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 //  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
   fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
