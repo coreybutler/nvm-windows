@@ -77,7 +77,7 @@ end;
 var
   nodeInUse: string;
 
-function TakeControl(np: string; nv: string): string;
+procedure TakeControl(np: string; nv: string);
 var
   path: string;
 begin
@@ -147,9 +147,9 @@ begin
     Exec(ExpandConstant('{cmd}'), '/C node -v > "' + TmpResultFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     LoadStringFromFile(TmpResultFile, stdout);
     NodeVersion := Trim(Ansi2String(stdout));
-    msg1 := MsgBox('Node '+NodeVersion+' is already installed. Do you want NVM to control this version?', mbConfirmation, MB_YESNO) = IDNO;
+    msg1 := SuppressibleMsgBox('Node '+NodeVersion+' is already installed. Do you want NVM to control this version?', mbConfirmation, MB_YESNO, IDYES) = IDNO;
     if msg1 then begin
-      msg2 := MsgBox('NVM cannot run in parallel with an existing Node.js installation. Node.js must be uninstalled before NVM can be installed, or you must allow NVM to control the existing installation. Do you want NVM to control node '+NodeVersion+'?', mbConfirmation, MB_YESNO) = IDYES;
+      msg2 := SuppressibleMsgBox('NVM cannot run in parallel with an existing Node.js installation. Node.js must be uninstalled before NVM can be installed, or you must allow NVM to control the existing installation. Do you want NVM to control node '+NodeVersion+'?', mbConfirmation, MB_YESNO, IDYES) = IDYES;
       if msg2 then begin
         TakeControl(NodePath, NodeVersion);
       end;
@@ -172,7 +172,7 @@ begin
       RemoveDir(SymlinkPage.Values[0]);
     end;
     if not dir1 then begin
-      msg3 := MsgBox(SymlinkPage.Values[0]+' will be overwritten and all contents will be lost. Do you want to proceed?', mbConfirmation, MB_OKCANCEL) = IDOK;
+      msg3 := SuppressibleMsgBox(SymlinkPage.Values[0]+' will be overwritten and all contents will be lost. Do you want to proceed?', mbConfirmation, MB_OKCANCEL, IDOK) = IDOK;
       if msg3 then begin
         RemoveDir(SymlinkPage.Values[0]);
       end;
@@ -199,7 +199,7 @@ var
   path: string;
   nvm_symlink: string;
 begin
-  MsgBox('Removing NVM for Windows will remove the nvm command and all versions of node.js, including global npm modules.', mbInformation, MB_OK);
+  SuppressibleMsgBox('Removing NVM for Windows will remove the nvm command and all versions of node.js, including global npm modules.', mbInformation, MB_OK, IDOK);
 
   // Remove the symlink
   RegQueryStringValue(HKEY_LOCAL_MACHINE,
