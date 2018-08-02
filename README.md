@@ -63,7 +63,7 @@ Make sure you use the same installation and symlink folder. If you originally in
 NVM for Windows is a command line tool. Simply type `nvm` in the console for help. The basic commands are:
 
 - `nvm arch [32|64]`: Show if node is running in 32 or 64 bit mode. Specify 32 or 64 to override the default architecture.
-- `nvm install <version> [arch]`: The version can be a node.js version or "latest" for the latest stable version. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set `[arch]` to "all" to install 32 AND 64 bit versions.
+- `nvm install <version> [arch]`: The version can be a node.js version or "node" for the latest stable version. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set `[arch]` to "all" to install 32 AND 64 bit versions.
 - `nvm list [available]`: List the node.js installations. Type `available` at the end to show a list of versions available for download.
 - `nvm on`: Enable node.js version management.
 - `nvm off`: Disable node.js version management (does not uninstall anything).
@@ -145,7 +145,7 @@ NVM for Windows comes with an installer, courtesy of a byproduct of my work on [
 
 Overall, this project brings together some ideas, a few battle-hardened pieces of other modules, and support for newer versions of node.
 
-NVM for Windows recognizes the "latest" versions using a [list](https://nodejs.org/download/release/index.json) provided by the Node project. Version 1.1.1+ use this list. Before this list existed, I was scraping releases and serving it as a standalone [data feed](https://github.com/coreybutler/nodedistro). This list was used in versions 1.1.0 and prior, but is now deprecated.
+NVM for Windows recognizes the latest versions using a [list](https://nodejs.org/download/release/index.json) provided by the Node project. Version 1.1.1+ use this list. Before this list existed, I was scraping releases and serving it as a standalone [data feed](https://github.com/coreybutler/nodedistro). This list was used in versions 1.1.0 and prior, but is now deprecated.
 
 ## Motivation
 

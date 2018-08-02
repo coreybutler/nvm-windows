@@ -188,7 +188,7 @@ func GetRemoteTextFile(url string) string {
 }
 
 func IsNode64bitAvailable(v string) bool {
-  if v == "latest" {
+  if (v == "latest" || v == "node") {
     return true
   }
 
