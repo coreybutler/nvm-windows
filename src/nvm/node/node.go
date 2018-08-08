@@ -81,12 +81,12 @@ func IsVersionAvailable(v string) bool {
 }
 
 func reverseStringArray(str []string) []string {
-	for i := 0; i < len(str)/2; i++ {
-		j := len(str) - i - 1
-		str[i], str[j] = str[j], str[i]
-	}
+  for i := 0; i < len(str)/2; i++ {
+    j := len(str) - i - 1
+    str[i], str[j] = str[j], str[i]
+  }
 
-	return str
+  return str
 }
 
 func GetInstalled(root string) []string {
