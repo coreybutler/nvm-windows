@@ -122,13 +122,13 @@ func main() {
 }
 
 func setNodeMirror(uri string) {
-	env.node_mirror = uri
-	saveSettings()
+  env.node_mirror = uri
+  saveSettings()
 }
 
 func setNpmMirror(uri string) {
-	env.npm_mirror = uri
-	saveSettings()
+  env.npm_mirror = uri
+  saveSettings()
 }
 
 func update() {
@@ -150,19 +150,19 @@ func CheckVersionExceedsLatest(version string) bool{
   content := web.GetRemoteTextFile(url)
   re := regexp.MustCompile("node-v(.+)+msi")
   reg := regexp.MustCompile("node-v|-x.+")
-	latest := reg.ReplaceAllString(re.FindString(content),"")
-	var vArr = strings.Split(version,".")
-	var lArr = strings.Split(latest, ".")
-	for index := range lArr {
-	lat,_ := strconv.Atoi(lArr[index])
-	ver,_ := strconv.Atoi(vArr[index])
+  latest := reg.ReplaceAllString(re.FindString(content),"")
+  var vArr = strings.Split(version,".")
+  var lArr = strings.Split(latest, ".")
+  for index := range lArr {
+  lat,_ := strconv.Atoi(lArr[index])
+  ver,_ := strconv.Atoi(vArr[index])
   //Should check for valid input (checking for conversion errors) but this tool is made to trust the user
-		if ver < lat {
+    if ver < lat {
       return false
-		} else if ver > lat {
+    } else if ver > lat {
       return true
     }
-	}
+  }
   return false
 }
 
@@ -214,8 +214,8 @@ func install(version string, cpuarch string) {
   }
 
   if CheckVersionExceedsLatest(version) {
-  	fmt.Println("Node.js v"+version+" is not yet released or available.")
-  	return
+    fmt.Println("Node.js v"+version+" is not yet released or available.")
+    return
   }
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
     fmt.Println("Node.js v"+version+" is only available in 32-bit.")
@@ -373,12 +373,12 @@ func uninstall(version string) {
 }
 
 func findLatestSubVersion(version string) string {
-	url := web.GetFullNodeUrl("latest-v" + version + ".x" + "/SHASUMS256.txt")
-	content := web.GetRemoteTextFile(url)
-	re := regexp.MustCompile("node-v(.+)+msi")
-	reg := regexp.MustCompile("node-v|-x.+")
-	latest := reg.ReplaceAllString(re.FindString(content), "")
-	return latest
+  url := web.GetFullNodeUrl("latest-v" + version + ".x" + "/SHASUMS256.txt")
+  content := web.GetRemoteTextFile(url)
+  re := regexp.MustCompile("node-v(.+)+msi")
+  reg := regexp.MustCompile("node-v|-x.+")
+  latest := reg.ReplaceAllString(re.FindString(content), "")
+  return latest
 }
 
 func cleanVersion(version string) string {
@@ -614,7 +614,7 @@ func help() {
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
   fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
   fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
-    fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
+  fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
   fmt.Println("  nvm on                       : Enable node.js version management.")
   fmt.Println("  nvm off                      : Disable node.js version management.")
   fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
@@ -652,8 +652,8 @@ func updateRootDir(path string) {
 }
 
 func saveSettings() {
-	content := "root: " + strings.Trim(env.root, " \n\r") + "\r\narch: " + strings.Trim(env.arch, " \n\r") + "\r\nproxy: " + strings.Trim(env.proxy, " \n\r") + "\r\noriginalpath: " + strings.Trim(env.originalpath, " \n\r") + "\r\noriginalversion: " + strings.Trim(env.originalversion, " \n\r")
-	content = content + "\r\nnode_mirror: " + strings.Trim(env.node_mirror, " \n\r") + "\r\nnpm_mirror: " + strings.Trim(env.npm_mirror, " \n\r")
+  content := "root: " + strings.Trim(env.root, " \n\r") + "\r\narch: " + strings.Trim(env.arch, " \n\r") + "\r\nproxy: " + strings.Trim(env.proxy, " \n\r") + "\r\noriginalpath: " + strings.Trim(env.originalpath, " \n\r") + "\r\noriginalversion: " + strings.Trim(env.originalversion, " \n\r")
+  content = content + "\r\nnode_mirror: " + strings.Trim(env.node_mirror, " \n\r") + "\r\nnpm_mirror: " + strings.Trim(env.npm_mirror, " \n\r")
   ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 

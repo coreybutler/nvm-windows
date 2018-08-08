@@ -8,8 +8,8 @@ import(
   "os/signal"
   "io"
   "io/ioutil"
-	"strings"
-	"syscall"
+  "strings"
+  "syscall"
   "crypto/tls"
   "strconv"
   "../arch"
@@ -67,23 +67,23 @@ func Download(url string, target string, version string) bool {
   }
   defer response.Body.Close()
   c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		fmt.Println("Download interrupted.Rolling back...")
-		output.Close()
-		response.Body.Close()
-		var err error
-		if strings.Contains(target, "node") {
-			err = os.RemoveAll(os.Getenv("NVM_HOME") + "\\v" + version)
-		} else {
-			err = os.Remove(target)
-		}
-		if err != nil {
-			fmt.Println("Error while rolling back", err)
-		}
-		os.Exit(1)
-	}()
+  signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+  go func() {
+    <-c
+    fmt.Println("Download interrupted.Rolling back...")
+    output.Close()
+    response.Body.Close()
+    var err error
+    if strings.Contains(target, "node") {
+      err = os.RemoveAll(os.Getenv("NVM_HOME") + "\\v" + version)
+    } else {
+      err = os.Remove(target)
+    }
+    if err != nil {
+      fmt.Println("Error while rolling back", err)
+    }
+    os.Exit(1)
+  }()
   _, err = io.Copy(output, response.Body)
   if err != nil {
     fmt.Println("Error while downloading", url, "-", err)

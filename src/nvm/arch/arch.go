@@ -15,7 +15,7 @@ func SearchBytesInFile( path string, match string, limit int) bool {
   if (err != nil) {
     return false;
   }
-  
+
   // Opening the file and checking if there is an arror
   file, err := os.Open(path)
   if err != nil {
