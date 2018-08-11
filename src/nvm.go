@@ -115,6 +115,7 @@ func main() {
         env.proxy = detail
         saveSettings()
       }
+
     //case "update": update()
     case "node_mirror": setNodeMirror(detail)
     case "npm_mirror": setNpmMirror(detail)
@@ -399,7 +400,7 @@ func use(version string, cpuarch string) {
     if !runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`,
       filepath.Join(env.root, "elevate.cmd"),
       filepath.Clean(env.symlink))) {
-        return
+      return
     }
   }
 
@@ -408,7 +409,7 @@ func use(version string, cpuarch string) {
     filepath.Join(env.root, "elevate.cmd"),
     filepath.Clean(env.symlink),
     filepath.Join(env.root, "v"+version))) {
-      return
+    return
   }
 
   // Use the assigned CPU architecture
@@ -432,6 +433,20 @@ func use(version string, cpuarch string) {
     os.Rename(node64path, nodepath) // node64.exe -> node.exe
   }
   fmt.Println("Now using node v"+version+" ("+cpuarch+"-bit)")
+}
+
+func useArchitecture(a string) {
+  if strings.ContainsAny("32",os.Getenv("PROCESSOR_ARCHITECTURE")) {
+    fmt.Println("This computer only supports 32-bit processing.")
+    return
+  }
+  if a == "32" || a == "64" {
+    env.arch = a
+    saveSettings()
+    fmt.Println("Set to "+a+"-bit mode")
+  } else {
+    fmt.Println("Cannot set architecture to "+a+". Must be 32 or 64 are acceptable values.")
+  }
 }
 
 func list(listtype string) {
@@ -548,7 +563,7 @@ func disable() {
   if !runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`,
     filepath.Join(env.root, "elevate.cmd"),
     filepath.Clean(env.symlink))) {
-      return
+    return
   }
 
   fmt.Println("nvm disabled")
