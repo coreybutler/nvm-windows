@@ -22,7 +22,9 @@ if exist src\nvm.exe (
 echo Building nvm.exe:
 
 go build src\nvm.go
+
 move nvm.exe %GOBIN%
+
 for /f %%i in ('%GOBIN%\nvm.exe version') do set BUILT_VERSION=%%i
 
 if NOT %BUILT_VERSION% == %version% (
@@ -32,11 +34,11 @@ if NOT %BUILT_VERSION% == %version% (
   echo nvm.exe v%BUILT_VERSION% built.
 )
 
-echo Code Sign nvm.exe...
+echo Codesign nvm.exe...
 .\buildtools\signtools\x64\signtool.exe sign /debug /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a %GOBIN%\nvm.exe
 
 echo Building "noinstall" zip...
-for /f %%a in (%GOBIN%) do (buildtools\zip -j -9 -r "%DIST%\nvm-noinstall.zip" "%CD%\LICENSE" "%%a\*" -x "%GOBIN%\nodejs.ico")
+for %%a in (%GOBIN%) do (buildtools\zip -j -9 -r "%DIST%\nvm-noinstall.zip" "%CD%\LICENSE" "%%a\*" -x "%GOBIN%\nodejs.ico")
 
 echo "Building the primary installer..."
 buildtools\iscc %INNOSETUP% /o%DIST%

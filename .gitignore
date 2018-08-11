@@ -31,4 +31,4 @@ bin/*.zip
 bin/nvm/*
 
 !.gitignore
-
+!.gitattributes
