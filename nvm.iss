@@ -1,9 +1,9 @@
 #define MyAppName "NVM for Windows"
 #define MyAppShortName "nvm"
 #define MyAppLCShortName "nvm"
-#define MyAppVersion "1.1.7"
+#define MyAppVersion ""
 #define MyAppPublisher "Ecor Ventures LLC"
-#define MyAppURL "https://github.com/coreybutler/nvm"
+#define MyAppURL "https://github.com/coreybutler/nvm-windows"
 #define MyAppExeName "nvm.exe"
 #define MyIcon "bin\nodejs.ico"
 #define ProjectRoot "."
@@ -17,8 +17,8 @@ SignTool=MsSign $f
 SignedUninstaller=yes
 AppId=40078385-F676-4C61-9A9C-F9028599D6D3
 AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-AppVerName={#MyAppName} {#MyAppVersion}
+AppVersion={%AppVersion}
+AppVerName={#MyAppName} {%AppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -28,7 +28,7 @@ DisableDirPage=no
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile={#ProjectRoot}\LICENSE
-OutputDir={#ProjectRoot}\dist\{#MyAppVersion}
+OutputDir={#ProjectRoot}\dist\{%AppVersion}
 OutputBaseFilename={#MyAppLCShortName}-setup
 SetupIconFile={#ProjectRoot}\{#MyIcon}
 Compression=lzma
@@ -37,7 +37,7 @@ ChangesEnvironment=yes
 DisableProgramGroupPage=yes
 ArchitecturesInstallIn64BitMode=x64 ia64
 UninstallDisplayIcon={app}\{#MyIcon}
-AppCopyright=Copyright (C) 2016 Corey Butler and contributors.
+AppCopyright=Copyright (C) 2018 Ecor Ventures LLC and contributors.
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
