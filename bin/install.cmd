@@ -1,8 +1,13 @@
 @echo off
 set /P NVM_PATH="Enter the absolute path where the zip file is extracted/copied to: "
-setx /M NVM_HOME "%NVM_PATH%"
-setx /M NVM_SYMLINK "C:\Program Files\nodejs"
-setx /M PATH "%PATH%;%NVM_HOME%;%NVM_SYMLINK%"
+set NVM_HOME=%NVM_PATH%
+set NVM_SYMLINK=C:\Program Files\nodejs
+setx /M NVM_HOME "%NVM_HOME%"
+setx /M NVM_SYMLINK "%NVM_SYMLINK%"
+
+for /f "skip=2 tokens=2,*" %%A in ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do (
+  setx /M PATH "%%B;%%NVM_HOME%%;%%NVM_SYMLINK%%"
+)
 
 if exist "%SYSTEMDRIVE%\Program Files (x86)\" (
 set SYS_ARCH=64
