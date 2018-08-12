@@ -26,6 +26,7 @@ Of course, I would also love to have additional maintainers. If you're new to Go
 
 ![Issues](https://img.shields.io/github/issues/coreybutler/nvm-windows.svg)
 ![Stars](https://img.shields.io/github/stars/coreybutler/nvm-windows.svg)
+[![Open Source Helpers](https://www.codetriage.com/coreybutler/nvm-windows/badges/users.svg)](https://www.codetriage.com/coreybutler/nvm-windows)
 
 Manage multiple installations of node.js on a Windows computer.
 
