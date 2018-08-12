@@ -82,7 +82,7 @@ Additionally, some npm modules may not be supported in the version of node you'r
 
 ### Antivirus
 
-Users have reported some problems using antivirus, specifically McAffee. It appears the antivirus software is manipulating access to the VBScript engine. See [issue #133](https://github.com/coreybutler/nvm-windows/issues/133) for details and resolution.
+Users have reported some problems using antivirus, specifically McAfee. It appears the antivirus software is manipulating access to the VBScript engine. See [issue #133](https://github.com/coreybutler/nvm-windows/issues/133) for details and resolution.
 
 ### Using Yarn
 
