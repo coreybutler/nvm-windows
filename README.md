@@ -163,4 +163,8 @@ MIT.
 
 ## Thanks
 
-Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to [@vkbansal](https://github.com/vkbansal), who has actively provided feedback throughout the releases. Thanks also go to [@rainabba](https://github.com/rainabba) and [@sullivanpt](https://github.com/sullivanpt) for getting Node v4 support integrated.
+Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to 
+
+- [@vkbansal](https://github.com/vkbansal), who provided significant early feedback throughout the early releases.
+- [@rainabba](https://github.com/rainabba) and [@sullivanpt](https://github.com/sullivanpt) for getting Node v4 support integrated.
+- [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w) who resolved the longstanding space escaping issue in path names ([#355](https://github.com/coreybutler/nvm-windows/pull/355)).
