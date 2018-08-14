@@ -85,6 +85,8 @@ Additionally, some npm modules may not be supported in the version of node you'r
 
 Users have reported some problems using antivirus, specifically McAfee. It appears the antivirus software is manipulating access to the VBScript engine. See [issue #133](https://github.com/coreybutler/nvm-windows/issues/133) for details and resolution.
 
+As of 1.1.7, the executable and installation files are code-signed by [Ecor Ventures LLC](https://ecorventures.com)/[Author.io](https://author.io). This should help prevent false positives with most antivirus software.
+
 ### Using Yarn
 
 **tldr;** `npm i -g yarn`
