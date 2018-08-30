@@ -26,6 +26,7 @@ Of course, I would also love to have additional maintainers. If you're new to Go
 
 ![Issues](https://img.shields.io/github/issues/coreybutler/nvm-windows.svg)
 ![Stars](https://img.shields.io/github/stars/coreybutler/nvm-windows.svg)
+[![Open Source Helpers](https://www.codetriage.com/coreybutler/nvm-windows/badges/users.svg)](https://www.codetriage.com/coreybutler/nvm-windows)
 
 Manage multiple installations of node.js on a Windows computer.
 
@@ -83,6 +84,8 @@ Additionally, some npm modules may not be supported in the version of node you'r
 ### Antivirus
 
 Users have reported some problems using antivirus, specifically McAfee. It appears the antivirus software is manipulating access to the VBScript engine. See [issue #133](https://github.com/coreybutler/nvm-windows/issues/133) for details and resolution.
+
+As of 1.1.7, the executable and installation files are code-signed by [Ecor Ventures LLC](https://ecorventures.com)/[Author.io](https://author.io). This should help prevent false positives with most antivirus software.
 
 ### Using Yarn
 
@@ -162,4 +165,8 @@ MIT.
 
 ## Thanks
 
-Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to [@vkbansal](https://github.com/vkbansal), who has actively provided feedback throughout the releases. Thanks also go to [@rainabba](https://github.com/rainabba) and [@sullivanpt](https://github.com/sullivanpt) for getting Node v4 support integrated.
+Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to 
+
+- [@vkbansal](https://github.com/vkbansal), who provided significant early feedback throughout the early releases.
+- [@rainabba](https://github.com/rainabba) and [@sullivanpt](https://github.com/sullivanpt) for getting Node v4 support integrated.
+- [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w) who resolved the longstanding space escaping issue in path names ([#355](https://github.com/coreybutler/nvm-windows/pull/355)).
