@@ -202,6 +202,7 @@ func install(version string, cpuarch string) {
   	fmt.Println("Node.js v"+version+" is not yet released or available.")
   	return
   }
+
   if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
     fmt.Println("Node.js v"+version+" is only available in 32-bit.")
     return
@@ -209,11 +210,9 @@ func install(version string, cpuarch string) {
 
   // Check to see if the version is already installed
   if !node.IsVersionInstalled(env.root,version,cpuarch) {
-
     if !node.IsVersionAvailable(version){
-      fmt.Println("Version "+version+" is not available. If you are attempting to download a \"just released\" version,")
-      fmt.Println("it may not be recognized by the nvm service yet (updated hourly). If you feel this is in error and")
-      fmt.Println("you know the version exists, please visit http://github.com/coreybutler/nodedistro and submit a PR.")
+      url := web.GetFullNodeUrl("index.json")
+      fmt.Println("\nVersion "+version+" is not available.\n\nThe complete list of available versions can be found at " + url)
       return
     }
 
@@ -654,9 +653,18 @@ func updateRootDir(path string) {
     return
   }
 
+  currentRoot := env.root
   env.root = filepath.Clean(path)
+
+  // Copy command files
+  os.Link(filepath.Clean(currentRoot + "/elevate.cmd"), filepath.Clean(env.root + "/elevate.cmd"))
+  os.Link(filepath.Clean(currentRoot + "/elevate.cmd"), filepath.Clean(env.root + "/elevate.vbs"))
+
   saveSettings()
-  fmt.Println("\nRoot has been set to "+path)
+
+  if currentRoot != env.root {
+    fmt.Println("\nRoot has been changed from " + currentRoot + " to " + path)
+  }
 }
 
 func runElevated(command string) bool {
