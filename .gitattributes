@@ -1,1 +1,4 @@
 * text eol=lf
+*.exe binary
+*.dll binary
+*.e32 binary
