@@ -1,14 +1,18 @@
+The npm/Microsoft/Google recommended **Node.js version manager for _Windows_**.
+
 # This is not the same thing as [nvm](https://github.com/creationix/nvm), which is a completely separate project for Mac/Linux only.
 
-Like this project? Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). Better yet, [become a Patron](https://patreon.com/coreybutler)!
+Like this project? Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). Better yet, [support the effort on Patreon](https://patreon.com/coreybutler).
 
-## NOTICE: STILL SEEKING CORE CONTRIBUTORS & MAINTAINERS
+## NOTICES
 
 _Are you multilingual?_
 
-I am particularly interested in finding people who can speak something other than English. Several problems have come up with non-latin character sets (Chinese, Japanese, Arabic, etc). I am also interested in producing language packs/translations for the installers. If you are interested in translating, please [signup here](https://coreybutler.typeform.com/to/ybqT6F).
+~~I am particularly interested in finding people who can speak something other than English. Several problems have come up with non-latin character sets (Chinese, Japanese, Arabic, etc). I am also interested in producing language packs/translations for the installers. If you are interested in translating, please [signup here](https://coreybutler.typeform.com/to/ybqT6F).~~
 
-**I am seeking donations to help pay for a lingohub.com account** to make life easier for translators! Please consider becoming a [becoming a patron](https://patreon.com/coreybutler) to support this.
+_The response for multilingual contributions has been phenomenal_. However; due to the necessarily slow pace of development (see "other" below), multilingual support won't arrive until 2.0.0 (which will likely be a cross-platform version manager with a new name).
+
+~~**I am seeking donations to help pay for a lingohub.com account** to make life easier for translators! Please consider becoming a [becoming a patron](https://patreon.com/coreybutler) to support this.~~
 
 _Are you outside of the US/UK/Canada?_
 
@@ -18,7 +22,7 @@ _Other (Anywhere)_
 
 The core concepts of this version manager are pretty simple, so the core code base is pretty focused/simple. I've done some work to make this project available on all operating systems. The only reason it's been so slow to release is anticipation of an explosion of new installers (chocolatey, homebrew, rpm, .deb, .msi, etc). I've partnered up with BitRock to simplify creation of some of these, but the BitRock installers don't support all of these.
 
-Of course, I would also love to have additional maintainers. If you're new to Go, that's OK - I was too, and that's what code reviews are for.
+Of course, I would also love to have additional maintainers. I greatly appreciate the existing maintainers who are answering questions and responding to issues, but be advised I have always been and am currently the only person working on new feature development (aside from some incredible contributions from people). I've been preoccupied with paid contract work to a) live and b) bootstrap [author.io](https://author.io) (a company to support this project and several others). My time has been very limited.
 
 # Node Version Manager (nvm) for Windows
 
