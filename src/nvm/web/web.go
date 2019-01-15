@@ -58,12 +58,14 @@ func Download(url string, target string, version string) bool {
   output, err := os.Create(target)
   if err != nil {
     fmt.Println("Error while creating", target, "-", err)
+    return false
   }
   defer output.Close()
 
   response, err := client.Get(url)
   if err != nil {
     fmt.Println("Error while downloading", url, "-", err)
+    return false
   }
   defer response.Body.Close()
   c := make(chan os.Signal, 2)
@@ -87,12 +89,14 @@ func Download(url string, target string, version string) bool {
   _, err = io.Copy(output, response.Body)
   if err != nil {
     fmt.Println("Error while downloading", url, "-", err)
+    return false
   }
   if response.Status[0:3] != "200" {
     fmt.Println("Download failed. Rolling Back.")
     err := os.Remove(target)
     if err != nil {
       fmt.Println("Rollback failed.",err)
+      return false
     }
     return false
   }
