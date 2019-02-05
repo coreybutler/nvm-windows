@@ -146,10 +146,10 @@ func (v *Version) Validate() error {
     for _, pre := range v.Pre {
       if !pre.IsNum { //Numeric prerelease versions already uint64
         if len(pre.VersionStr) == 0 {
-          return fmt.Errorf("Prerelease can not be empty %q", pre.VersionStr)
+          return fmt.Errorf("prerelease can not be empty %q", pre.VersionStr)
         }
         if !containsOnly(pre.VersionStr, alphanum) {
-          return fmt.Errorf("Invalid character(s) found in prerelease %q", pre.VersionStr)
+          return fmt.Errorf("invalid character(s) found in prerelease %q", pre.VersionStr)
         }
       }
     }
@@ -158,10 +158,10 @@ func (v *Version) Validate() error {
   if len(v.Build) > 0 {
     for _, build := range v.Build {
       if len(build) == 0 {
-        return fmt.Errorf("Build meta data can not be empty %q", build)
+        return fmt.Errorf("build meta data can not be empty %q", build)
       }
       if !containsOnly(build, alphanum) {
-        return fmt.Errorf("Invalid character(s) found in build meta data %q", build)
+        return fmt.Errorf("invalid character(s) found in build meta data %q", build)
       }
     }
   }
@@ -188,10 +188,10 @@ func Parse(s string) (*Version, error) {
 
   // Major
   if !containsOnly(parts[0], numbers) {
-    return nil, fmt.Errorf("Invalid character(s) found in major number %q", parts[0])
+    return nil, fmt.Errorf("invalid character(s) found in major number %q", parts[0])
   }
   if hasLeadingZeroes(parts[0]) {
-    return nil, fmt.Errorf("Major number must not contain leading zeroes %q", parts[0])
+    return nil, fmt.Errorf("major number must not contain leading zeroes %q", parts[0])
   }
   major, err := strconv.ParseUint(parts[0], 10, 64)
   if err != nil {
@@ -200,10 +200,10 @@ func Parse(s string) (*Version, error) {
 
   // Minor
   if !containsOnly(parts[1], numbers) {
-    return nil, fmt.Errorf("Invalid character(s) found in minor number %q", parts[1])
+    return nil, fmt.Errorf("invalid character(s) found in minor number %q", parts[1])
   }
   if hasLeadingZeroes(parts[1]) {
-    return nil, fmt.Errorf("Minor number must not contain leading zeroes %q", parts[1])
+    return nil, fmt.Errorf("minor number must not contain leading zeroes %q", parts[1])
   }
   minor, err := strconv.ParseUint(parts[1], 10, 64)
   if err != nil {
@@ -232,10 +232,10 @@ func Parse(s string) (*Version, error) {
   }
 
   if !containsOnly(parts[2][:subVersionIndex], numbers) {
-    return nil, fmt.Errorf("Invalid character(s) found in patch number %q", parts[2][:subVersionIndex])
+    return nil, fmt.Errorf("invalid character(s) found in patch number %q", parts[2][:subVersionIndex])
   }
   if hasLeadingZeroes(parts[2][:subVersionIndex]) {
-    return nil, fmt.Errorf("Patch number must not contain leading zeroes %q", parts[2][:subVersionIndex])
+    return nil, fmt.Errorf("patch number must not contain leading zeroes %q", parts[2][:subVersionIndex])
   }
   patch, err := strconv.ParseUint(parts[2][:subVersionIndex], 10, 64)
   if err != nil {
@@ -273,7 +273,7 @@ func Parse(s string) (*Version, error) {
         return nil, errors.New("Build meta data is empty")
       }
       if !containsOnly(str, alphanum) {
-        return nil, fmt.Errorf("Invalid character(s) found in build meta data %q", str)
+        return nil, fmt.Errorf("invalid character(s) found in build meta data %q", str)
       }
       v.Build = append(v.Build, str)
     }
@@ -297,7 +297,7 @@ func NewPRVersion(s string) (*PRVersion, error) {
   v := &PRVersion{}
   if containsOnly(s, numbers) {
     if hasLeadingZeroes(s) {
-      return nil, fmt.Errorf("Numeric PreRelease version must not contain leading zeroes %q", s)
+      return nil, fmt.Errorf("numeric PreRelease version must not contain leading zeroes %q", s)
     }
     num, err := strconv.ParseUint(s, 10, 64)
 
@@ -311,7 +311,7 @@ func NewPRVersion(s string) (*PRVersion, error) {
     v.VersionStr = s
     v.IsNum = false
   } else {
-    return nil, fmt.Errorf("Invalid character(s) found in prerelease %q", s)
+    return nil, fmt.Errorf("invalid character(s) found in prerelease %q", s)
   }
   return v, nil
 }
@@ -373,7 +373,7 @@ func NewBuildVersion(s string) (string, error) {
     return "", errors.New("Buildversion is empty")
   }
   if !containsOnly(s, alphanum) {
-    return "", fmt.Errorf("Invalid character(s) found in build meta data %q", s)
+    return "", fmt.Errorf("invalid character(s) found in build meta data %q", s)
   }
   return s, nil
 }
