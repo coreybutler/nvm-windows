@@ -181,9 +181,16 @@ func install(version string, cpuarch string) {
     cpuarch = arch.Validate(cpuarch)
   }
 
-  // If user specifies "latest" version, find out what version is
-  if version == "latest" {
-    url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
+  isAlpha := regexp.MustCompile(`^[A-Za-z]+$`).MatchString
+
+  // If user specifies version by name ("latest", "dubnium", "argon", ...), find out what version is
+  if isAlpha(version) {
+    version = strings.ToLower(version)
+    fragment := ""
+    if version != "latest" {
+      fragment = "-"+version
+    }
+    url := web.GetFullNodeUrl("latest"+fragment+"/SHASUMS256.txt")
     content := web.GetRemoteTextFile(url)
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
