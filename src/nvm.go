@@ -18,6 +18,7 @@ import (
   "./nvm/file"
   "./nvm/node"
   "github.com/olekukonko/tablewriter"
+	"gopkg.in/AlecAivazis/survey.v1"
 )
 
 const (
@@ -370,6 +371,60 @@ func findLatestSubVersion(version string) string {
 }
 
 func use(version string, cpuarch string) {
+	if version == "" {
+		currentVersion, currentArch := node.GetCurrentVersion()
+
+		v := node.GetInstalled(env.root)
+
+		listOptions := []string{}
+		listIndex := 0
+
+		for i := 0; i < len(v); i++ {
+			installedVersion := v[i]
+			listOption := ""
+			actArch := arch.Bit(filepath.Join(env.root, installedVersion, "node.exe"))
+			isCurrentVersion := installedVersion == ("v" + currentVersion)
+
+			if file.Exists(filepath.Join(env.root, installedVersion, "node64.exe")) || actArch == "64" {
+				listIndex++
+				listOption = strconv.Itoa(listIndex) + ") " + installedVersion + " (64-bit)"
+
+				if isCurrentVersion && currentArch == "64" {
+					listOption += "(Current)"
+				}
+
+				listOptions = append(listOptions, listOption)
+			}
+
+			if file.Exists(filepath.Join(env.root, installedVersion, "node32.exe")) || actArch == "32" {
+				listIndex++
+				listOption = strconv.Itoa(listIndex) + ") " + installedVersion + " (32-bit)"
+
+				if isCurrentVersion && currentArch == "32" {
+					listOption += "(Current)"
+				}
+
+				listOptions = append(listOptions, listOption)
+			}
+		}
+
+		selectedVersion := ""
+		versionPrompt := &survey.Select{
+			Message: "Select installed node version (" + strconv.Itoa(listIndex) + " total):",
+			Options: listOptions,
+		}
+		survey.AskOne(versionPrompt, &selectedVersion, nil)
+
+		if selectedVersion == "" {
+			return
+		}
+
+		varegex := regexp.MustCompile("^\\d\\)\\sv(.*)\\s\\((\\d{2})-bit\\)")
+		res := varegex.FindStringSubmatch(selectedVersion)
+
+		version = res[1]
+		cpuarch = res[2]
+	}
   if version == "32" || version == "64" {
     cpuarch = version
     v, _ := node.GetCurrentVersion()
