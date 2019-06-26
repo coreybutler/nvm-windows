@@ -46,9 +46,21 @@ bleeding edge version without uninstalling the stable version of node, this util
 
 ### Installation & Upgrades
 
-It comes with an installer (and uninstaller), because getting it should be easy. Please note, you need to uninstall any existing versions of node.js before installing NVM for Windows. Also delete any existing nodejs installation directories (e.g., "C:\Program Files\nodejs") that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
+#### Uninstall existing node
 
-You should also delete the existing npm install location (e.g. "C:\Users\<user>\AppData\Roaming\npm") so that the nvm install location will be correctly used instead. After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
+Please note, you need to uninstall any existing versions of node.js before installing NVM for Windows. Also delete any existing nodejs installation directories (e.g., "C:\Program Files\nodejs") that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
+
+#### Uninstall existing npm
+
+You should also delete the existing npm install location (e.g. "C:\Users\<user>\AppData\Roaming\npm") so that the nvm install location will be correctly used instead. 
+
+#### Install nvm-windows
+
+npm-windows comes with an installer (and uninstaller), because getting it should be easy. 
+
+#### Reinstall any global utilities
+
+After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
 ```
 nvm use 4.4.0
 npm install gulp-cli -g
@@ -59,11 +71,13 @@ npm install gulp-cli -g
 
 ![NVM for Windows Installer](http://i.imgur.com/x8EzjSC.png)
 
-**To upgrade**, run the new installer. It will safely overwrite the files it needs to update without touching your node.js installations.
-Make sure you use the same installation and symlink folder. If you originally installed to the default locations, you just need to click
-"next" on each window until it finishes.
+### Upgrading nvm-windows
+
+**To upgrade nvm-windows**, run the new installer. It will safely overwrite the files it needs to update without touching your node.js installations. Make sure you use the same installation and symlink folder. If you originally installed to the default locations, you just need to click "next" on each window until it finishes.
 
 ### Usage
+
+**nvm-windows runs in an Admin shell**. You'll need to start `powershell` or Command Prompt as Administrator to use nvm-windows
 
 NVM for Windows is a command line tool. Simply type `nvm` in the console for help. The basic commands are:
 
@@ -82,8 +96,7 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 
 ### Gotcha!
 
-Please note that any global npm modules you may have installed are **not** shared between the various versions of node.js you have installed.
-Additionally, some npm modules may not be supported in the version of node you're using, so be aware of your environment as you work.
+Please note that any global npm modules you may have installed are **not** shared between the various versions of node.js you have installed. Additionally, some npm modules may not be supported in the version of node you're using, so be aware of your environment as you work.
 
 ### Antivirus
 
