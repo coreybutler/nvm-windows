@@ -56,20 +56,26 @@ You should also delete the existing npm install location (e.g. "C:\Users\<user>\
 
 #### Install nvm-windows
 
-npm-windows comes with an installer (and uninstaller), because getting it should be easy. 
+[Download the latest nvm-windows installer](https://github.com/coreybutler/nvm/releases) and install it.
+
+![NVM for Windows Installer](http://i.imgur.com/x8EzjSC.png)
 
 #### Reinstall any global utilities
 
 After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
+
 ```
 nvm use 4.4.0
 npm install gulp-cli -g
 nvm use 0.10.33
 npm install gulp-cli -g
 ```
-[Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
 
-![NVM for Windows Installer](http://i.imgur.com/x8EzjSC.png)
+#### Using Yarn
+
+If you're using yarn, just `npm i -g yarn`
+
+See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how-do-i-use-yarn-with-nvm-windows) for details.
 
 ### Upgrading nvm-windows
 
@@ -104,11 +110,6 @@ Users have reported some problems using antivirus, specifically McAfee. It appea
 
 As of 1.1.7, the executable and installation files are code-signed by [Ecor Ventures LLC](https://ecorventures.com)/[Author.io](https://author.io). This should help prevent false positives with most antivirus software.
 
-### Using Yarn
-
-**tldr;** `npm i -g yarn`
-
-See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how-do-i-use-yarn-with-nvm-windows) for details.
 
 ### Build from source
 
