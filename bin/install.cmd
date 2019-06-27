@@ -1,5 +1,5 @@
 @echo off
-set /P NVM_PATH="Enter the absolute path where the zip file is extracted/copied to: "
+set /P NVM_PATH="Enter the absolute path where the nvm-windows zip file is extracted/copied to: "
 set NVM_HOME=%NVM_PATH%
 set NVM_SYMLINK=C:\Program Files\nodejs
 setx /M NVM_HOME "%NVM_HOME%"
