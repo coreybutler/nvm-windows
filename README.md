@@ -58,6 +58,8 @@ You should also delete the existing npm install location (e.g. "C:\Users\<user>\
 
 npm-windows comes with an installer (and uninstaller), because getting it should be easy. 
 
+Alternatively, you can install via package manager: `choco install nvm` / `scoop install nvm`.
+
 #### Reinstall any global utilities
 
 After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
