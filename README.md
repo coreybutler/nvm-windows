@@ -56,7 +56,7 @@ You should also delete the existing npm install location (e.g. "C:\Users\<user>\
 
 #### Install nvm-windows
 
-npm-windows comes with an installer (and uninstaller), because getting it should be easy. 
+nvm-windows comes with an installer (and uninstaller), because getting it should be easy. 
 
 #### Reinstall any global utilities
 
