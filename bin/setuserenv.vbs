@@ -4,7 +4,7 @@ If InStr(userpath, "%NVM_HOME%") = False Then
     userpath = userpath & ";%NVM_HOME%;"
 End If
 If InStr(userpath, "%NVM_SYMLINK%") = False Then
-    userpath = userpath & ";%NVM_SYMLNK%;"
+    userpath = userpath & ";%NVM_SYMLINK%;"
 End If
 
 userpath = Replace(userpath, ";;", ";")
