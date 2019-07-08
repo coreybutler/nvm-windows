@@ -96,7 +96,7 @@ begin
 
   RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
 
-  ExecAsOriginalUser('wscript', 'setuserenv.vbs', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode);
+  ExecAsOriginalUser('wscript', 'setuserenv.vbs', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   nodeInUse := ExpandConstant('{app}')+'\'+nv;
 
@@ -221,7 +221,7 @@ begin
 
   RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
 
-  ExecAsOriginalUser('wscript', 'unsetuserenv.vbs', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode);
+  ExecAsOriginalUser('wscript', 'unsetuserenv.vbs', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   Result := True;
 end;
@@ -256,7 +256,7 @@ begin
       StringChangeEx(path,';;',';',True);
       RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
     end;
-    ExecAsOriginalUser('wscript', 'setuserenv.vbs', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode);
+    ExecAsOriginalUser('wscript', 'setuserenv.vbs', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 end;
 
