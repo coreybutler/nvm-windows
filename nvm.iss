@@ -82,6 +82,7 @@ var
 procedure TakeControl(np: string; nv: string);
 var
   path: string;
+  ResultCode: integer;
 begin
   // Move the existing node.js installation directory to the nvm root & update the path
   RenameFile(np,ExpandConstant('{app}')+'\'+nv);
@@ -192,6 +193,7 @@ function InitializeUninstall(): Boolean;
 var
   path: string;
   nvm_symlink: string;
+  ResultCode: integer;
 begin
   SuppressibleMsgBox('Removing NVM for Windows will remove the nvm command and all versions of node.js, including global npm modules.', mbInformation, MB_OK, IDOK);
 
