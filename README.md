@@ -4,9 +4,8 @@ The npm/Microsoft/Google recommended **Node.js version manager for _Windows_**.
 
 Like this project? Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). 
 
-Better yet, click the "Sponsor" button. Patreon sponsors will receive patron-only update posts.
+Better yet, **click the "Sponsor" button**. Patreon sponsors will receive patron-only update posts.
 
-![Sponsor NVM for Windows](https://github.com/coreybutler/promo/raw/master/images/Sponsor.gif)
 
 ## NOTICES
 
