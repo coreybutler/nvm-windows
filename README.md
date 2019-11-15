@@ -9,7 +9,7 @@ Better yet, **click the "Sponsor" button** at the top of this screen. Patreon sp
 
 ## NOTICES
 
-(9/6/19) I am actively working on new Github actions to build releases. There are several great contributions in master (which contains the to-be-released 1.1.8 version), but I've always had to build these by hand.... and as many of you have noticed, my time has been extremely limited for quite awhile. The time consuming part is preparing the NSIS build, but once that is automated, it should be significantly easier for people to contribute changes _and actually see them released_.
+(2019-09-06) I am actively working on new Github actions to build releases. There are several great contributions in master (which contains the to-be-released 1.1.8 version), but I've always had to build these by hand.... and as many of you have noticed, my time has been extremely limited for quite awhile. The time consuming part is preparing the NSIS build, but once that is automated, it should be significantly easier for people to contribute changes _and actually see them released_.
 
 Older notices have moved to the [notices wiki entry](https://github.com/coreybutler/nvm-windows/wiki/Notices).
 
