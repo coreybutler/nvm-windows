@@ -13,6 +13,10 @@ Better yet, **click the "Sponsor" button** at the top of this screen. Patreon sp
 
 Older notices have moved to the [notices wiki entry](https://github.com/coreybutler/nvm-windows/wiki/Notices).
 
+## Common Issues & Resolutions
+
+Please see the [Common Issues](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues) page before posting an issue.
+
 # Node Version Manager (nvm) for Windows
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
