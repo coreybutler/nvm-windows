@@ -1,3 +1,5 @@
+Make sure you have reviewed the [common issues](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues) and existing issues before submitting a new issue.
+
 If this is a question about how to use NVM4W, please use [stackoverflow](http://stackoverflow.com/questions/tagged/nvm-windows) instead.
 
 If this is an issue regarding antivirus, make sure you search the existing issues first.
@@ -17,15 +19,7 @@ If this is an issue regarding antivirus, make sure you search the existing issue
 
 ### I'm using NVM4W version:
 
-- [ ] 1.1.7
-- [ ] 1.1.6
-- [ ] 1.1.5
-- [ ] 1.1.4
-- [ ] 1.1.3
-- [ ] 1.1.2
-- [ ] 1.1.1
-- [ ] Older
-- [ ] OTHER (Please Specify)
+Run `nvm version` if you don't know.
 
 ### I have already...
 
