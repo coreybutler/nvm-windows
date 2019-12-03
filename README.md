@@ -45,7 +45,7 @@ Please note, you need to uninstall any existing versions of node.js before insta
 
 #### Uninstall existing npm
 
-You should also delete the existing npm install location (e.g. "C:\Users\<user>\AppData\Roaming\npm") so that the nvm install location will be correctly used instead. 
+You should also delete the existing npm install location (e.g. "C:\Users\&lt;user&gt;\AppData\Roaming\npm") so that the nvm install location will be correctly used instead. 
 
 #### Install nvm-windows
 
