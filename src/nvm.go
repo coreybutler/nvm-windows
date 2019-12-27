@@ -661,7 +661,7 @@ func updateRootDir(path string) {
 
   // Copy command files
   os.Link(filepath.Clean(currentRoot + "/elevate.cmd"), filepath.Clean(env.root + "/elevate.cmd"))
-  os.Link(filepath.Clean(currentRoot + "/elevate.cmd"), filepath.Clean(env.root + "/elevate.vbs"))
+  os.Link(filepath.Clean(currentRoot + "/elevate.vbs"), filepath.Clean(env.root + "/elevate.vbs"))
 
   saveSettings()
 
