@@ -42,7 +42,6 @@ func SearchBytesInFile( path string, match string, limit int) bool {
       }
     }
   }
-  file.Close();
   return false;
 }
 
