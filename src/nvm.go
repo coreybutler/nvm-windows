@@ -5,6 +5,7 @@ import (
   "fmt"
   "io/ioutil"
   "log"
+  "net/url"
   "os"
   "os/exec"
   "path/filepath"
@@ -725,28 +726,36 @@ func setup() {
   }
 
   // Process each line and extract the value
+  var m map[string]string
   for _, line := range lines {
-    line = strings.Trim(line, " \r\n")
-    if strings.HasPrefix(line, "root:") {
-      env.root = filepath.Clean(strings.TrimSpace(regexp.MustCompile("^root:").ReplaceAllString(line, "")))
-    } else if strings.HasPrefix(line, "originalpath:") {
-      env.originalpath = filepath.Clean(strings.TrimSpace(regexp.MustCompile("^originalpath:").ReplaceAllString(line, "")))
-    } else if strings.HasPrefix(line, "originalversion:") {
-      env.originalversion = strings.TrimSpace(regexp.MustCompile("^originalversion:").ReplaceAllString(line, ""))
-    } else if strings.HasPrefix(line, "arch:") {
-      env.arch = strings.TrimSpace(regexp.MustCompile("^arch:").ReplaceAllString(line, ""))
-    } else if strings.HasPrefix(line, "node_mirror:") {
-      env.node_mirror = strings.TrimSpace(regexp.MustCompile("^node_mirror:").ReplaceAllString(line, ""))
-    } else if strings.HasPrefix(line, "npm_mirror:") {
-      env.npm_mirror = strings.TrimSpace(regexp.MustCompile("^npm_mirror:").ReplaceAllString(line, ""))
-    } else if strings.HasPrefix(line, "proxy:") {
-      env.proxy = strings.TrimSpace(regexp.MustCompile("^proxy:").ReplaceAllString(line, ""))
-      if env.proxy != "none" && env.proxy != "" {
-        if strings.ToLower(env.proxy[0:4]) != "http" {
-          env.proxy = "http://"+env.proxy
-        }
-        web.SetProxy(env.proxy, env.verifyssl)
-      }
+    res := strings.Split(strings.TrimSpace(line), ":")
+    if (len(res) != 2) {
+      continue
+    }
+    m[res[0]] = strings.Trim(res[1], "\r\n")
+  }
+  if val, ok := m["root"]; ok {
+    env.root = filepath.Clean(val)
+  }
+  if val, ok := m["originalpath"]; ok {
+    env.originalpath = filepath.Clean(val)
+  }
+  if val, ok := m["originalversion"]; ok {
+    env.originalversion = val
+  }
+  if val, ok := m["arch"]; ok {
+    env.arch = val
+  }
+  if val, ok := m["node_mirror"]; ok {
+    env.node_mirror = val
+  }
+  if val, ok := m["npm_mirror"]; ok {
+    env.npm_mirror = val
+  }
+  if val, ok := m["proxy"]; ok {
+    res, err := url.Parse(val)
+    if err != nil {
+      web.SetProxy(res.String(), env.verifyssl)
     }
   }
 
