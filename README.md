@@ -64,6 +64,19 @@ npm install gulp-cli -g
 
 ![NVM for Windows Installer](http://i.imgur.com/x8EzjSC.png)
 
+#### Using aliases
+You can use aliases as friendly names to refer to node version.
+
+```
+# use an alias
+nvm install 4.4.0
+nvm alias project-4 4.4.0
+nvm use project-4
+
+# delete an alias
+nvm alias project-4
+```
+
 ### Upgrading nvm-windows
 
 **To upgrade nvm-windows**, run the new installer. It will safely overwrite the files it needs to update without touching your node.js installations. Make sure you use the same installation and symlink folder. If you originally installed to the default locations, you just need to click "next" on each window until it finishes.
