@@ -173,6 +173,15 @@ I chose Go because it is cross-platform, felt like less overhead than Java, has 
 
 MIT.
 
+## Sponsors
+
+<table cellpadding="10" cellspacing="0" border="0">
+  <tr>
+    <td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>
+    <td><a href="https://butlerlogic.com"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/butlerlogic_logo.png" width="200px"/></a></td>
+  </tr>
+</table>
+
 ## Thanks
 
 Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to 
