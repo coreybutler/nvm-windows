@@ -192,7 +192,7 @@ func install(version string, cpuarch string) {
 
   // if the user specifies only the major version number then install the latest
   // version of the major version number
-  if len(version) == 1 {
+  if !strings.Contains(version, ".") {
     version = findLatestSubVersion(version)
   } else {
     version = cleanVersion(version)
