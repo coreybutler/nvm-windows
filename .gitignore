@@ -32,3 +32,5 @@ bin/nvm/*
 
 !.gitignore
 !.gitattributes
+pkg/*
+
