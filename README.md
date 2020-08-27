@@ -53,6 +53,8 @@ You should also delete the existing npm install location (e.g. "C:\Users\\&lt;us
 
 nvm-windows comes with an installer (and uninstaller), because getting it should be easy. 
 
+_If NVM4W doesn't appear to work immediately after installation, restart the terminal/powershell._
+
 #### Reinstall any global utilities
 
 After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
