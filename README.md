@@ -1,15 +1,17 @@
 The npm/Microsoft/Google recommended **Node.js version manager for _Windows_**.
 
-# This is not the same thing as [nvm](https://github.com/creationix/nvm), which is a completely separate project for Mac/Linux only.
+# This is not the same thing as nvm.
+_The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._
 
-Like this project? Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). 
+## Like this project?
 
-Better yet, **click the "Sponsor" button** at the top of this screen. Patreon sponsors will receive patron-only update posts.
+Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). 
 
+Better yet, **click the "Sponsor" button** at the top of this screen.
 
 ## NOTICES
 
-(2019-09-06) I am actively working on new Github actions to build releases. There are several great contributions in master (which contains the to-be-released 1.1.8 version), but I've always had to build these by hand.... and as many of you have noticed, my time has been extremely limited for quite awhile. The time consuming part is preparing the NSIS build, but once that is automated, it should be significantly easier for people to contribute changes _and actually see them released_.
+This repository has been accepted into the Github Discussions beta program. Please look for updates there. The Gitter channel will be retired in favor of this new feature.
 
 Older notices have moved to the [notices wiki entry](https://github.com/coreybutler/nvm-windows/wiki/Notices).
 
