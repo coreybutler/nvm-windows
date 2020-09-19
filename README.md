@@ -29,7 +29,7 @@ Please see the [Common Issues](https://github.com/coreybutler/nvm-windows/wiki/C
 
 Manage multiple installations of node.js on a Windows computer.
 
-**tl;dr** [nvm](https://github.com/creationix/nvm), but for Windows, with an installer. [Download Now](https://github.com/coreybutler/nvm-windows/releases)! This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. However, node 4+ is supported.
+**tl;dr** Similar (not identical) to [nvm](https://github.com/creationix/nvm), but for Windows. Has an installer. [Download Now](https://github.com/coreybutler/nvm-windows/releases)! This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. However, node 4+ is supported. Remember when running `nvm install` or `nvm use`, you must have Windows administrative rights (to create symlinks).
 
 ![NVM for Windows](http://i.imgur.com/BNlcbi4.png)
 
