@@ -17,6 +17,7 @@ import (
   "./nvm/arch"
   "./nvm/file"
   "./nvm/node"
+  "github.com/blang/semver"
   "github.com/olekukonko/tablewriter"
 )
 
@@ -115,7 +116,16 @@ func main() {
         env.proxy = detail
         saveSettings()
       }
-
+    case "current":
+      inuse, _ := node.GetCurrentVersion()
+      v, _ := semver.Make(inuse)
+      err := v.Validate()
+      if err == nil {
+        fmt.Println("v" + inuse)
+      } else {
+        fmt.Println(inuse)
+      }
+  
     //case "update": update()
     case "node_mirror": setNodeMirror(detail)
     case "npm_mirror": setNpmMirror(detail)
