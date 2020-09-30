@@ -38,6 +38,11 @@ bleeding edge version without uninstalling the stable version of node, this util
 ![Switch between stable and unstable versions.](http://i.imgur.com/zHEz8Oq.png)
 
 ### Installation & Upgrades
+Manual installer [Download Now](https://github.com/coreybutler/nvm-windows/releases) 
+```
+choco install nvm
+scoop install nvm
+```
 
 #### Uninstall existing node
 
