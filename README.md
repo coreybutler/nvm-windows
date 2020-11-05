@@ -1,13 +1,11 @@
 The npm/Microsoft/Google recommended **Node.js version manager for _Windows_**.
 
 # This is not the same thing as nvm.
-_The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._
+_The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in the [Why another version manager?](https://github.com/coreybutler/nvm-windows#why-another-version-manager) and [what's the big difference?](https://github.com/coreybutler/nvm-windows#whats-the-big-difference) sections.
 
 ## Like this project?
 
-Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). 
-
-Better yet, **click the "Sponsor" button** at the top of this screen.
+Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). Better yet, **click the "Sponsor" button** at the top of this screen.
 
 ## NOTICES
 
@@ -21,10 +19,6 @@ Please see the [Common Issues](https://github.com/coreybutler/nvm-windows/wiki/C
 
 # Node Version Manager (nvm) for Windows
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
-
-![Issues](https://img.shields.io/github/issues/coreybutler/nvm-windows.svg)
-![Stars](https://img.shields.io/github/stars/coreybutler/nvm-windows.svg)
 [![Open Source Helpers](https://www.codetriage.com/coreybutler/nvm-windows/badges/users.svg)](https://www.codetriage.com/coreybutler/nvm-windows)
 
 Manage multiple installations of node.js on a Windows computer.
