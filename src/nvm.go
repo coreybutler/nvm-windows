@@ -189,7 +189,17 @@ func install(version string, cpuarch string) {
     reg := regexp.MustCompile("node-v|-x.+")
     version = reg.ReplaceAllString(re.FindString(content),"")
   }
-
+  
+  // If user specifies "lts" version, find out what version is
+  if version == "lts" {
+		ver := node.GetLTS()
+		url := web.GetFullNodeUrl("v" + ver)
+		content := web.GetRemoteTextFile(url)
+		re := regexp.MustCompile("node-v(.+)+msi")
+		reg := regexp.MustCompile("node-v|-x.+")
+		version = reg.ReplaceAllString(re.FindString(content), "")
+  }
+  
   // if the user specifies only the major version number then install the latest
   // version of the major version number
   if len(version) == 1 {
