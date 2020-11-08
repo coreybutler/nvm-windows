@@ -1,19 +1,17 @@
-The npm/Microsoft/Google recommended **Node.js version manager for _Windows_**.
+The [npm](https://docs.npmjs.com/cli/v6/configuring-npm/install#windows-node-version-managers)/[Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows)/Google recommended **Node.js version manager for _Windows_**.
 
 # This is not the same thing as nvm.
-_The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._
+_The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in the [Why another version manager?](https://github.com/coreybutler/nvm-windows#why-another-version-manager) and [what's the big difference?](https://github.com/coreybutler/nvm-windows#whats-the-big-difference) sections.
 
 ## Like this project?
 
-Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). 
-
-Better yet, **click the "Sponsor" button** at the top of this screen.
+Let people know with a [tweet](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb). Better yet, **click the "Sponsor" button** at the top of this screen.
 
 ## NOTICES
 
-This repository has been accepted into the Github Discussions beta program. Please look for updates there. The Gitter channel will be retired in favor of this new feature.
+This repository now uses [Github Discussions](https://github.com/coreybutler/nvm-windows/discussions) for updates. Sponsors also receive occasional email updates. The Gitter channel has been retired in favor of these new features.
 
-Older notices have moved to the [notices wiki entry](https://github.com/coreybutler/nvm-windows/wiki/Notices).
+Old notices have moved to the [notices wiki entry](https://github.com/coreybutler/nvm-windows/wiki/Notices).
 
 ## Common Issues & Resolutions
 
@@ -21,10 +19,6 @@ Please see the [Common Issues](https://github.com/coreybutler/nvm-windows/wiki/C
 
 # Node Version Manager (nvm) for Windows
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) (I post development updates here)
-
-![Issues](https://img.shields.io/github/issues/coreybutler/nvm-windows.svg)
-![Stars](https://img.shields.io/github/stars/coreybutler/nvm-windows.svg)
 [![Open Source Helpers](https://www.codetriage.com/coreybutler/nvm-windows/badges/users.svg)](https://www.codetriage.com/coreybutler/nvm-windows)
 
 Manage multiple installations of node.js on a Windows computer.
@@ -41,32 +35,29 @@ bleeding edge version without uninstalling the stable version of node, this util
 
 ### Installation & Upgrades
 
-#### Uninstall existing node
+#### _PREREQUISITE:_ Uninstall existing node & npm
 
-Please note, you need to uninstall any existing versions of node.js before installing NVM for Windows. Also delete any existing nodejs installation directories (e.g., "C:\Program Files\nodejs") that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
+Uninstall any existing versions of Node.js before installing NVM for Windows (otherwise you'll have conflicting versions). Delete any existing Node.js installation directories (e.g., "C:\Program Files\nodejs") that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
-#### Uninstall existing npm
-
-You should also delete the existing npm install location (e.g. "C:\Users\\&lt;user&gt;\\AppData\Roaming\npm"), so that the nvm install location will be correctly used instead. Backup the global `npmrc` config (e.g. `C:\Users\&lt;user&gt;\AppData\Roaming\npm\etc\npmrc`), if you have some important settings there, or copy the settings to the user config `C:\Users\&lt;user&gt;\.npmrc`.
+Delete the existing npm install location (e.g. "C:\Users\\&lt;user&gt;\\AppData\Roaming\npm") to prevent global module conflicts. Remember to backup any global `npmrc` config (e.g. `C:\Users\&lt;user&gt;\AppData\Roaming\npm\etc\npmrc`), or copy the settings to the user config `C:\Users\&lt;user&gt;\.npmrc`.
 
 #### Install nvm-windows
 
-nvm-windows comes with an installer (and uninstaller), because getting it should be easy. 
+[Download the latest installer](https://github.com/coreybutler/nvm/releases) (comes with an uninstaller). There is also a manual option (see [manual installation](https://github.com/coreybutler/nvm-windows/wiki#manual-installation) in the wiki).
 
 _If NVM4W doesn't appear to work immediately after installation, restart the terminal/powershell._
 
+![NVM for Windows Installer](http://i.imgur.com/x8EzjSC.png)
+
 #### Reinstall any global utilities
 
-After install, reinstalling global utilities (e.g. gulp) will have to be done for each installed version of node:
+After install, reinstalling global utilities (e.g. yarn) will have to be done for each installed version of node:
 ```
-nvm use 4.4.0
-npm install gulp-cli -g
-nvm use 0.10.33
-npm install gulp-cli -g
+nvm use 14.0.0
+npm install -g yarn
+nvm use 12.0.1
+npm install -g yarn
 ```
-[Download the latest installer from the releases](https://github.com/coreybutler/nvm/releases).
-
-![NVM for Windows Installer](http://i.imgur.com/x8EzjSC.png)
 
 ### Upgrading nvm-windows
 
