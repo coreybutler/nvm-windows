@@ -235,20 +235,18 @@ func GetAvailable() ([]string, []string, []string, []string, []string, map[strin
 }
 
 func GetLTS() string {
-	url := web.GetFullNodeUrl("index.json")
-	text := web.GetRemoteTextFile(url)
-	var lts string
-	var data = make([]map[string]interface{}, 0)
-	json.Unmarshal([]byte(text), &data)
+  url := web.GetFullNodeUrl("index.json")
+  text := web.GetRemoteTextFile(url)
+  lts := make([]string,0)
+  var data = make([]map[string]interface{}, 0)
+  json.Unmarshal([]byte(text), &data)
 
-	for _, element := range data {
-
-		var version = element["version"].(string)[1:]
-
-		if isLTS(element) {
-			lts = version
-			break
-		}
-	}
-	return lts
+  for _, element := range data {
+    var version = element["version"].(string)[1:]
+    if isLTS(element) {
+	  lts = append(lts, version)
+	  }
+  }
+  
+  return lts[0]
 }

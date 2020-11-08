@@ -181,23 +181,15 @@ func install(version string, cpuarch string) {
     cpuarch = arch.Validate(cpuarch)
   }
 
-  // If user specifies "latest" version, find out what version is
+  // If user specifies "latest" or "lts" version, find out what version is
   if version == "latest" {
     url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
     content := web.GetRemoteTextFile(url)
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
     version = reg.ReplaceAllString(re.FindString(content),"")
-  }
-  
-  // If user specifies "lts" version, find out what version is
-  if version == "lts" {
-		ver := node.GetLTS()
-		url := web.GetFullNodeUrl("v" + ver)
-		content := web.GetRemoteTextFile(url)
-		re := regexp.MustCompile("node-v(.+)+msi")
-		reg := regexp.MustCompile("node-v|-x.+")
-		version = reg.ReplaceAllString(re.FindString(content), "")
+  } else if version == "lts" {
+    version = node.GetLTS()
   }
   
   // if the user specifies only the major version number then install the latest
