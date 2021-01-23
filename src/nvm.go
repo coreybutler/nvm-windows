@@ -160,14 +160,14 @@ func install(version string, cpuarch string) {
   }
 
   if version == "" {
-		if file.Exists(".nvmrc") {
+	if file.Exists(".nvmrc") {
       version = nvmrc()
-		} else {
+	} else {
     fmt.Println("\nInvalid version.")
     fmt.Println(" ")
     help()
     return
-		}
+	}
   }
 
   cpuarch = strings.ToLower(cpuarch)
@@ -382,7 +382,7 @@ func use(version string, cpuarch string) {
   
   if version == "" {
     if file.Exists(".nvmrc") {
-	    version = nvmrc()
+      version = nvmrc()
     }
   }
 
@@ -462,12 +462,14 @@ func useArchitecture(a string) {
 }
 
 func nvmrc() string {
-  line, err := file.ReadLines(".nvmrc")					
+  line, err := file.ReadLines(".nvmrc")
   if err == nil {
     fmt.Println("\nFound .nvmrc file with version  "+line[0])
     return line[0]
-  }
-  return ""  
+  } else {
+    fmt.Println("Error reading .nvmrc file. ")
+    return ""
+  }  
 }
 
 func list(listtype string) {
