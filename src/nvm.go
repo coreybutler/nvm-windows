@@ -399,7 +399,7 @@ func use(version string, cpuarch string) {
   // Remove symlink if it already exists
   sym, _ := os.Stat(env.symlink)
   if sym != nil {
-    if !runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`,
+    if !runElevated(fmt.Sprintf(`"%s" cmd /C rmdir /Q /S "%s"`,
       filepath.Join(env.root, "elevate.cmd"),
       filepath.Clean(env.symlink))) {
       return
