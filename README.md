@@ -37,9 +37,9 @@ bleeding edge version without uninstalling the stable version of node, this util
 
 #### _PREREQUISITE:_ Uninstall existing node & npm
 
-Uninstall any existing versions of Node.js before installing NVM for Windows (otherwise you'll have conflicting versions). Delete any existing Node.js installation directories (e.g., "C:\Program Files\nodejs") that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
+Uninstall any existing versions of Node.js before installing NVM for Windows (otherwise you'll have conflicting versions). Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
-Delete the existing npm install location (e.g. "C:\Users\\&lt;user&gt;\\AppData\Roaming\npm") to prevent global module conflicts. Remember to backup any global `npmrc` config (e.g. `C:\Users\&lt;user&gt;\AppData\Roaming\npm\etc\npmrc`), or copy the settings to the user config `C:\Users\&lt;user&gt;\.npmrc`.
+Delete the existing npm install location (e.g. `%AppData%\npm\`) to prevent global module conflicts. Remember to backup any global `npmrc` config (e.g. `%AppData%\etc\npmrc`), or copy the settings to the user config (`%UserProfile%\.npmrc`).
 
 #### Install nvm-windows
 
