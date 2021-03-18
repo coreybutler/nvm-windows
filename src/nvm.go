@@ -727,6 +727,7 @@ func setup() {
   // Process each line and extract the value
   for _, line := range lines {
     line = strings.Trim(line, " \r\n")
+    line = os.ExpandEnv(line)
     if strings.HasPrefix(line, "root:") {
       env.root = filepath.Clean(strings.TrimSpace(regexp.MustCompile("^root:").ReplaceAllString(line, "")))
     } else if strings.HasPrefix(line, "originalpath:") {
