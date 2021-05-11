@@ -1,4 +1,4 @@
-The [npm](https://docs.npmjs.com/cli/v6/configuring-npm/install#windows-node-version-managers)/[Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows)/Google recommended **Node.js version manager for _Windows_**.
+The [npm](https://docs.npmjs.com/cli/v7/configuring-npm/install#windows-node-version-managers)/[Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows)/Google recommended **Node.js version manager for _Windows_**.
 
 # This is not the same thing as nvm.
 _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in the [Why another version manager?](https://github.com/coreybutler/nvm-windows#why-another-version-manager) and [what's the big difference?](https://github.com/coreybutler/nvm-windows#whats-the-big-difference) sections.
