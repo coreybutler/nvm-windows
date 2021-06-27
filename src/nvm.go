@@ -292,20 +292,17 @@ func install(version string, cpuarch string) {
         // sometimes Windows can take some time to enable access to large amounts of files after unzip, use exponential backoff to wait until it is ready
         for _, i := range [5]int{1, 2, 4, 8, 16} {
           time.Sleep(time.Duration(i)*time.Second)
-          moveNpmErr = os.Rename(npmSourcePath, filepath.Join(env.root, "v"+version, "node_modules", "npm"))
+          moveNpmErr = os.Rename(filepath.Join(tempDir, "nvm-npm", "npm-"+npmv), filepath.Join(env.root, "v"+version, "node_modules", "npm"))
           if moveNpmErr == nil { break }
         }
-
       }
 
-      if err == nil && moveNpmErr == nil {
+      if err == nil {
         // Remove the temp directory
         // may consider keep the temp files here
         os.RemoveAll(tempDir)
 
         fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use "+version)
-      } else if moveNpmErr != nil {
-        fmt.Println("Error: Unable to move directory "+npmSourcePath+" to node_modules: "+moveNpmErr.Error())
       } else {
         fmt.Println("Error: Unable to install NPM: "+err.Error());
       }
