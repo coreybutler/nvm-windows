@@ -1,4 +1,4 @@
-The [npm](https://docs.npmjs.com/cli/v6/configuring-npm/install#windows-node-version-managers)/[Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows)/Google recommended **Node.js version manager for _Windows_**.
+The [npm](https://docs.npmjs.com/cli/v7/configuring-npm/install#windows-node-version-managers)/[Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows)/Google recommended **Node.js version manager for _Windows_**.
 
 # This is not the same thing as nvm.
 _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in the [Why another version manager?](https://github.com/coreybutler/nvm-windows#why-another-version-manager) and [what's the big difference?](https://github.com/coreybutler/nvm-windows#whats-the-big-difference) sections.
@@ -37,9 +37,9 @@ bleeding edge version without uninstalling the stable version of node, this util
 
 #### _PREREQUISITE:_ Uninstall existing node & npm
 
-Uninstall any existing versions of Node.js before installing NVM for Windows (otherwise you'll have conflicting versions). Delete any existing Node.js installation directories (e.g., "C:\Program Files\nodejs") that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
+Uninstall any existing versions of Node.js before installing NVM for Windows (otherwise you'll have conflicting versions). Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
-Delete the existing npm install location (e.g. "C:\Users\\&lt;user&gt;\\AppData\Roaming\npm") to prevent global module conflicts. Remember to backup any global `npmrc` config (e.g. `C:\Users\&lt;user&gt;\AppData\Roaming\npm\etc\npmrc`), or copy the settings to the user config `C:\Users\&lt;user&gt;\.npmrc`.
+Backup any global `npmrc` config (e.g. `C:\Users\&lt;user&gt;\AppData\Roaming\npm\etc\npmrc`), or copy the settings to the user config `C:\Users\&lt;user&gt;\.npmrc`. Delete the existing npm install location (e.g. "C:\Users\\&lt;user&gt;\\AppData\Roaming\npm") to prevent global module conflicts. 
 
 #### Install nvm-windows
 
