@@ -13,14 +13,15 @@ if exist src\nvm.exe (
 
 REM Make the executable and add to the binary directory
 echo Building nvm.exe
-go build src\nvm.go
+cd .\src
+go build nvm.go
 
 REM Group the file with the helper binaries
 move nvm.exe %GOBIN%
+cd ..\
 
 REM Codesign the executable
-.\buildtools\signtools\x64\signtool.exe sign /debug /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a %GOBIN%\nvm.exe
-
+@REM .\buildtools\signtools\x64\signtool.exe sign /debug /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a %GOBIN%\nvm.exe
 
 for /f %%i in ('%GOBIN%\nvm.exe version') do set AppVersion=%%i
 echo nvm.exe v%AppVersion% built.
