@@ -19,6 +19,7 @@ import (
 	"nvm/node"
 	"nvm/web"
 
+	"github.com/blang/semver"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -104,6 +105,8 @@ func main() {
 		fmt.Println(NvmVersion)
 	case "v":
 		fmt.Println(NvmVersion)
+	case "version":
+		fmt.Println(NvmVersion)
 	case "arch":
 		if strings.Trim(detail, " \r\n") != "" {
 			detail = strings.Trim(detail, " \r\n")
@@ -125,6 +128,18 @@ func main() {
 		} else {
 			env.proxy = detail
 			saveSettings()
+		}
+	case "current":
+		inuse, _ := node.GetCurrentVersion()
+		v, _ := semver.Make(inuse)
+		err := v.Validate()
+		fmt.Println(err, inuse)
+		if err != nil {
+			fmt.Println(inuse)
+		} else if inuse == "Unknown" {
+			fmt.Println("No current version. Run 'nvm use x.x.x' to set a version.")
+		} else {
+			fmt.Println("v" + inuse)
 		}
 
 	//case "update": update()
@@ -601,6 +616,7 @@ func help() {
 	fmt.Println("\nUsage:")
 	fmt.Println(" ")
 	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
+	fmt.Println("  nvm current                  : Display active version.")
 	fmt.Println("  nvm install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
 	fmt.Println("                                 most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults")
 	fmt.Println("                                 to system arch). Set [arch] to \"all\" to install 32 AND 64 bit versions.")
