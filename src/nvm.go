@@ -18,6 +18,7 @@ import (
   "./nvm/arch"
   "./nvm/file"
   "./nvm/node"
+  "github.com/blang/semver"
   "github.com/olekukonko/tablewriter"
 )
 
@@ -116,7 +117,16 @@ func main() {
         env.proxy = detail
         saveSettings()
       }
-
+    case "current":
+      inuse, _ := node.GetCurrentVersion()
+      v, _ := semver.Make(inuse)
+      err := v.Validate()
+      if err == nil {
+        fmt.Println("v" + inuse)
+      } else {
+        fmt.Println(inuse)
+      }
+  
     //case "update": update()
     case "node_mirror": setNodeMirror(detail)
     case "npm_mirror": setNpmMirror(detail)
@@ -182,18 +192,22 @@ func install(version string, cpuarch string) {
     cpuarch = arch.Validate(cpuarch)
   }
 
-  // If user specifies "latest" version, find out what version is
+  // If user specifies "latest" or "lts" (latest LTS) version, find out what version is
   if version == "latest" {
     url := web.GetFullNodeUrl("latest/SHASUMS256.txt");
     content := web.GetRemoteTextFile(url)
     re := regexp.MustCompile("node-v(.+)+msi")
     reg := regexp.MustCompile("node-v|-x.+")
     version = reg.ReplaceAllString(re.FindString(content),"")
+  } else if version == "lts" {
+    _, ltsList, _, _, _, _ := node.GetAvailable()
+    // ltsList has already been numerically sorted
+    version = ltsList[0]
   }
 
   // if the user specifies only the major version number then install the latest
   // version of the major version number
-  if len(version) == 1 {
+  if !strings.Contains(version, ".") {
     version = findLatestSubVersion(version)
   } else {
     version = cleanVersion(version)
@@ -371,7 +385,15 @@ func findLatestSubVersion(version string) string {
 }
 
 func use(version string, cpuarch string) {
-  if version == "32" || version == "64" {
+  if version == "latest" {
+    installed := node.GetInstalled(env.root)
+    if len(installed) == 0 {
+      fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest")
+      return
+    }
+
+    version = installed[0]
+  } else if version == "32" || version == "64" {
     cpuarch = version
     v, _ := node.GetCurrentVersion()
     version = v
@@ -539,7 +561,7 @@ func list(listtype string) {
     table.AppendBulk(data) // Add Bulk Data
     table.Render()
 
-    fmt.Println("\nThis is a partial list. For a complete list, visit https://nodejs.org/download/release")
+    fmt.Println("\nThis is a partial list. For a complete list, visit https://nodejs.org/download/releases")
   }
 }
 
@@ -577,7 +599,7 @@ func help() {
   fmt.Println("\nUsage:")
   fmt.Println(" ")
   fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
-  fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest stable version.")
+  fmt.Println("  nvm install <version> [arch] : The version can be a node.js version, \"latest\" for the latest stable version, or \"lts\" for the latest LTS.")
   fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
   fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
   fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
@@ -590,7 +612,7 @@ func help() {
   fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
   fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 //  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
-  fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
+  fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version or use \"latest\" to switch to the latest installed version. Optionally specify 32/64bit architecture.")
   fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
   fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
   fmt.Println("                                 If <path> is not set, the current root will be displayed.")
@@ -728,6 +750,7 @@ func setup() {
   // Process each line and extract the value
   var m map[string]string
   for _, line := range lines {
+    line = os.ExpandEnv(line)
     res := strings.Split(strings.TrimSpace(line), ":")
     if (len(res) != 2) {
       continue

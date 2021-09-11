@@ -1,51 +1,68 @@
-Make sure you have reviewed the [common issues](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues) and existing issues before submitting a new issue.
+<!-- 
 
-If this is a question about how to use NVM4W, please use [stackoverflow](http://stackoverflow.com/questions/tagged/nvm-windows) instead.
+👋 WELCOME
+ 
+===============================================================================
+PLEASE, pretty please, make sure your issue hasn't already been addressed.
+===============================================================================
 
-If this is an issue regarding antivirus, make sure you search the existing issues first.
+Here's how:
+
+- Read the README to be aware of npm gotchas & antivirus issues.
+- Review the wiki at https://github.com/coreybutler/nvm-windows/wiki
+- Verify you're running NVM4W with a user account that has administrative privileges.
+- Search the issues (open and closed) to make sure this isn't a duplicate.
+- Review the Discussion board.
+
+--------------------------------------------------------------------------------
+|    If this isn't a bug report, please use the discussion feature instead!    |
+--------------------------------------------------------------------------------
+
+NOTICE:
+
+Windows 7 is not technically supported. This software may work on
+Windows 7, but no fixes will be made for it. Microsoft ended EXTENDED support
+for Windows 7 on January 14, 2020. There is a note about Windows 7 in the wiki.
+
+Only the standard terminal app and Powershell are supported. Non-standard shell
+environments (Cmder, Hyper, Cygwin, git) often manipulate file paths and other
+features. While an attempt is made to make NVM4W work in as many environments
+as possible, we cannot realistically test every non-standard shell.
+
+💬 Failure to fill in the basic questions may result in slow/no response or
+dismissal of the issue. This project has had too many empty issues with nothing
+more than a title and we cannot guess about your environment. Save everyone some
+time and provide answers that will help the project maintainer(s) isolate and
+fix the issue.
+-->
+
+**NVM4W version:** <!-- Run `nvm version` to find out. -->
 
 ### My Environment
 
-- [ ] Windows 7 or below (not truly supported due to EOL - see wiki for details)
-- [ ] Windows 8
-- [ ] Windows 8.1
-- [ ] Windows 10
-- [ ] Windows 10 IoT Core
-- [ ] Windows Server 2012
-- [ ] Windows Server 2012 R2
-- [ ] Windows Server 2016
+<!-- 
+💬 Please provide only the environments you're experiencing a problem with.
 
-- [ ] My Windows installation is non-English.
+Example:
+- Windows 8
+- Windows 8.1
+- Windows 10
+- Windows 10 IoT Core
+- Windows Server 2012
+- Windows Server 2012 R2
+- Windows Server 2016
 
-### I'm using NVM4W version:
-
-Run `nvm version` if you don't know.
-
-### I have already...
-
-- [ ] read the README to be aware of npm gotchas & antivirus issues.
-- [ ] reviewed the [wiki](https://github.com/coreybutler/nvm-windows/wiki) to make sure my issue hasn't already been resolved.
-- [ ] verified I'm using an account with administrative privileges.
-- [ ] searched the issues (open and closed) to make sure this isn't a duplicate.
-- [ ] made sure this isn't a question about how to use NVM for Windows, since [gitter](https://gitter.im/coreybutler/nvm-windows?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) is used for questions and comments.
-
-### My issue is related to (check only those which apply):
-
-- [ ] settings.txt
-- [ ] proxy support (Have you tried version 1.1.0+?)
-- [ ] 32 or 64 bit support (Have you tried version 1.1.3+?)
-- [ ] Character escaping (Have you tried version 1.1.6+?)
-- [ ] A standard shell environment (terminal/powershell)
-- [ ] A non-standard shell environment (Cmder, Hyper, Cygwin, git)
+🤔 If your Windows installation is non-English, please mention it.
+-->
 
 ### Expected Behavior
 
-Fill me in...
+<!-- 💬 Uncomment and fill me in... -->
 
 ### Actual Behavior
 
-Fill me in...
+<!-- 💬 Uncomment and fill me in... -->
 
 ### Steps to reproduce the problem:
 
-Fill me in...
+<!-- 💬 Uncomment and fill me in... -->
