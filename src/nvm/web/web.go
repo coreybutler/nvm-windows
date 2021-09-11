@@ -36,11 +36,17 @@ func SetMirrors(node_mirror string, npm_mirror string){
     if strings.ToLower(nodeBaseAddress[0:4]) != "http" {
       nodeBaseAddress = "http://"+nodeBaseAddress
     }
+    if !strings.HasSuffix(nodeBaseAddress, "/") {
+      nodeBaseAddress += "/"
+    }
   }
   if npm_mirror != "" && npm_mirror != "none"{
     npmBaseAddress = npm_mirror;
     if strings.ToLower(npmBaseAddress[0:4]) != "http" {
       npmBaseAddress = "http://"+npmBaseAddress
+    }
+    if !strings.HasSuffix(npmBaseAddress, "/") {
+      npmBaseAddress += "/"
     }
   }
 }
