@@ -101,8 +101,6 @@ func main() {
 		} else {
 			fmt.Println("\nCurrent Root: " + env.root)
 		}
-	case "version":
-		fmt.Println(NvmVersion)
 	case "v":
 		fmt.Println(NvmVersion)
 	case "version":
@@ -133,7 +131,7 @@ func main() {
 		inuse, _ := node.GetCurrentVersion()
 		v, _ := semver.Make(inuse)
 		err := v.Validate()
-		fmt.Println(err, inuse)
+
 		if err != nil {
 			fmt.Println(inuse)
 		} else if inuse == "Unknown" {
@@ -212,17 +210,11 @@ func install(version string, cpuarch string) {
 
 	// If user specifies "latest" version, find out what version is
 	if version == "latest" {
-		url := web.GetFullNodeUrl("latest/SHASUMS256.txt")
-		content := web.GetRemoteTextFile(url)
-		re := regexp.MustCompile("node-v(.+)+msi")
-		reg := regexp.MustCompile("node-v|-x.+")
-		version = reg.ReplaceAllString(re.FindString(content), "")
+		version = getLatest()
 	}
 
 	if version == "lts" {
-		_, ltsList, _, _, _, _ := node.GetAvailable()
-		// ltsList has already been numerically sorted
-		version = ltsList[0]
+		version = getLTS()
 	}
 
 	// if the user specifies only the major version number then install the latest
@@ -410,13 +402,25 @@ func findLatestSubVersion(version string) string {
 }
 
 func use(version string, cpuarch string) {
-	if version == "32" || version == "64" {
+	cpuarch = arch.Validate(cpuarch)
+
+	if version == "newest" {
+		installed := node.GetInstalled(env.root)
+		if len(installed) == 0 {
+			fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest")
+			return
+		}
+
+		version = installed[0]
+	} else if version == "latest" {
+		version = getLatest()
+	} else if version == "lts" {
+		version = getLTS()
+	} else if version == "32" || version == "64" {
 		cpuarch = version
 		v, _ := node.GetCurrentVersion()
 		version = v
 	}
-
-	cpuarch = arch.Validate(cpuarch)
 
 	version = cleanVersion(version)
 
@@ -630,7 +634,8 @@ func help() {
 	fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
 	fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 	//  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
-	fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally specify 32/64bit architecture.")
+	fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally use \"latest\", \"lts\", or \"newest\".")
+	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
 	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
@@ -689,6 +694,20 @@ func cleanVersion(version string) string {
 func getNpmVersion(nodeversion string) string {
 	_, _, _, _, _, npm := node.GetAvailable()
 	return npm[nodeversion]
+}
+
+func getLatest() string {
+	url := web.GetFullNodeUrl("latest/SHASUMS256.txt")
+	content := web.GetRemoteTextFile(url)
+	re := regexp.MustCompile("node-v(.+)+msi")
+	reg := regexp.MustCompile("node-v|-x.+")
+	return reg.ReplaceAllString(re.FindString(content), "")
+}
+
+func getLTS() string {
+	_, ltsList, _, _, _, _ := node.GetAvailable()
+	// ltsList has already been numerically sorted
+	return ltsList[0]
 }
 
 func updateRootDir(path string) {
