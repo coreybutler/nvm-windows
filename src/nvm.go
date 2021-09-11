@@ -595,7 +595,7 @@ func help() {
 	fmt.Println("\nUsage:")
 	fmt.Println(" ")
 	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
-	fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest stable version.")
+	fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest current version.")
 	fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
 	fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
 	fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
