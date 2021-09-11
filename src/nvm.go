@@ -204,6 +204,12 @@ func install(version string, cpuarch string) {
 		version = reg.ReplaceAllString(re.FindString(content), "")
 	}
 
+	if version == "lts" {
+		_, ltsList, _, _, _, _ := node.GetAvailable()
+		// ltsList has already been numerically sorted
+		version = ltsList[0]
+	}
+
 	// if the user specifies only the major version number then install the latest
 	// version of the major version number
 	if len(version) == 1 {
@@ -595,9 +601,9 @@ func help() {
 	fmt.Println("\nUsage:")
 	fmt.Println(" ")
 	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
-	fmt.Println("  nvm install <version> [arch] : The version can be a node.js version or \"latest\" for the latest current version.")
-	fmt.Println("                                 Optionally specify whether to install the 32 or 64 bit version (defaults to system arch).")
-	fmt.Println("                                 Set [arch] to \"all\" to install 32 AND 64 bit versions.")
+	fmt.Println("  nvm install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
+	fmt.Println("                                 most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults")
+	fmt.Println("                                 to system arch). Set [arch] to \"all\" to install 32 AND 64 bit versions.")
 	fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
 	fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
 	fmt.Println("  nvm on                       : Enable node.js version management.")
