@@ -21,9 +21,9 @@ move nvm.exe %GOBIN%
 cd ..\
 
 REM Codesign the executable
-@REM .\buildtools\signtools\x64\signtool.exe sign /debug /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a %GOBIN%\nvm.exe
+REM .\buildtools\signtools\x64\signtool.exe sign /debug /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a %GOBIN%\nvm.exe
 
-for /f %%i in ('%GOBIN%\nvm.exe version') do set AppVersion=%%i
+for /f %%i in ('"%GOBIN%\nvm.exe" version') do set AppVersion=%%i
 echo nvm.exe v%AppVersion% built.
 
 REM Create the distribution folder
@@ -39,10 +39,10 @@ REM Create the distribution directory
 mkdir "%DIST%"
 
 REM Create the "no install" zip version
-for %%a in (%GOBIN%) do (buildtools\zip -j -9 -r "%DIST%\nvm-noinstall.zip" "%CD%\LICENSE" "%%a\*" -x "%GOBIN%\nodejs.ico")
+for %%a in ("%GOBIN%") do (buildtools\zip -j -9 -r "%DIST%\nvm-noinstall.zip" "%CD%\LICENSE" %%a\* -x "%GOBIN%\nodejs.ico")
 
 REM Generate the installer (InnoSetup)
-buildtools\iscc %INNOSETUP% /o%DIST%
+buildtools\iscc "%INNOSETUP%" "/o%DIST%"
 buildtools\zip -j -9 -r "%DIST%\nvm-setup.zip" "%DIST%\nvm-setup.exe"
 
 REM Generate checksums
