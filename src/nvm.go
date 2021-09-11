@@ -60,8 +60,6 @@ func main() {
 	detail := ""
 	procarch := arch.Validate(env.arch)
 
-	setup()
-
 	// Capture any additional arguments
 	if len(args) > 2 {
 		detail = args[2]
@@ -74,6 +72,10 @@ func main() {
 	if len(args) < 2 {
 		help()
 		return
+	}
+
+	if args[1] != "version" && args[1] != "v" {
+		setup()
 	}
 
 	// Run the appropriate method
@@ -238,8 +240,10 @@ func install(version string, cpuarch string) {
 		}
 
 		// Download node
+		append32 := node.IsVersionInstalled(env.root, version, "64")
+		append64 := node.IsVersionInstalled(env.root, version, "32")
 		if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "32") {
-			success := web.GetNodeJS(env.root, version, "32")
+			success := web.GetNodeJS(env.root, version, "32", append32)
 			if !success {
 				os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
 				fmt.Println("Could not download node.js v" + version + " 32-bit executable.")
@@ -247,7 +251,7 @@ func install(version string, cpuarch string) {
 			}
 		}
 		if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "64") {
-			success := web.GetNodeJS(env.root, version, "64")
+			success := web.GetNodeJS(env.root, version, "64", append64)
 			if !success {
 				os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
 				fmt.Println("Could not download node.js v" + version + " 64-bit executable.")
@@ -256,6 +260,7 @@ func install(version string, cpuarch string) {
 		}
 
 		if file.Exists(filepath.Join(env.root, "v"+version, "node_modules", "npm")) {
+			fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
 			return
 		}
 
@@ -286,12 +291,6 @@ func install(version string, cpuarch string) {
 			// Standard npm support
 			os.Rename(filepath.Join(tempNpmBin, "npm"), filepath.Join(env.root, "v"+version, "npm"))
 			os.Rename(filepath.Join(tempNpmBin, "npm.cmd"), filepath.Join(env.root, "v"+version, "npm.cmd"))
-
-			// corepack support
-			if _, err := os.Stat(filepath.Join(tempNpmBin, "corepack")); err == nil {
-				os.Rename(filepath.Join(tempNpmBin, "corepack"), filepath.Join(env.root, "v"+version, "corepack"))
-				os.Rename(filepath.Join(tempNpmBin, "corepack.cmd"), filepath.Join(env.root, "v"+version, "corepack.cmd"))
-			}
 
 			// npx support
 			if _, err := os.Stat(filepath.Join(tempNpmBin, "npx")); err == nil {

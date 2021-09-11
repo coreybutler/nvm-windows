@@ -11,9 +11,15 @@ import (
 	"nvm/file"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+
+	"archive/zip"
+
+	"github.com/blang/semver"
+	fs "github.com/coreybutler/go-fsutil"
 )
 
 var client = &http.Client{}
@@ -101,8 +107,7 @@ func Download(url string, target string, version string) bool {
 	return true
 }
 
-func GetNodeJS(root string, v string, a string) bool {
-
+func GetNodeJS(root string, v string, a string, append bool) bool {
 	a = arch.Validate(a)
 
 	vpre := ""
@@ -123,17 +128,51 @@ func GetNodeJS(root string, v string, a string) bool {
 		}
 	}
 
-	url := getNodeUrl(v, vpre)
+	url := getNodeUrl(v, vpre, a, append)
 
 	if url == "" {
 		//No url should mean this version/arch isn't available
 		fmt.Println("Node.js v" + v + " " + a + "bit isn't available right now.")
 	} else {
 		fileName := root + "\\v" + v + "\\node" + a + ".exe"
+		if strings.HasSuffix(url, ".zip") {
+			fileName = root + "\\v" + v + "\\node.zip"
+		}
 
 		fmt.Println("Downloading node.js version " + v + " (" + a + "-bit)... ")
 
 		if Download(url, fileName, v) {
+			// Extract the zip file
+			if strings.HasSuffix(url, ".zip") {
+				fmt.Println("Extracting...")
+				err := unzip(fileName, root+"\\v"+v)
+				if err != nil {
+					fmt.Println("Error extracting from Node archive: " + err.Error())
+
+					err = os.Remove(fileName)
+					if err != nil {
+						fmt.Printf("Failed to remove %v after failed extraction. Please remove manually.", fileName)
+					}
+
+					return false
+				}
+
+				err = os.Remove(fileName)
+				if err != nil {
+					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", fileName)
+				}
+
+				zip := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(url), ".zip", "", 1)
+				err = fs.Move(zip, root+"\\v"+v, true)
+				if err != nil {
+					fmt.Println("ERROR moving file: " + err.Error())
+				}
+
+				err = os.RemoveAll(zip)
+				if err != nil {
+					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", zip)
+				}
+			}
 			fmt.Printf("Complete\n")
 			return true
 		} else {
@@ -205,13 +244,98 @@ func IsNode64bitAvailable(v string) bool {
 	return true
 }
 
-func getNodeUrl(v string, vpre string) string {
+func getNodeUrl(v string, vpre string, arch string, append bool) string {
+	a := "x86"
+	if arch == "64" {
+		a = "x64"
+	}
+
 	//url := "http://nodejs.org/dist/v"+v+"/" + vpre + "/node.exe"
 	url := GetFullNodeUrl("v" + v + "/" + vpre + "/node.exe")
+
+	if !append {
+		version, err := semver.Make(v)
+		if err != nil {
+			fmt.Println("Node.js v" + v + " " + a + "bit isn't available right now.")
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		corepack, _ := semver.Make("16.9.0")
+
+		if version.GTE(corepack) {
+			url = GetFullNodeUrl("v" + v + "/node-v" + v + "-win-" + a + ".zip")
+		}
+	}
+
 	// Check online to see if a 64 bit version exists
 	_, err := client.Head(url)
 	if err != nil {
 		return ""
 	}
 	return url
+}
+
+func unzip(src, dest string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := r.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	os.MkdirAll(dest, 0755)
+
+	// Closure to address file descriptors issue with all the deferred .Close() methods
+	extractAndWriteFile := func(f *zip.File) error {
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := rc.Close(); err != nil {
+				panic(err)
+			}
+		}()
+
+		path := filepath.Join(dest, f.Name)
+
+		// Check for ZipSlip (Directory traversal)
+		if !strings.HasPrefix(path, filepath.Clean(dest)+string(os.PathSeparator)) {
+			return fmt.Errorf("illegal file path: %s", path)
+		}
+
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(path, f.Mode())
+		} else {
+			os.MkdirAll(filepath.Dir(path), f.Mode())
+			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if err := f.Close(); err != nil {
+					panic(err)
+				}
+			}()
+
+			_, err = io.Copy(f, rc)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	for _, f := range r.File {
+		err := extractAndWriteFile(f)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
