@@ -67,10 +67,10 @@ func GetFullNpmUrl(path string) string {
 }
 
 func Download(url string, target string, version string) bool {
-
 	output, err := os.Create(target)
 	if err != nil {
 		fmt.Println("Error while creating", target, "-", err)
+		return false
 	}
 	defer output.Close()
 
