@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -179,6 +180,7 @@ func update() {
 */
 
 func install(version string, cpuarch string) {
+	requestedVersion := version
 	args := os.Args
 	lastarg := args[len(args)-1]
 
@@ -223,6 +225,17 @@ func install(version string, cpuarch string) {
 		version = findLatestSubVersion(version)
 	} else {
 		version = cleanVersion(version)
+	}
+
+	v, err := semver.Make(version)
+	if err == nil {
+		err = v.Validate()
+	}
+
+	if err != nil {
+		fmt.Println("\"" + requestedVersion + "\" is not a valid version.")
+		fmt.Println("Please use a valid semantic version number, \"lts\", or \"latest\".")
+		return
 	}
 
 	if checkVersionExceedsLatest(version) {
@@ -366,6 +379,20 @@ func uninstall(version string) {
 		fmt.Println("Provide the version you want to uninstall.")
 		help()
 		return
+	}
+
+	if strings.ToLower(version) == "latest" {
+		version = getLatest()
+	} else if strings.ToLower(version) == "lts" {
+		version = getLTS()
+	} else if strings.ToLower(version) == "newest" {
+		installed := node.GetInstalled(env.root)
+		if len(installed) == 0 {
+			fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest")
+			return
+		}
+
+		version = installed[0]
 	}
 
 	version = cleanVersion(version)
@@ -786,28 +813,43 @@ func setup() {
 	}
 
 	// Process each line and extract the value
+	m := make(map[string]string)
 	for _, line := range lines {
-		line = strings.Trim(line, " \r\n")
+		line = strings.TrimSpace(line)
 		line = os.ExpandEnv(line)
-		if strings.HasPrefix(line, "root:") {
-			env.root = filepath.Clean(strings.TrimSpace(regexp.MustCompile("^root:").ReplaceAllString(line, "")))
-		} else if strings.HasPrefix(line, "originalpath:") {
-			env.originalpath = filepath.Clean(strings.TrimSpace(regexp.MustCompile("^originalpath:").ReplaceAllString(line, "")))
-		} else if strings.HasPrefix(line, "originalversion:") {
-			env.originalversion = strings.TrimSpace(regexp.MustCompile("^originalversion:").ReplaceAllString(line, ""))
-		} else if strings.HasPrefix(line, "arch:") {
-			env.arch = strings.TrimSpace(regexp.MustCompile("^arch:").ReplaceAllString(line, ""))
-		} else if strings.HasPrefix(line, "node_mirror:") {
-			env.node_mirror = strings.TrimSpace(regexp.MustCompile("^node_mirror:").ReplaceAllString(line, ""))
-		} else if strings.HasPrefix(line, "npm_mirror:") {
-			env.npm_mirror = strings.TrimSpace(regexp.MustCompile("^npm_mirror:").ReplaceAllString(line, ""))
-		} else if strings.HasPrefix(line, "proxy:") {
-			env.proxy = strings.TrimSpace(regexp.MustCompile("^proxy:").ReplaceAllString(line, ""))
-			if env.proxy != "none" && env.proxy != "" {
-				if strings.ToLower(env.proxy[0:4]) != "http" {
-					env.proxy = "http://" + env.proxy
-				}
-				web.SetProxy(env.proxy, env.verifyssl)
+		res := strings.Split(line, ":")
+		if len(res) < 2 {
+			continue
+		}
+		m[res[0]] = strings.TrimSpace(strings.Join(res[1:], ":"))
+	}
+
+	if val, ok := m["root"]; ok {
+		env.root = filepath.Clean(val)
+	}
+	if val, ok := m["originalpath"]; ok {
+		env.originalpath = filepath.Clean(val)
+	}
+	if val, ok := m["originalversion"]; ok {
+		env.originalversion = val
+	}
+	if val, ok := m["arch"]; ok {
+		env.arch = val
+	}
+	if val, ok := m["node_mirror"]; ok {
+		env.node_mirror = val
+	}
+	if val, ok := m["npm_mirror"]; ok {
+		env.npm_mirror = val
+	}
+	if val, ok := m["proxy"]; ok {
+		if val != "none" && val != "" {
+			if strings.ToLower(val[0:4]) != "http" {
+				val = "http://" + val
+			}
+			res, err := url.Parse(val)
+			if err != nil {
+				web.SetProxy(res.String(), env.verifyssl)
 			}
 		}
 	}
