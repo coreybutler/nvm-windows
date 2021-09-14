@@ -1,10 +1,10 @@
 # NVM for Windows
-:star: Version 1.1.8 will be released the week of September 13, 2021.
+
+The [Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows)/[npm](https://docs.npmjs.com/cli/v7/configuring-npm/install#windows-node-version-managers)/Google recommended Node.js version manager for _Windows_.
 
 [![Download Now](https://img.shields.io/badge/-Download%20Now!-%2322A6F2)](https://github.com/coreybutler/nvm-windows/releases) [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/coreybutler/nvm-windows?label=Latest%20Release&style=social)]((https://github.com/coreybutler/nvm-windows/releases)) ![GitHub Release Date](https://img.shields.io/github/release-date/coreybutler/nvm-windows?label=Released&style=social) ![GitHub all releases](https://img.shields.io/github/downloads/coreybutler/nvm-windows/total?label=Downloads&style=social) [![Discuss](https://img.shields.io/badge/-Discuss-blue)](https://github.com/coreybutler/nvm-windows/discussions) ![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Fintent%2Ftweet%3Fhashtags%3Dnodejs%26original_referer%3Dhttp%253A%252F%252F127.0.0.1%253A91%252F%26text%3DCheck%2520out%2520NVM%2520for%2520Windows%21%26tw_p%3Dtweetbutton%26url%3Dhttp%253A%252F%252Fgithub.com%252Fcoreybutler%252Fnvm-windows%26via%3Dgoldglovecb)
 
-
-The [Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows)/[npm](https://docs.npmjs.com/cli/v7/configuring-npm/install#windows-node-version-managers)/Google recommended Node.js version manager for _Windows_.
+:star: Version 1.1.8 will be released the week of September 13, 2021.
 
 <details>
 <summary><b>This is not the same thing as nvm!</b> (expand for details)</summary>
@@ -12,24 +12,24 @@ The [Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows
 _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in the [Why another version manager?](https://github.com/coreybutler/nvm-windows#why-another-version-manager) and [what&#39;s the big difference?](https://github.com/coreybutler/nvm-windows#whats-the-big-difference) sections.
 </details>
 
-## Sponsors
+### Sponsors
 
-<table cellpadding="5" cellspacing="0" border="0">
-  <tr>
-    <td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>
-    <td><a href="https://
-marketing-site-48m.pages.dev"><img src="https://github.com/coreybutler/staticassets/raw/master/images/logos/logo_enabledb_w_text.png" width="200px"/></a></td>
-    <td><a href="https://butlerlogic.com"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/butlerlogic_logo.png" width="200px"/></a></td>
-  </tr>
-  <tr>
-    <td colspan="3" align="center">
-      <a href="https://github.com/sponsors/coreybutler"><img src="https://img.shields.io/github/sponsors/coreybutler?label=Individual%20Sponsors&logo=github&style=social"/></a>
-       &nbsp;<a href="https://github.com/sponsors/coreybutler"><img src="https://img.shields.io/badge/-Become%20a%20Sponsor-yellow"/></a>
-    </td>
-  </tr>
-</table>
-
----
+<div align="center">
+  <table cellpadding="5" cellspacing="0" border="0" align="center">
+    <tr>
+      <td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>
+      <td><a href="https://
+  marketing-site-48m.pages.dev"><img src="https://github.com/coreybutler/staticassets/raw/master/images/logos/logo_enabledb_w_text.png" width="200px"/></a></td>
+      <td><a href="https://butlerlogic.com"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/butlerlogic_logo.png" width="200px"/></a></td>
+    </tr>
+    <tr>
+      <td colspan="3" align="center">
+        <a href="https://github.com/sponsors/coreybutler"><img src="https://img.shields.io/github/sponsors/coreybutler?label=Individual%20Sponsors&logo=github&style=social"/></a>
+        &nbsp;<a href="https://github.com/sponsors/coreybutler"><img src="https://img.shields.io/badge/-Become%20a%20Sponsor-yellow"/></a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## Overview
 
