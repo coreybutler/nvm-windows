@@ -1,6 +1,7 @@
-# NVM for Windows
+<h1 align="center">NVM for Windows</h1>
 
-The [Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows)/[npm](https://docs.npmjs.com/cli/v7/configuring-npm/install#windows-node-version-managers)/Google recommended Node.js version manager for _Windows_.
+<div align="center">
+  The <a href="https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows">Microsoft</a>/<a href="https://docs.npmjs.com/cli/v7/configuring-npm/install#windows-node-version-managers">npm</a>/Google recommended Node.js version manager for <em>Windows</em>.<br/><br/>
 
 [![Download Now](https://img.shields.io/badge/-Download%20Now!-%2322A6F2)](https://github.com/coreybutler/nvm-windows/releases) [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/coreybutler/nvm-windows?label=Latest%20Release&style=social)]((https://github.com/coreybutler/nvm-windows/releases)) ![GitHub Release Date](https://img.shields.io/github/release-date/coreybutler/nvm-windows?label=Released&style=social) ![GitHub all releases](https://img.shields.io/github/downloads/coreybutler/nvm-windows/total?label=Downloads&style=social) [![Discuss](https://img.shields.io/badge/-Discuss-blue)](https://github.com/coreybutler/nvm-windows/discussions) ![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Fintent%2Ftweet%3Fhashtags%3Dnodejs%26original_referer%3Dhttp%253A%252F%252F127.0.0.1%253A91%252F%26text%3DCheck%2520out%2520NVM%2520for%2520Windows%21%26tw_p%3Dtweetbutton%26url%3Dhttp%253A%252F%252Fgithub.com%252Fcoreybutler%252Fnvm-windows%26via%3Dgoldglovecb)
 
@@ -11,8 +12,9 @@ The [Microsoft](https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows
 
 _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in the [Why another version manager?](https://github.com/coreybutler/nvm-windows#why-another-version-manager) and [what&#39;s the big difference?](https://github.com/coreybutler/nvm-windows#whats-the-big-difference) sections.
 </details>
+</div>
 
-### Sponsors
+<h3 align="center">Sponsors</div>
 
 <div align="center">
   <table cellpadding="5" cellspacing="0" border="0" align="center">
@@ -30,6 +32,7 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
     </tr>
   </table>
 </div>
+<br/><br/>
 
 ## Overview
 
