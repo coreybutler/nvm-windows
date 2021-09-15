@@ -20,7 +20,7 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
   <table cellpadding="5" cellspacing="0" border="0" align="center">
     <tr>
       <td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>
-      <td><a href="https://marketing-site-48m.pages.dev"><img src="https://github.com/coreybutler/staticassets/raw/master/images/logos/logo_enabledb_w_text.png" width="200px"/></a></td>
+      <td><a href="https://enabledb.com"><img src="https://github.com/coreybutler/staticassets/raw/master/images/logos/logo_enabledb_w_text.png" width="200px"/></a></td>
       <td><a href="https://butlerlogic.com"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/butlerlogic_logo.png" width="200px"/></a></td>
     </tr>
     <tr>
