@@ -15,4 +15,4 @@ jobs:
           days-before-stale: 30
           days-before-close: 7
           days-before-pr-close: -1
-          start-date: '2021-15-09T00:00:00Z' # ISO 8601 or RFC 2822
+          start-date: '2021-09-15T00:00:00Z' # ISO 8601 or RFC 2822
