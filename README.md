@@ -31,6 +31,9 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
 </div>
 <br/>
 
+<div align="center"><b>Running into issues?</b> See the <a href="https://github.com/coreybutler/nvm-windows/wiki/Common-Issues">common issues wiki</a>.</div>
+
+
 ## Overview
 
 Manage multiple installations of node.js on a Windows computer.
