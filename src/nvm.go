@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -179,28 +180,12 @@ func update() {
 }
 */
 
-func install(version string, cpuarch string) {
-	requestedVersion := version
-	args := os.Args
-	lastarg := args[len(args)-1]
-
-	if lastarg == "--insecure" {
-		env.verifyssl = false
-	}
-
-	if version == "" {
-		fmt.Println("\nInvalid version.")
-		fmt.Println(" ")
-		help()
-		return
-	}
-
-	cpuarch = strings.ToLower(cpuarch)
+func getVersion(version string, cpuarch string) (string, string, error) {
+	arch := strings.ToLower(cpuarch)
 
 	if cpuarch != "" {
 		if cpuarch != "32" && cpuarch != "64" && cpuarch != "all" {
-			fmt.Println("\"" + cpuarch + "\" is not a valid CPU architecture. Must be 32 or 64.")
-			return
+			return version, cpuarch, errors.New("\"" + cpuarch + "\" is not a valid CPU architecture. Must be 32 or 64.")
 		}
 	} else {
 		cpuarch = env.arch
@@ -208,6 +193,10 @@ func install(version string, cpuarch string) {
 
 	if cpuarch != "all" {
 		cpuarch = arch.Validate(cpuarch)
+	}
+
+	if version == "" {
+		return "", cpuarch, errors.New("Invalid version.")
 	}
 
 	// If user specifies "latest" version, find out what version is
@@ -219,17 +208,60 @@ func install(version string, cpuarch string) {
 		version = getLTS()
 	}
 
-	// if the user specifies only the major version number then install the latest
-	// version of the major version number
-	if !strings.Contains(version, ".") {
-		version = findLatestSubVersion(version)
-	} else {
-		version = cleanVersion(version)
+	if version == "newest" {
+		installed := node.GetInstalled(env.root)
+		if len(installed) == 0 {
+			return version, "", errors.New("No versions of node.js found. Try installing the latest by typing nvm install latest")
+		}
+
+		version = installed[0]
+	}
+
+	if version == "32" || version == "64" {
+		cpuarch = version
+		v, _ := node.GetCurrentVersion()
+		version = v
 	}
 
 	v, err := semver.Make(version)
 	if err == nil {
 		err = v.Validate()
+	}
+
+	if err == nil {
+		// if the user specifies only the major/minor version, identify the latest
+		// version applicable to what was provided.
+		sv := strings.Split(version, ".")
+		if len(sv) < 3 {
+			version = findLatestSubVersion(version)
+		} else {
+			version = cleanVersion(version)
+		}
+	}
+
+	return version, cpuarch, err
+}
+
+func install(version string, cpuarch string) {
+	requestedVersion := version
+	args := os.Args
+	lastarg := args[len(args)-1]
+
+	if lastarg == "--insecure" {
+		env.verifyssl = false
+	}
+
+	v, a, err := getVersion(version, cpuarch)
+	version = v
+	cpuarch = a
+
+	if err != nil {
+		fmt.Println(err.Error())
+		if version == "" {
+			fmt.Println(" ")
+			help()
+		}
+		return
 	}
 
 	if err != nil {
@@ -429,27 +461,14 @@ func findLatestSubVersion(version string) string {
 }
 
 func use(version string, cpuarch string) {
-	cpuarch = arch.Validate(cpuarch)
+	v, a, err := getVersion(cersion, cpuarch)
+	version = v
+	cpuarch = a
 
-	if version == "newest" {
-		installed := node.GetInstalled(env.root)
-		if len(installed) == 0 {
-			fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest")
-			return
-		}
-
-		version = installed[0]
-	} else if version == "latest" {
-		version = getLatest()
-	} else if version == "lts" {
-		version = getLTS()
-	} else if version == "32" || version == "64" {
-		cpuarch = version
-		v, _ := node.GetCurrentVersion()
-		version = v
+	if err != nil {
+		fmt.Println(err.Error())
+		return
 	}
-
-	version = cleanVersion(version)
 
 	// Make sure the version is installed. If not, warn.
 	if !node.IsVersionInstalled(env.root, version, cpuarch) {
