@@ -609,7 +609,7 @@ func list(listtype string) {
 		table.AppendBulk(data) // Add Bulk Data
 		table.Render()
 
-		fmt.Println("\nThis is a partial list. For a complete list, visit https://nodejs.org/download/release/")
+		fmt.Println("\nThis is a partial list. For a complete list, visit https://nodejs.org/en/download/releases")
 	}
 }
 
