@@ -181,7 +181,7 @@ func update() {
 */
 
 func getVersion(version string, cpuarch string) (string, string, error) {
-	arch := strings.ToLower(cpuarch)
+	cpuarch = strings.ToLower(cpuarch)
 
 	if cpuarch != "" {
 		if cpuarch != "32" && cpuarch != "64" && cpuarch != "all" {
@@ -223,11 +223,12 @@ func getVersion(version string, cpuarch string) (string, string, error) {
 		version = v
 	}
 
+	version = strings.Replace(version, "v", "", 1)
+
 	v, err := semver.Make(version)
 	if err == nil {
 		err = v.Validate()
 	}
-
 	if err == nil {
 		// if the user specifies only the major/minor version, identify the latest
 		// version applicable to what was provided.
@@ -237,6 +238,8 @@ func getVersion(version string, cpuarch string) (string, string, error) {
 		} else {
 			version = cleanVersion(version)
 		}
+
+		version = strings.Replace(version, "v", "", 1)
 	}
 
 	return version, cpuarch, err
@@ -434,9 +437,11 @@ func uninstall(version string) {
 		fmt.Printf("Uninstalling node v" + version + "...")
 		v, _ := node.GetCurrentVersion()
 		if v == version {
-			runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`,
-				filepath.Join(env.root, "elevate.cmd"),
-				filepath.Clean(env.symlink)))
+			_, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			if err != nil {
+				fmt.Println(fmt.Sprint(err))
+				return
+			}
 		}
 		e := os.RemoveAll(filepath.Join(env.root, "v"+version))
 		if e != nil {
@@ -460,13 +465,17 @@ func findLatestSubVersion(version string) string {
 	return latest
 }
 
-func use(version string, cpuarch string) {
-	v, a, err := getVersion(cersion, cpuarch)
+func use(version string, cpuarch string, reload ...bool) {
+	v, a, err := getVersion(version, cpuarch)
 	version = v
 	cpuarch = a
 
 	if err != nil {
-		fmt.Println(err.Error())
+		if strings.Contains(err.Error(), "No Major.Minor.Patch") {
+			fmt.Printf("Unrecognized version/alias: \"%v %v-bit\"", v, a)
+		} else {
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
@@ -489,18 +498,39 @@ func use(version string, cpuarch string) {
 	// Remove symlink if it already exists
 	sym, _ := os.Stat(env.symlink)
 	if sym != nil {
-		if !runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`,
-			filepath.Join(env.root, "elevate.cmd"),
-			filepath.Clean(env.symlink))) {
-			return
+		_, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+		if err != nil {
+			fmt.Println(fmt.Sprint(err))
 		}
+
+		// // Return if the symlink already exists
+		// if ok {
+		// 	fmt.Print(err)
+		// 	return
+		// }
 	}
 
 	// Create new symlink
-	if !runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`,
-		filepath.Join(env.root, "elevate.cmd"),
-		filepath.Clean(env.symlink),
-		filepath.Join(env.root, "v"+version))) {
+	var ok bool
+	ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
+	if err != nil {
+		if strings.Contains(err.Error(), "file already exists") {
+			ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			reloadable := true
+			if len(reload) > 0 {
+				reloadable = reload[0]
+			}
+			if err != nil {
+				fmt.Println(fmt.Sprint(err))
+			} else if reloadable {
+				use(version, cpuarch, false)
+				return
+			}
+		} else {
+			fmt.Print(fmt.Sprint(err))
+		}
+	}
+	if !ok {
 		return
 	}
 
@@ -652,10 +682,12 @@ func enable() {
 }
 
 func disable() {
-	if !runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`,
-		filepath.Join(env.root, "elevate.cmd"),
-		filepath.Clean(env.symlink))) {
+	ok, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+	if !ok {
 		return
+	}
+	if err != nil {
+		fmt.Print(fmt.Sprint(err))
 	}
 
 	fmt.Println("nvm disabled")
@@ -777,7 +809,25 @@ func updateRootDir(path string) {
 	}
 }
 
-func runElevated(command string) bool {
+func runElevated(command string, forceUAC ...bool) (bool, error) {
+	uac := false
+	if len(forceUAC) > 0 {
+		uac = forceUAC[0]
+	}
+
+	if uac {
+		log.Print(command)
+		cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), command)
+		var output bytes.Buffer
+		var _stderr bytes.Buffer
+		cmd.Stdout = &output
+		cmd.Stderr = &_stderr
+		perr := cmd.Run()
+		if perr != nil {
+			return false, errors.New(fmt.Sprint(perr) + ": " + _stderr.String())
+		}
+	}
+
 	c := exec.Command("cmd") // dummy executable that actually needs to exist but we'll overwrite using .SysProcAttr
 
 	// Based on the official docs, syscall.SysProcAttr.CmdLine doesn't exist.
@@ -791,11 +841,15 @@ func runElevated(command string) bool {
 
 	err := c.Run()
 	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-		return false
+		msg := stderr.String()
+		if strings.Contains(msg, "not have sufficient privilege") && uac {
+			return runElevated(command, false)
+		}
+		// fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		return false, errors.New(fmt.Sprint(err) + ": " + msg)
 	}
 
-	return true
+	return true, nil
 }
 
 func saveSettings() {
