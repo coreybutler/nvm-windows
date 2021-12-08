@@ -915,14 +915,16 @@ func setup() {
 	if val, ok := m["npm_mirror"]; ok {
 		env.npm_mirror = val
 	}
+
 	if val, ok := m["proxy"]; ok {
 		if val != "none" && val != "" {
 			if strings.ToLower(val[0:4]) != "http" {
 				val = "http://" + val
 			}
 			res, err := url.Parse(val)
-			if err != nil {
+			if err == nil {
 				web.SetProxy(res.String(), env.verifyssl)
+				env.proxy = res.String()
 			}
 		}
 	}
