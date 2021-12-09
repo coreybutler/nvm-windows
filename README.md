@@ -2,7 +2,7 @@
 
 <div align="center">
   The <a href="https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows">Microsoft</a>/<a href="https://docs.npmjs.com/cli/v7/configuring-npm/install#windows-node-version-managers">npm</a>/Google recommended Node.js version manager for <em>Windows</em>.<br/>
-  
+
 <details>
 <summary><b>This is not the same thing as nvm!</b> (expand for details)</summary>
 
@@ -32,7 +32,6 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
 <br/>
 
 <div align="center"><b>Running into issues?</b> See the <a href="https://github.com/coreybutler/nvm-windows/wiki/Common-Issues">common issues wiki</a>.</div>
-
 
 ## Overview
 
@@ -100,7 +99,7 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 - **`nvm uninstall <version>`**: Uninstall a specific version.
 - **`nvm use <version> [arch]`**: Switch to use the specified version. Optionally use `latest`, `lts`, or `newest`. `newest` is the latest _installed_ version. Optionally specify 32/64bit architecture. `nvm use <arch>` will continue using the selected version, but switch to 32/64 bit mode. For information about using `use` in a specific directory (or using `.nvmrc`), please refer to [issue #16](https://github.com/coreybutler/nvm-windows/issues/16).
 - **`nvm root <path>`**: Set the directory where nvm should store different versions of node.js. If `<path>` is not set, the current root will be displayed.
-- **`nvm version`: Displays the current running version of NVM for Windows.
+- **`nvm version`**: Displays the current running version of NVM for Windows.
 - **`nvm node_mirror <node_mirror_url>`**: Set the node mirror.People in China can use *https://npm.taobao.org/mirrors/node/*
 - **`nvm npm_mirror <npm_mirror_url>`**: Set the npm mirror.People in China can use *https://npm.taobao.org/mirrors/npm/*
 
@@ -174,6 +173,7 @@ Thanks to everyone who has submitted issues on and off Github, made suggestions,
 - [@vkbansal](https://github.com/vkbansal), who provided significant early feedback throughout the early releases.
 - [@rainabba](https://github.com/rainabba) and [@sullivanpt](https://github.com/sullivanpt) for getting Node v4 support integrated.
 - [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w) who resolved the longstanding space escaping issue in path names ([#355](https://github.com/coreybutler/nvm-windows/pull/355)).
+- [ajyong](https://github.com/ajyong) who sponsored the code signing certificate in late 2021.
 
 <br/>
 
