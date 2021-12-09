@@ -180,7 +180,8 @@ func update() {
 }
 */
 
-func getVersion(version string, cpuarch string) (string, string, error) {
+func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (string, string, error) {
+	requestedVersion := version
 	cpuarch = strings.ToLower(cpuarch)
 
 	if cpuarch != "" {
@@ -224,11 +225,11 @@ func getVersion(version string, cpuarch string) (string, string, error) {
 	}
 
 	version = strings.Replace(version, "v", "", 1)
-
 	v, err := semver.Make(version)
 	if err == nil {
 		err = v.Validate()
 	}
+
 	if err == nil {
 		// if the user specifies only the major/minor version, identify the latest
 		// version applicable to what was provided.
@@ -240,6 +241,15 @@ func getVersion(version string, cpuarch string) (string, string, error) {
 		}
 
 		version = strings.Replace(version, "v", "", 1)
+	} else if strings.Contains(err.Error(), "No Major.Minor.Patch") {
+		latestLocalInstall := false
+		if len(localInstallsOnly) > 0 {
+			latestLocalInstall = localInstallsOnly[0]
+		}
+		version = findLatestSubVersion(version, latestLocalInstall)
+		if len(version) == 0 {
+			err = errors.New("Unrecognized version: \"" + requestedVersion + "\"")
+		}
 	}
 
 	return version, cpuarch, err
@@ -456,7 +466,29 @@ func uninstall(version string) {
 	return
 }
 
-func findLatestSubVersion(version string) string {
+func findLatestSubVersion(version string, localOnly ...bool) string {
+	if len(localOnly) > 0 && localOnly[0] {
+		installed := node.GetInstalled(env.root)
+		result := ""
+		for _, v := range installed {
+			if strings.HasPrefix(v, "v"+version) {
+				if result != "" {
+					current, _ := semver.New(strings.Replace(result, "v", "", 1))
+					next, _ := semver.New(strings.Replace(v, "v", "", 1))
+					if current.LT(*next) {
+						result = v
+					}
+				} else {
+					result = v
+				}
+			}
+		}
+
+		if len(strings.TrimSpace(result)) > 0 {
+			return result
+		}
+	}
+
 	url := web.GetFullNodeUrl("latest-v" + version + ".x" + "/SHASUMS256.txt")
 	content := web.GetRemoteTextFile(url)
 	re := regexp.MustCompile("node-v(.+)+msi")
@@ -466,13 +498,13 @@ func findLatestSubVersion(version string) string {
 }
 
 func use(version string, cpuarch string, reload ...bool) {
-	v, a, err := getVersion(version, cpuarch)
+	v, a, err := getVersion(version, cpuarch, true)
 	version = v
 	cpuarch = a
 
 	if err != nil {
 		if strings.Contains(err.Error(), "No Major.Minor.Patch") {
-			fmt.Printf("Unrecognized version/alias: \"%v %v-bit\"", v, a)
+			fmt.Printf("node v%v (%v-bit) is not installed or cannot be found.", v, a)
 		} else {
 			fmt.Println(err.Error())
 		}
