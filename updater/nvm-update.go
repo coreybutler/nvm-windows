@@ -3,15 +3,18 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"internal/syscall/windows/registry"
 	"nvm/web"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
 	"github.com/coreybutler/go-fsutil"
 	"github.com/gen2brain/dlgs"
+	"golang.org/x/sys/windows/registry"
 )
 
 var version = "1.1.8"
@@ -89,7 +92,18 @@ func main() {
 	fsutil.Move(tmpdir, root)
 	os.RemoveAll(tmpdir)
 
-	fmt.Printf("\nUpgraded to NVM for Windows v%v", strings.TrimSpace(run(exe, "version")))
+	version := strings.TrimSpace(run(exe, "version"))
+	key, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\40078385-F676-4C61-9A9C-F9028599D6D3_is1`, registry.QUERY_VALUE)
+	if err == nil {
+		defer key.Close()
+		key.SetStringValue("DisplayVersion", version)
+		key.SetStringValue("DisplayName", "NVM for Windows "+version)
+
+		current := time.Now()
+		key.SetStringValue("InstallDate", current.Format("20060102"))
+	}
+
+	fmt.Printf("\nUpgraded to NVM for Windows v%v", version)
 }
 
 func run(command ...string) string {
