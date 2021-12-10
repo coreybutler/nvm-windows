@@ -848,7 +848,7 @@ func runElevated(command string, forceUAC ...bool) (bool, error) {
 	}
 
 	if uac {
-		log.Print(command)
+		// Alternative elevation option at stackoverflow.com/questions/31558066/how-to-ask-for-administer-privileges-on-windows-with-go
 		cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), command)
 		var output bytes.Buffer
 		var _stderr bytes.Buffer
@@ -970,4 +970,14 @@ func setup() {
 		fmt.Println(env.root + " could not be found or does not exist. Exiting.")
 		return
 	}
+}
+
+func isAdmin() bool {
+	fs, err := os.Open("\\\\.\\PHYSICALDRIVE0")
+	if err == nil {
+		fs.Close()
+		return true
+	}
+
+	return false
 }
