@@ -111,7 +111,9 @@ Please note that any global npm modules you may have installed are **not** share
 
 Users have reported some problems using antivirus, specifically McAfee. It appears the antivirus software is manipulating access to the VBScript engine. See [issue #133](https://github.com/coreybutler/nvm-windows/issues/133) for details and resolution.
 
-Releases _up to_ v1.1.7 are code-signed by [Ecor Ventures LLC](https://ecorventures.com)/[Author.io](https://author.io). This should help prevent false positives with most antivirus software. v1.1.8+ is not code signed (see release notes for reasons).
+**v1.1.8 is not code signed**, but all other versions are signed by [Ecor Ventures LLC](https://ecorventures.com)/[Author.io](https://author.io). This should help prevent false positives with most antivirus software.
+
+> v1.1.8+ was not code signed due to an expired certificate (see the [release notes](https://github.com/coreybutler/nvm-windows/releases/tag/1.1.8) for reasons). **v1.1.9 _is_ code signed** thanks to [ajyong](https://github.com/ajyong), who sponsored the new certificate.
 
 ### Using Yarn
 
