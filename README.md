@@ -54,9 +54,9 @@ There are situations where the ability to switch between different versions of N
 Uninstall any existing versions of Node.js before installing NVM for Windows (otherwise you'll have conflicting versions). Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
 :eyes: **Backup any global `npmrc` config** :eyes:
-(e.g. `C:\Users\<user>\AppData\Roaming\npm\etc\npmrc`)
+(e.g. `%AppData%\npm\etc\npmrc`)
 
-Alternatively, copy the settings to the user config `C:\Users\<user>\.npmrc`. Delete the existing npm install location (e.g. `C:\Users\<user>\AppData\Roaming\npm`) to prevent global module conflicts.
+Alternatively, copy the settings to the user config `%UserProfile%\.npmrc`. Delete the existing npm install location (e.g. `%AppData%\npm`) to prevent global module conflicts.
 
 #### Install nvm-windows
 
@@ -100,8 +100,8 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 - **`nvm use <version> [arch]`**: Switch to use the specified version. Optionally use `latest`, `lts`, or `newest`. `newest` is the latest _installed_ version. Optionally specify 32/64bit architecture. `nvm use <arch>` will continue using the selected version, but switch to 32/64 bit mode. For information about using `use` in a specific directory (or using `.nvmrc`), please refer to [issue #16](https://github.com/coreybutler/nvm-windows/issues/16).
 - **`nvm root <path>`**: Set the directory where nvm should store different versions of node.js. If `<path>` is not set, the current root will be displayed.
 - **`nvm version`**: Displays the current running version of NVM for Windows.
-- **`nvm node_mirror <node_mirror_url>`**: Set the node mirror.People in China can use *https://npm.taobao.org/mirrors/node/*
-- **`nvm npm_mirror <npm_mirror_url>`**: Set the npm mirror.People in China can use *https://npm.taobao.org/mirrors/npm/*
+- **`nvm node_mirror <node_mirror_url>`**: Set the node mirror.People in China can use *https://npmmirror.com/mirrors/node/*
+- **`nvm npm_mirror <npm_mirror_url>`**: Set the npm mirror.People in China can use *https://npmmirror.com/mirrors/npm/*
 
 ### :warning: Gotcha!
 
