@@ -224,7 +224,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 		version = v
 	}
 
-	version = strings.Replace(version, "v", "", 1)
+	version = versionNumberFrom(version)
 	v, err := semver.Make(version)
 	if err == nil {
 		err = v.Validate()
@@ -240,7 +240,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 			version = cleanVersion(version)
 		}
 
-		version = strings.Replace(version, "v", "", 1)
+		version = versionNumberFrom(version)
 	} else if strings.Contains(err.Error(), "No Major.Minor.Patch") {
 		latestLocalInstall := false
 		if len(localInstallsOnly) > 0 {
@@ -482,6 +482,10 @@ func uninstall(version string) {
 	return
 }
 
+func versionNumberFrom(version string) string {
+	return strings.Replace(version, "v", "", 1)
+}
+
 func findLatestSubVersion(version string, localOnly ...bool) string {
 	if len(localOnly) > 0 && localOnly[0] {
 		installed := node.GetInstalled(env.root)
@@ -489,8 +493,8 @@ func findLatestSubVersion(version string, localOnly ...bool) string {
 		for _, v := range installed {
 			if strings.HasPrefix(v, "v"+version) {
 				if result != "" {
-					current, _ := semver.New(strings.Replace(result, "v", "", 1))
-					next, _ := semver.New(strings.Replace(v, "v", "", 1))
+					current, _ := semver.New(versionNumberFrom(result))
+					next, _ := semver.New(versionNumberFrom(v))
 					if current.LT(*next) {
 						result = v
 					}
@@ -501,7 +505,7 @@ func findLatestSubVersion(version string, localOnly ...bool) string {
 		}
 
 		if len(strings.TrimSpace(result)) > 0 {
-			return result
+			return versionNumberFrom(result)
 		}
 	}
 
@@ -514,17 +518,13 @@ func findLatestSubVersion(version string, localOnly ...bool) string {
 }
 
 func use(version string, cpuarch string, reload ...bool) {
-	v, a, err := getVersion(version, cpuarch, true)
-	version = v
-	cpuarch = a
+	version, cpuarch, err := getVersion(version, cpuarch, true)
 
 	if err != nil {
-		if strings.Contains(err.Error(), "No Major.Minor.Patch") {
-			fmt.Printf("node v%v (%v-bit) is not installed or cannot be found.", v, a)
-		} else {
+		if !strings.Contains(err.Error(), "No Major.Minor.Patch") {
 			fmt.Println(err.Error())
+			return
 		}
-		return
 	}
 
 	// Make sure the version is installed. If not, warn.
