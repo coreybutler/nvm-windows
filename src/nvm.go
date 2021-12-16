@@ -269,12 +269,28 @@ func install(version string, cpuarch string) {
 	cpuarch = a
 
 	if err != nil {
-		fmt.Println(err.Error())
-		if version == "" {
-			fmt.Println(" ")
-			help()
+		if strings.Contains(err.Error(), "No Major.Minor.Patch") {
+			sv, sverr := semver.Make(version)
+			if sverr == nil {
+				sverr = sv.Validate()
+			}
+			if sverr != nil {
+				version = findLatestSubVersion(version)
+				if len(version) == 0 {
+					sverr = errors.New("Unrecognized version: \"" + requestedVersion + "\"")
+				}
+			}
+			err = sverr
 		}
-		return
+
+		if err != nil {
+			fmt.Println(err.Error())
+			if version == "" {
+				fmt.Println(" ")
+				help()
+			}
+			return
+		}
 	}
 
 	if err != nil {
@@ -970,14 +986,4 @@ func setup() {
 		fmt.Println(env.root + " could not be found or does not exist. Exiting.")
 		return
 	}
-}
-
-func isAdmin() bool {
-	fs, err := os.Open("\\\\.\\PHYSICALDRIVE0")
-	if err == nil {
-		fs.Close()
-		return true
-	}
-
-	return false
 }
