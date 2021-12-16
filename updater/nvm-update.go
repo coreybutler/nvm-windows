@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"internal/syscall/windows/registry"
 	"nvm/web"
 	"os"
 	"os/exec"
