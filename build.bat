@@ -6,6 +6,16 @@ SET GOBIN=%CD%\bin
 REM Support for older architectures
 SET GOARCH=386
 
+REM First check to see if they have signtool.
+if not exist buildtools\signtool.exe (
+    echo ----------------------------
+    echo You need buildtools\signtool.exe to build nvm for Windows.
+    echo You can get as part of the Windows SDK here: 
+    echo    https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/
+    echo ----------------------------
+    echo "Exiting without building."
+)
+
 REM Cleanup existing build if it exists
 if exist src\nvm.exe (
   del src\nvm.exe
@@ -16,10 +26,10 @@ echo ----------------------------
 echo Building nvm.exe
 echo ----------------------------
 cd .\src
-go build nvm.go
-
-REM Group the file with the helper binaries
-move nvm.exe %GOBIN%
+if exist ..\GOTIDY (
+    go mod tidy
+)
+go build -o %GOBIN%\nvm.exe nvm.go
 cd ..\
 
 REM Codesign the executable
@@ -53,6 +63,9 @@ echo ----------------------------
 echo Generating update utility...
 echo ----------------------------
 cd .\updater
+if exist ..\GOTIDY (
+    go mod tidy
+)
 go build nvm-update.go
 move nvm-update.exe %DIST%
 cd ..\
