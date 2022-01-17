@@ -197,7 +197,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	}
 
 	if version == "" {
-		return "", cpuarch, errors.New("Invalid version.")
+		return "", cpuarch, errors.New("A version argument is required but missing.")
 	}
 
 	// If user specifies "latest" version, find out what version is
@@ -212,7 +212,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	if version == "newest" {
 		installed := node.GetInstalled(env.root)
 		if len(installed) == 0 {
-			return version, "", errors.New("No versions of node.js found. Try installing the latest by typing nvm install latest")
+			return version, "", errors.New("No versions of node.js found. Try installing the latest by typing nvm install latest.")
 		}
 
 		version = installed[0]
@@ -449,7 +449,7 @@ func uninstall(version string) {
 	} else if strings.ToLower(version) == "newest" {
 		installed := node.GetInstalled(env.root)
 		if len(installed) == 0 {
-			fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest")
+			fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest.")
 			return
 		}
 
@@ -916,7 +916,7 @@ func useArchitecture(a string) {
   if a == "32" || a == "64" {
     env.arch = a
     saveSettings()
-    fmt.Println("Set to "+a+"-bit mode")
+    fmt.Println("Set to "+a+"-bit mode.")
   } else {
     fmt.Println("Cannot set architecture to "+a+". Must be 32 or 64 are acceptable values.")
   }
