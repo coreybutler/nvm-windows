@@ -147,6 +147,10 @@ func main() {
 		setNodeMirror(detail)
 	case "npm_mirror":
 		setNpmMirror(detail)
+	case "ls-remote":
+		nvmLsRemote()
+	case "list-remote":
+		nvmLsRemote()
 	default:
 		help()
 	}
@@ -158,6 +162,35 @@ func main() {
 func setNodeMirror(uri string) {
 	env.node_mirror = uri
 	saveSettings()
+}
+
+func nvmLsRemote() {
+	args := os.Args
+	tableheaderfooter := []string{"Version", "Date", "Lts"}
+	data := web.GetNodeRemoteVersionList()
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(tableheaderfooter)
+	table.SetFooter(tableheaderfooter)
+	var listdata [][]string
+	for _, v := range data {
+		
+		if (len(args) > 2 && !strings.HasPrefix(v.Version, "v"+args[2])) {
+			continue;
+		}
+		var row []string
+		var rrow [][]string
+		row = append(row, v.Version)
+		row = append(row, v.Date)
+		if len(v.Lts) > 0 {
+			row = append(row, "LTS: "+v.Lts)
+		} else {
+			row = append(row, v.Lts)
+		}
+		rrow = append(rrow, row)
+		listdata = append(rrow, listdata...)
+	}
+	table.AppendBulk(listdata)
+	table.Render()
 }
 
 func setNpmMirror(uri string) {

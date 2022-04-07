@@ -48,13 +48,15 @@ There are situations where the ability to switch between different versions of N
 ![Switch between stable and unstable versions.](https://github.com/coreybutler/staticassets/raw/master/images/nvm-usage-highlighted.jpg)
 
 ### Installation & Upgrades
-Manual installer [Download Now](https://github.com/coreybutler/nvm-windows/releases) 
+
+Manual installer [Download Now](https://github.com/coreybutler/nvm-windows/releases)
+
 ```
 choco install nvm
 scoop install nvm
 ```
 
-#### :star: :star: Uninstall any pre-existing Node installations!! :star: :star:
+#### :star: :star: Uninstall any pre-existing Node installations!! :star: :star
 
 Uninstall any existing versions of Node.js before installing NVM for Windows (otherwise you'll have conflicting versions). Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
@@ -105,10 +107,11 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 - **`nvm use <version> [arch]`**: Switch to use the specified version. Optionally use `latest`, `lts`, or `newest`. `newest` is the latest _installed_ version. Optionally specify 32/64bit architecture. `nvm use <arch>` will continue using the selected version, but switch to 32/64 bit mode. For information about using `use` in a specific directory (or using `.nvmrc`), please refer to [issue #16](https://github.com/coreybutler/nvm-windows/issues/16).
 - **`nvm root <path>`**: Set the directory where nvm should store different versions of node.js. If `<path>` is not set, the current root will be displayed.
 - **`nvm version`**: Displays the current running version of NVM for Windows.
-- **`nvm node_mirror <node_mirror_url>`**: Set the node mirror.People in China can use *https://npmmirror.com/mirrors/node/*
-- **`nvm npm_mirror <npm_mirror_url>`**: Set the npm mirror.People in China can use *https://npmmirror.com/mirrors/npm/*
+- **`nvm node_mirror <node_mirror_url>`**: Set the node mirror.People in China can use *<https://npmmirror.com/mirrors/node/>*
+- **`nvm npm_mirror <npm_mirror_url>`**: Set the npm mirror.People in China can use *<https://npmmirror.com/mirrors/npm/>*
+- **`nvm ls-remote [<version>]`**: List remote versions available for install, matching a given <version> if provided
 
-### :warning: Gotcha!
+### :warning: Gotcha
 
 Please note that any global npm modules you may have installed are **not** shared between the various versions of node.js you have installed. Additionally, some npm modules may not be supported in the version of node you're using, so be aware of your environment as you work.
 
@@ -128,7 +131,7 @@ See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how
 
 ### Build from source
 
-- Install go from http://golang.org
+- Install go from <http://golang.org>
 - Download source / Git Clone the repo
 - Change GOARCH to amd64 in build.bat if you feel like building a 64-bit executable
 - Fire up a Windows command prompt and change directory to project dir

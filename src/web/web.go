@@ -2,6 +2,7 @@ package web
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,6 +28,12 @@ var nodeBaseAddress = "https://nodejs.org/dist/"
 var npmBaseAddress = "https://github.com/npm/cli/archive/"
 
 // var oldNpmBaseAddress = "https://github.com/npm/npm/archive/"
+
+type NodeVersion struct {
+	Version  string `json:"version"`
+	Date     string `json:"date"`
+	Lts      string `json:"lts"`
+}
 
 func SetProxy(p string, verifyssl bool) {
 	if p != "" && p != "none" {
@@ -248,6 +255,29 @@ func IsNode64bitAvailable(v string) bool {
 
 	// TODO: fixme. Assume a 64 bit version exists
 	return true
+}
+
+func GetNodeRemoteVersionList() []NodeVersion {
+	var AllNodeVersions []NodeVersion
+	url := nodeBaseAddress + "index.json"
+	response, err := client.Get(url)
+	if err != nil {
+		fmt.Println("Error while fetching version", url, "-", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode == http.StatusOK {
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println("Error while parsing version response body", url, "-", err)
+		}
+
+		if err := json.Unmarshal(bodyBytes, &AllNodeVersions); err != nil {
+			fmt.Println("Error while parsing versions", url, "-", err)
+		}
+
+	}
+	return AllNodeVersions
 }
 
 func getNodeUrl(v string, vpre string, arch string, append bool) string {
