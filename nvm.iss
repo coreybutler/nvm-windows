@@ -1,7 +1,7 @@
 #define MyAppName "NVM for Windows"
 #define MyAppShortName "nvm"
 #define MyAppLCShortName "nvm"
-#define MyAppVersion ""
+#define MyAppVersion "1.1.9"
 #define MyAppPublisher "Ecor Ventures LLC"
 #define MyAppURL "https://github.com/coreybutler/nvm-windows"
 #define MyAppExeName "nvm.exe"
@@ -13,8 +13,8 @@
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 PrivilegesRequired=admin
-SignTool=MsSign $f
-SignedUninstaller=yes
+; SignTool=MsSign $f
+; SignedUninstaller=yes
 AppId=40078385-F676-4C61-9A9C-F9028599D6D3
 AppName={#MyAppName}
 AppVersion={%AppVersion}
@@ -37,7 +37,7 @@ ChangesEnvironment=yes
 DisableProgramGroupPage=yes
 ArchitecturesInstallIn64BitMode=x64 ia64
 UninstallDisplayIcon={app}\{#MyIcon}
-AppCopyright=Copyright (C) 2018 Ecor Ventures LLC and contributors.
+AppCopyright=Copyright (C) 2018-2021 Ecor Ventures LLC, Corey Butler, and contributors.
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

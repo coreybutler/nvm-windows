@@ -1,0 +1,115 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["needs review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting your issue, please do the following:
+        
+        1. Make sure you're running Windows. If you're using macOS, Linux, WSL/WSL2, or a Docker container using Linux, then you probably want [nvm](https://github.com/nvm-sh/nvm) (this is NVM _for Windows_).
+        1. Review the [common issues and resolutions](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues) wiki page.
+        1. Search existing issues to see if your issue has already been opened/closed (help prevent duplicates).
+        1. Remember, there is a [wiki](https://github.com/coreybutler/nvm-windows/wiki) that answers questions about installation types, building from source, and project philosophy concerns.
+        1. **[Read the README](https://github.com/coreybutler/nvm-windows)**. We took the time to write it for you. Many people ignore this.
+        1. If your issue is actually a question, please use the [discussions page](https://github.com/coreybutler/nvm-windows/discussions) so the whole community can help.
+        1. If you're seeking commercial help or requesting something you really need for work, please consider sponsoring the change/fix.
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: issue
+    attributes:
+      label: What happened?
+      description: Please provide a clear and concise description of what happened.
+      placeholder: Tell us what you see!
+      value: ""
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What did you expect to happen?
+      description: Please provide a clear and concise description of what you expected to happen.
+      placeholder: Tell us what you thought you'd see!
+      value: ""
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version are you running?
+      options:
+        - 1.1.9 or newer (Default)
+        - 1.1.8
+        - 1.1.7
+        - 1.1.6 or older
+    validations:
+      required: true
+  - type: dropdown
+    id: os-version
+    attributes:
+      label: Which version of Windows?
+      multiple: true
+      options:
+        - Windows 11+
+        - Windows 10 (Default)
+        - Windows 8.1
+        - Windows 8
+        - Windows 7
+        - Older
+  - type: dropdown
+    id: os-language
+    attributes:
+      label: Which locale?
+      description: Are you running a non-English version of Windows?
+      multiple: false
+      options:
+        - English (Default)
+        - Western European
+        - Asian
+        - Other Non-English
+  - type: dropdown
+    id: permissions
+    attributes:
+      label: User Permissions?
+      options:
+        - Administrative Privileges, Elevated
+        - Administrative Privileges, Non-Elevated
+        - Standard User, Elevated
+        - Standard Use, Non-Elevated
+        - I don't know (Default)
+        - Other, please describe
+  - type: dropdown
+    id: developer-mode
+    attributes:
+      label: Is Developer Mode enabled?
+      description: See [Enable your device for development](https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development).
+      options:
+        - Yes
+        - No (Default)
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log/console output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: misc
+    attributes:
+      label: Anything else?
+      description: |
+      Links? References? Anything that will give us more context about the issue you are encountering!
+
+      Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in.
+    validations:
+      required: false

@@ -1,0 +1,68 @@
+<!-- 
+
+👋 WELCOME
+ 
+===============================================================================
+PLEASE, pretty please, make sure your issue hasn't already been addressed.
+===============================================================================
+
+Here's how:
+
+- Read the README to be aware of npm gotchas & antivirus issues.
+- Review the wiki at https://github.com/coreybutler/nvm-windows/wiki
+- Verify you're running NVM4W with a user account that has administrative privileges.
+- Search the issues (open and closed) to make sure this isn't a duplicate.
+- Review the Discussion board.
+
+--------------------------------------------------------------------------------
+|    If this isn't a bug report, please use the discussion feature instead!    |
+--------------------------------------------------------------------------------
+
+NOTICE:
+
+Windows 7 is not technically supported. This software may work on
+Windows 7, but no fixes will be made for it. Microsoft ended EXTENDED support
+for Windows 7 on January 14, 2020. There is a note about Windows 7 in the wiki.
+
+Only the standard terminal app and Powershell are supported. Non-standard shell
+environments (Cmder, Hyper, Cygwin, git) often manipulate file paths and other
+features. While an attempt is made to make NVM4W work in as many environments
+as possible, we cannot realistically test every non-standard shell.
+
+💬 Failure to fill in the basic questions may result in slow/no response or
+dismissal of the issue. This project has had too many empty issues with nothing
+more than a title and we cannot guess about your environment. Save everyone some
+time and provide answers that will help the project maintainer(s) isolate and
+fix the issue.
+-->
+
+**NVM4W version:** <!-- Run `nvm version` to find out. -->
+
+### My Environment
+
+<!-- 
+💬 Please provide only the environments you're experiencing a problem with.
+
+Example:
+- Windows 8
+- Windows 8.1
+- Windows 10
+- Windows 10 IoT Core
+- Windows Server 2012
+- Windows Server 2012 R2
+- Windows Server 2016
+
+🤔 If your Windows installation is non-English, please mention it.
+-->
+
+### Expected Behavior
+
+<!-- 💬 Uncomment and fill me in... -->
+
+### Actual Behavior
+
+<!-- 💬 Uncomment and fill me in... -->
+
+### Steps to reproduce the problem:
+
+<!-- 💬 Uncomment and fill me in... -->
