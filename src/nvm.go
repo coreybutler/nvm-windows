@@ -347,7 +347,9 @@ func install(version string, cpuarch string) {
 		}
 
 		if file.Exists(filepath.Join(env.root, "v"+version, "node_modules", "npm")) {
-			fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
+			npmv := getNpmVersion(version)
+			fmt.Println("npm v"+npmv+" installed successfully.")
+			fmt.Println("\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
 			return
 		}
 

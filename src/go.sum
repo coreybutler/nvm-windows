@@ -6,6 +6,8 @@ github.com/coreybutler/go-fsutil v1.1.0 h1:HSp9qewM4XspmJJDi4p/QxSSVQTAhn2AlqJxQ
 github.com/coreybutler/go-fsutil v1.1.0/go.mod h1:B+6ufEkkRZgFwyR2sHEVG9dMzVBU3GbyGyYmCq7YkEk=
 github.com/coreybutler/go-fsutil v1.1.1 h1:ec295Tjnk/BEP/TdiyoaYhtg5/8qcM+BfVyhpjr/6ts=
 github.com/coreybutler/go-fsutil v1.1.1/go.mod h1:B+6ufEkkRZgFwyR2sHEVG9dMzVBU3GbyGyYmCq7YkEk=
+github.com/coreybutler/go-fsutil v1.2.0 h1:kbm62NSofawglUppEOhpHC3NDf/J7ZpguBirBnsgUwU=
+github.com/coreybutler/go-fsutil v1.2.0/go.mod h1:B+6ufEkkRZgFwyR2sHEVG9dMzVBU3GbyGyYmCq7YkEk=
 github.com/mattn/go-runewidth v0.0.9 h1:Lm995f3rfxdpd6TSmuVCHVb/QhupuXlYr8sCI/QdE+0=
 github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
