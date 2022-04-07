@@ -109,7 +109,7 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 - **`nvm version`**: Displays the current running version of NVM for Windows.
 - **`nvm node_mirror <node_mirror_url>`**: Set the node mirror.People in China can use *<https://npmmirror.com/mirrors/node/>*
 - **`nvm npm_mirror <npm_mirror_url>`**: Set the npm mirror.People in China can use *<https://npmmirror.com/mirrors/npm/>*
-- **`nvm ls-remote [<version>]`**: List remote versions available for install, matching a given <version> if provided
+- **`nvm ls-remote [<version>]`**: List remote NodeJS versions available for install, matching a given `<version>` if provided
 
 ### :warning: Gotcha
 

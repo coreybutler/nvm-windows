@@ -799,6 +799,7 @@ func help() {
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
 	fmt.Println("  nvm version                  : Displays the current running version of nvm for Windows. Aliased as v.")
+	fmt.Println("  nvm ls-remote [<version>]    : List remote NodeJS versions available for install, matching a given <version> if provided.")
 	fmt.Println(" ")
 }
 
