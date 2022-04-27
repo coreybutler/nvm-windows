@@ -169,7 +169,7 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 				}
 
 				zip := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(url), ".zip", "", 1)
-				err = fs.Move(zip, root+"\\v"+v)
+				err = fs.Move(zip, root+"\\v"+v, true)
 				if err != nil {
 					fmt.Println("ERROR moving file: " + err.Error())
 				}
