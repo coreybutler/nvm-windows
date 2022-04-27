@@ -878,10 +878,6 @@ func runElevated(command string, forceUAC ...bool) (bool, error) {
 
 	if uac {
 		// Alternative elevation option at stackoverflow.com/questions/31558066/how-to-ask-for-administer-privileges-on-windows-with-go
-		path := filepath.Join(env.root, "elevate.cmd")
-		command = strings.ReplaceAll(command, path, ``)
-		//command = strings.ReplaceAll(command, `"`, ``)
-		command = strings.TrimSpace(command)
 		cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), command)
 		var output bytes.Buffer
 		var _stderr bytes.Buffer
@@ -907,8 +903,8 @@ func runElevated(command string, forceUAC ...bool) (bool, error) {
 	err := c.Run()
 	if err != nil {
 		msg := stderr.String()
-		if strings.Contains(msg, "not have sufficient privilege") && !uac {
-			return runElevated(command, true)
+		if strings.Contains(msg, "not have sufficient privilege") && uac {
+			return runElevated(command, false)
 		}
 		// fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return false, errors.New(fmt.Sprint(err) + ": " + msg)
