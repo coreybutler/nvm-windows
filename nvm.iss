@@ -6,6 +6,7 @@
 #define MyAppURL "https://github.com/coreybutler/nvm-windows"
 #define MyAppExeName "nvm.exe"
 #define MyIcon "bin\nodejs.ico"
+#define MyAppId "40078385-F676-4C61-9A9C-F9028599D6D3"
 #define ProjectRoot "."
 
 [Setup]
@@ -15,7 +16,7 @@
 PrivilegesRequired=admin
 ; SignTool=MsSign $f
 ; SignedUninstaller=yes
-AppId=40078385-F676-4C61-9A9C-F9028599D6D3
+AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={%AppVersion}
 AppVerName={#MyAppName} {%AppVersion}
@@ -260,6 +261,8 @@ begin
     RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'NVM_SYMLINK', SymlinkPage.Values[0]);
     RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'NVM_HOME', ExpandConstant('{app}'));
     RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'NVM_SYMLINK', SymlinkPage.Values[0]);
+    
+    RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppId}_is1', 'DisplayVersion', '{#MyAppVersion}');
 
     // Update system and user PATH if needed
     RegQueryStringValue(HKEY_LOCAL_MACHINE,
