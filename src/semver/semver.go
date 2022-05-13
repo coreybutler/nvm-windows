@@ -32,7 +32,7 @@ type Version struct {
   Minor uint64
   Patch uint64
   Pre   []*PRVersion
-  Build []string //No Precendence
+  Build []string //No Precedence
 }
 
 // Version to string
@@ -126,7 +126,7 @@ func (v *Version) Compare(o *Version) int {
       }
     }
 
-    // If all pr versions are the equal but one has further prversion, this one greater
+    // If all pr versions are the equal but one has further pr version, this one greater
     if i == len(v.Pre) && i == len(o.Pre) {
       return 0
     } else if i == len(v.Pre) && i < len(o.Pre) {
@@ -222,7 +222,7 @@ func Parse(s string) (*Version, error) {
   } else if preIndex == -1 && buildIndex == -1 {
     subVersionIndex = len(parts[2])
   } else {
-    // if there is no actual prversion but a hyphen inside the build meta data
+    // if there is no actual pr version but a hyphen inside the build meta data
     if buildIndex < preIndex {
       subVersionIndex = buildIndex
       preIndex = -1 // Build meta data before preIndex found implicates there are no prerelease versions
