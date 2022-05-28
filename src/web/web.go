@@ -74,7 +74,16 @@ func Download(url string, target string, version string) bool {
 	}
 	defer output.Close()
 
-	response, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	// TODO: Add version to user agent
+	req.Header.Set("User-Agent", "NVM for Windows")
+
+	response, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
 	}
@@ -83,7 +92,7 @@ func Download(url string, target string, version string) bool {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println("Download interrupted.Rolling back...")
+		fmt.Println("Download interrupted. Rolling back...")
 		output.Close()
 		response.Body.Close()
 		var err error
@@ -97,14 +106,53 @@ func Download(url string, target string, version string) bool {
 		}
 		os.Exit(1)
 	}()
-	_, err = io.Copy(output, response.Body)
-	if err != nil {
-		fmt.Println("Error while downloading", url, "-", err)
+	var body []byte
+	if response.StatusCode != 200 {
+		body, err = ioutil.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println("Failed to read response body: " + err.Error())
+		}
+	} else {
+		_, err = io.Copy(output, response.Body)
+		if err != nil {
+			fmt.Println("Error while downloading", url, "-", err)
+		}
 	}
-	if response.Status[0:3] != "200" {
+
+	redirect := response.Header.Get("Location")
+
+	switch response.StatusCode {
+	case 300:
+		if len(redirect) > 0 && redirect != url {
+			return Download(redirect, target, version)
+		}
+
+		if strings.Contains(url, "/npm/cli/archive/v6.14.17.zip") {
+			return Download("https://github.com/npm/cli/archive/refs/tags/v6.14.17.zip", target, version)
+		}
+
+		fmt.Printf("\n\nREMOTE SERVER FAILURE\n\n---\nGET %v --> %v\n\n", url, response.StatusCode)
+		for key, val := range response.Header {
+			fmt.Printf("%v: %v\n", key, val)
+		}
+		if len(body) > 0 {
+			fmt.Printf("\n%s", body)
+		}
+		fmt.Println("\n---\n\n")
+
+		return false
+	case 302:
+		fallthrough
+	case 307:
+		fmt.Println("Redirecting to " + redirect)
+		return Download(redirect, target, version)
+	case 200:
+		// No processing necessary for successful response
+	default:
 		fmt.Println("Download failed. Rolling Back.")
 		err := os.Remove(target)
 		if err != nil {
+			fmt.Println(target)
 			fmt.Println("Rollback failed.", err)
 		}
 		return false
