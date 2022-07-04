@@ -518,6 +518,14 @@ func findLatestSubVersion(version string, localOnly ...bool) string {
 }
 
 func use(version string, cpuarch string, reload ...bool) {
+	if len(version) == 0 {
+		content, err := os.ReadFile(".nvmrc")
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		version = string(content)
+	}
 	version, cpuarch, err := getVersion(version, cpuarch, true)
 
 	if err != nil {
@@ -760,6 +768,7 @@ func help() {
 	fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
 	fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 	//  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
+	fmt.Println("  nvm use                      : Switch to use the version specified in a `.nvmrc` file in the current directory.")
 	fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally use \"latest\", \"lts\", or \"newest\".")
 	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
 	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
