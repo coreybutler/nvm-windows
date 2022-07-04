@@ -13,7 +13,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"nvm/arch"
@@ -463,7 +462,7 @@ func uninstall(version string) {
 		fmt.Printf("Uninstalling node v" + version + "...")
 		v, _ := node.GetCurrentVersion()
 		if v == version {
-			_, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			_, err := runElevated("rmdir", filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink))
 			if err != nil {
 				fmt.Println(fmt.Sprint(err))
 				return
@@ -546,7 +545,7 @@ func use(version string, cpuarch string, reload ...bool) {
 	// Remove symlink if it already exists
 	sym, _ := os.Stat(env.symlink)
 	if sym != nil {
-		_, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+		_, err := runElevated("rmdir", filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink))
 		if err != nil {
 			fmt.Println(fmt.Sprint(err))
 		}
@@ -560,10 +559,10 @@ func use(version string, cpuarch string, reload ...bool) {
 
 	// Create new symlink
 	var ok bool
-	ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
+	ok, err = runElevated("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
 	if err != nil {
 		if strings.Contains(err.Error(), "file already exists") {
-			ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			ok, err = runElevated("rmdir", filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink))
 			reloadable := true
 			if len(reload) > 0 {
 				reloadable = reload[0]
@@ -730,7 +729,7 @@ func enable() {
 }
 
 func disable() {
-	ok, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+	ok, err := runElevated("rmdir", filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink))
 	if !ok {
 		return
 	}
@@ -857,44 +856,19 @@ func updateRootDir(path string) {
 	}
 }
 
-func runElevated(command string, forceUAC ...bool) (bool, error) {
-	uac := false
-	if len(forceUAC) > 0 {
-		uac = forceUAC[0]
-	}
+func runElevated(name string, arg ...string) (bool, error) {
+	return run(filepath.Join(env.root, "elevate.cmd"), append([]string{"cmd", "/C", name}, arg...)...)
+}
 
-	if uac {
-		// Alternative elevation option at stackoverflow.com/questions/31558066/how-to-ask-for-administer-privileges-on-windows-with-go
-		cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), command)
-		var output bytes.Buffer
-		var _stderr bytes.Buffer
-		cmd.Stdout = &output
-		cmd.Stderr = &_stderr
-		perr := cmd.Run()
-		if perr != nil {
-			return false, errors.New(fmt.Sprint(perr) + ": " + _stderr.String())
-		}
-	}
-
-	c := exec.Command("cmd") // dummy executable that actually needs to exist but we'll overwrite using .SysProcAttr
-
-	// Based on the official docs, syscall.SysProcAttr.CmdLine doesn't exist.
-	// But it does and is vital:
-	// https://github.com/golang/go/issues/15566#issuecomment-333274825
-	// https://medium.com/@felixge/killing-a-child-process-and-all-of-its-children-in-go-54079af94773
-	c.SysProcAttr = &syscall.SysProcAttr{CmdLine: command}
+func run(name string, arg ...string) (bool, error) {
+	c := exec.Command(name, arg...)
 
 	var stderr bytes.Buffer
 	c.Stderr = &stderr
 
 	err := c.Run()
 	if err != nil {
-		msg := stderr.String()
-		if strings.Contains(msg, "not have sufficient privilege") && uac {
-			return runElevated(command, false)
-		}
-		// fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-		return false, errors.New(fmt.Sprint(err) + ": " + msg)
+		return false, errors.New(fmt.Sprint(err) + ": " + stderr.String())
 	}
 
 	return true, nil
