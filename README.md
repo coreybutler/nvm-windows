@@ -33,6 +33,15 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
 
 <div align="center"><b>Running into issues?</b> See the <a href="https://github.com/coreybutler/nvm-windows/wiki/Common-Issues">common issues wiki</a>.</div>
 
+<br/>
+<table style="background-color:red;padding:6px;border-radius:3px;">
+  <tr><td>
+    <h3>Seeking Feedback:</h3>
+    We're working on Runtime (rt), the successor to NVM For Windows. Please contribute by taking a minute to complete <a href="https://t.co/oGqQCM9FPx">this form</a>. Thank you!
+    <h3></h3>
+  </td></tr>
+</table>
+
 ## Overview
 
 Manage multiple installations of node.js on a Windows computer.
