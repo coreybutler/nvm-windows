@@ -37,9 +37,9 @@ func SetProxy(p string, verifyssl bool) {
 	}
 }
 
-func SetMirrors(node_mirror string, npm_mirror string) {
-	if node_mirror != "" && node_mirror != "none" {
-		nodeBaseAddress = node_mirror
+func SetMirrors(nodeMirror string, npmMirror string) {
+	if nodeMirror != "" && nodeMirror != "none" {
+		nodeBaseAddress = nodeMirror
 		if strings.ToLower(nodeBaseAddress[0:4]) != "http" {
 			nodeBaseAddress = "http://" + nodeBaseAddress
 		}
@@ -47,8 +47,8 @@ func SetMirrors(node_mirror string, npm_mirror string) {
 			nodeBaseAddress = nodeBaseAddress + "/"
 		}
 	}
-	if npm_mirror != "" && npm_mirror != "none" {
-		npmBaseAddress = npm_mirror
+	if npmMirror != "" && npmMirror != "none" {
+		npmBaseAddress = npmMirror
 		if strings.ToLower(npmBaseAddress[0:4]) != "http" {
 			npmBaseAddress = "http://" + npmBaseAddress
 		}
