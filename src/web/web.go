@@ -182,22 +182,22 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 		}
 	}
 
-	url := getNodeUrl(v, vpre, a, append)
+	nodeUrl := getNodeUrl(v, vpre, a, append)
 
-	if url == "" {
-		//No url should mean this version/arch isn't available
+	if nodeUrl == "" {
+		//No nodeUrl should mean this version/arch isn't available
 		fmt.Println("Node.js v" + v + " " + a + "bit isn't available right now.")
 	} else {
 		fileName := root + "\\v" + v + "\\node" + a + ".exe"
-		if strings.HasSuffix(url, ".zip") {
+		if strings.HasSuffix(nodeUrl, ".zip") {
 			fileName = root + "\\v" + v + "\\node.zip"
 		}
 
 		fmt.Println("Downloading node.js version " + v + " (" + a + "-bit)... ")
 
-		if Download(url, fileName, v) {
+		if Download(nodeUrl, fileName, v) {
 			// Extract the zip file
-			if strings.HasSuffix(url, ".zip") {
+			if strings.HasSuffix(nodeUrl, ".zip") {
 				fmt.Println("Extracting...")
 				err := unzip(fileName, root+"\\v"+v)
 				if err != nil {
@@ -216,15 +216,15 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", fileName)
 				}
 
-				zip := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(url), ".zip", "", 1)
-				err = fs.Move(zip, root+"\\v"+v, true)
+				nodeZip := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(nodeUrl), ".nodeZip", "", 1)
+				err = fs.Move(nodeZip, root+"\\v"+v, true)
 				if err != nil {
 					fmt.Println("ERROR moving file: " + err.Error())
 				}
 
-				err = os.RemoveAll(zip)
+				err = os.RemoveAll(nodeZip)
 				if err != nil {
-					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", zip)
+					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", nodeZip)
 				}
 			}
 			fmt.Printf("Complete\n")
@@ -238,7 +238,7 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 }
 
 func GetNpm(root string, v string) bool {
-	url := GetFullNpmUrl("v" + v + ".zip")
+	fullNpmUrl := GetFullNpmUrl("v" + v + ".zip")
 	// temp directory to download the .zip file
 	tempDir := root + "\\temp"
 
@@ -254,7 +254,7 @@ func GetNpm(root string, v string) bool {
 	fileName := tempDir + "\\" + "npm-v" + v + ".zip"
 
 	fmt.Printf("Downloading npm version " + v + "... ")
-	if Download(url, fileName, v) {
+	if Download(fullNpmUrl, fileName, v) {
 		fmt.Printf("Complete\n")
 		return true
 	} else {
@@ -304,8 +304,8 @@ func getNodeUrl(v string, vpre string, arch string, append bool) string {
 		a = "x64"
 	}
 
-	//url := "http://nodejs.org/dist/v"+v+"/" + vpre + "/node.exe"
-	url := GetFullNodeUrl("v" + v + "/" + vpre + "/node.exe")
+	//fullNodeUrl := "http://nodejs.org/dist/v"+v+"/" + vpre + "/node.exe"
+	fullNodeUrl := GetFullNodeUrl("v" + v + "/" + vpre + "/node.exe")
 
 	if !append {
 		version, err := semver.Make(v)
@@ -318,16 +318,16 @@ func getNodeUrl(v string, vpre string, arch string, append bool) string {
 		corepack, _ := semver.Make("16.9.0")
 
 		if version.GTE(corepack) {
-			url = GetFullNodeUrl("v" + v + "/node-v" + v + "-win-" + a + ".zip")
+			fullNodeUrl = GetFullNodeUrl("v" + v + "/node-v" + v + "-win-" + a + ".zip")
 		}
 	}
 
 	// Check online to see if a 64 bit version exists
-	_, err := client.Head(url)
+	_, err := client.Head(fullNodeUrl)
 	if err != nil {
 		return ""
 	}
-	return url
+	return fullNodeUrl
 }
 
 func unzip(src, dest string) error {
