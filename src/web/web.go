@@ -216,7 +216,7 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", fileName)
 				}
 
-				nodeZip := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(nodeUrl), ".nodeZip", "", 1)
+				nodeZip := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(nodeUrl), ".zip", "", 1)
 				err = fs.Move(nodeZip, root+"\\v"+v, true)
 				if err != nil {
 					fmt.Println("ERROR moving file: " + err.Error())
