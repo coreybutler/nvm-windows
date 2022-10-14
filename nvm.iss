@@ -193,7 +193,7 @@ begin
     'Select the folder in which Setup should create the symlink, then click Next.',
     False, '');
   SymlinkPage.Add('This directory will automatically be added to your system path.');
-  SymlinkPage.Values[0] := ExpandConstant('{pf}\nodejs');
+  SymlinkPage.Values[0] := ExpandConstant('{localappdata}\nodejs');
 end;
 
 function InitializeUninstall(): Boolean;
