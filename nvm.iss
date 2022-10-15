@@ -13,7 +13,8 @@
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-PrivilegesRequired=admin
+PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=commandline
 ; SignTool=MsSign $f
 ; SignedUninstaller=yes
 AppId={#MyAppId}
@@ -55,7 +56,35 @@ Name: "{group}\Uninstall {#MyAppShortName}"; Filename: "{uninstallexe}"
 
 [Code]
 var
-  SymlinkPage: TInputDirWizardPage;
+  SymlinkPath: string;
+
+// Used strip a directory out of a semicolon sperated string
+procedure CleanPath(path: string; dir: string);
+begin
+  StringChangeEx(path,dir,'',True);
+  StringChangeEx(path,';;',';',True);
+end;
+
+// Registry Root for environment variables.
+function RegRoot(): Integer;
+begin
+  if IsAdminInstallMode()
+  then
+    Result := HKEY_LOCAL_MACHINE
+  else
+    Result := HKEY_CURRENT_USER;
+  
+end;
+
+// Registry subkey for environment variables.
+function EnvSubkey(): string;
+begin
+  if IsAdminInstallMode()
+  then
+    Result := 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment'
+  else
+    Result := 'Environment';
+end;
 
 function IsDirEmpty(dir: string): Boolean;
 var
@@ -76,6 +105,7 @@ begin
   end;
 end;
 
+
 //function getInstalledVErsions(dir: string):
 var
   nodeInUse: string;
@@ -87,26 +117,14 @@ begin
   // Move the existing node.js installation directory to the nvm root & update the path
   RenameFile(np,ExpandConstant('{app}')+'\'+nv);
 
-  RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'Path', path);
+  RegQueryStringValue(RegRoot(), EnvSubkey(), 'Path', path);
 
-  StringChangeEx(path,np+'\','',True);
-  StringChangeEx(path,np,'',True);
-  StringChangeEx(path,np+';;',';',True);
+  CleanPath(path, np+'\');
+  CleanPath(path, np);
 
-  RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
+  RegWriteExpandStringValue(RegRoot(), EnvSubkey(),  'Path', path);
 
-  RegQueryStringValue(HKEY_CURRENT_USER,
-    'Environment',
-    'Path', path);
-
-  StringChangeEx(path,np+'\','',True);
-  StringChangeEx(path,np,'',True);
-  StringChangeEx(path,np+';;',';',True);
-
-  RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
-
+  
   nodeInUse := ExpandConstant('{app}')+'\'+nv;
 
 end;
@@ -168,19 +186,19 @@ begin
   end;
 
   // Make sure the symlink directory doesn't exist
-  if DirExists(SymlinkPage.Values[0]) then begin
+  if DirExists(SymlinkPath) then begin
     // If the directory is empty, just delete it since it will be recreated anyway.
-    dir1 := IsDirEmpty(SymlinkPage.Values[0]);
+    dir1 := IsDirEmpty(SymlinkPath);
     if dir1 then begin
-      RemoveDir(SymlinkPage.Values[0]);
+      RemoveDir(SymlinkPath);
     end;
     if not dir1 then begin
-      msg3 := SuppressibleMsgBox(SymlinkPage.Values[0]+' will be overwritten and all contents will be lost. Do you want to proceed?', mbConfirmation, MB_OKCANCEL, IDOK) = IDOK;
+      msg3 := SuppressibleMsgBox(SymlinkPath+' will be overwritten and all contents will be lost. Do you want to proceed?', mbConfirmation, MB_OKCANCEL, IDOK) = IDOK;
       if msg3 then begin
-        RemoveDir(SymlinkPage.Values[0]);
+        RemoveDir(SymlinkPath);
       end;
       if not msg3 then begin
-        //RaiseException('The symlink cannot be created due to a conflict with the existing directory at '+SymlinkPage.Values[0]);
+        //RaiseException('The symlink cannot be created due to a conflict with the existing directory at '+SymlinkPath);
         WizardForm.Close;
       end;
     end;
@@ -189,12 +207,7 @@ end;
 
 procedure InitializeWizard;
 begin
-  SymlinkPage := CreateInputDirPage(wpSelectDir,
-    'Set Node.js Symlink', 'The active version of Node.js will always be available here.',
-    'Select the folder in which Setup should create the symlink, then click Next.',
-    False, '');
-  SymlinkPage.Add('This directory will automatically be added to your system path.');
-  SymlinkPage.Values[0] := ExpandConstant('{pf}\nodejs');
+  SymlinkPath := ExpandConstant('{app}\nodejs');
 end;
 
 function InitializeUninstall(): Boolean;
@@ -204,45 +217,18 @@ var
 begin
   SuppressibleMsgBox('Removing NVM for Windows will remove the nvm command and all versions of node.js, including global npm modules.', mbInformation, MB_OK, IDOK);
 
-  // Remove the symlink
-  RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'NVM_SYMLINK', nvm_symlink);
+ // Remove the symlink
+  RegQueryStringValue(RegRoot(), EnvSubkey(), 'NVM_SYMLINK', nvm_symlink);
   RemoveDir(nvm_symlink);
 
   // Clean the registry
-  RegDeleteValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'NVM_HOME')
-  RegDeleteValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'NVM_SYMLINK')
-  RegDeleteValue(HKEY_CURRENT_USER,
-    'Environment',
-    'NVM_HOME')
-  RegDeleteValue(HKEY_CURRENT_USER,
-    'Environment',
-    'NVM_SYMLINK')
-
-  RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'Path', path);
-
-  StringChangeEx(path,'%NVM_HOME%','',True);
-  StringChangeEx(path,'%NVM_SYMLINK%','',True);
-  StringChangeEx(path,';;',';',True);
-
-  RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
-
-  RegQueryStringValue(HKEY_CURRENT_USER,
-    'Environment',
-    'Path', path);
-
-  StringChangeEx(path,'%NVM_HOME%','',True);
-  StringChangeEx(path,'%NVM_SYMLINK%','',True);
-  StringChangeEx(path,';;',';',True);
-
-  RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
+  RegDeleteValue(RegRoot(), EnvSubkey(), 'NVM_HOME')
+  RegDeleteValue(RegRoot(), EnvSubkey(), 'NVM_SYMLINK')
+  
+  RegQueryStringValue(RegRoot(), EnvSubkey(), 'Path', path);
+  CleanPath(path,'%NVM_HOME%');
+  CleanPath(path,'%NVM_SYMLINK%');
+  RegWriteExpandStringValue(RegRoot(), EnvSubkey(),  'Path', path);
 
   Result := True;
 end;
@@ -254,49 +240,32 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
-    SaveStringToFile(ExpandConstant('{app}\settings.txt'), 'root: ' + ExpandConstant('{app}') + #13#10 + 'path: ' + SymlinkPage.Values[0] + #13#10, False);
+    SaveStringToFile(ExpandConstant('{app}\settings.txt'), 'root: ' + ExpandConstant('{app}') + #13#10 + 'path: ' + SymlinkPath + #13#10, False);
 
     // Add Registry settings
-    RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'NVM_HOME', ExpandConstant('{app}'));
-    RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'NVM_SYMLINK', SymlinkPage.Values[0]);
-    RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'NVM_HOME', ExpandConstant('{app}'));
-    RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'NVM_SYMLINK', SymlinkPage.Values[0]);
-    
-    RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppId}_is1', 'DisplayVersion', '{#MyAppVersion}');
+    RegWriteExpandStringValue(RegRoot(), EnvSubkey(),  'NVM_HOME', ExpandConstant('{app}'));
+    RegWriteExpandStringValue(RegRoot(), EnvSubkey(),  'NVM_SYMLINK', SymlinkPath);
+   
+    RegWriteStringValue(RegRoot, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppId}_is1', 'DisplayVersion', '{#MyAppVersion}');
 
     // Update system and user PATH if needed
-    RegQueryStringValue(HKEY_LOCAL_MACHINE,
-      'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-      'Path', path);
+    RegQueryStringValue(RegRoot(), EnvSubkey(),'Path', path);
     if Pos('%NVM_HOME%',path) = 0 then begin
       path := path+';%NVM_HOME%';
       StringChangeEx(path,';;',';',True);
-      RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
+      RegWriteExpandStringValue(RegRoot(), EnvSubkey(), 'Path', path);
     end;
     if Pos('%NVM_SYMLINK%',path) = 0 then begin
       path := path+';%NVM_SYMLINK%';
       StringChangeEx(path,';;',';',True);
-      RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
-    end;
-    RegQueryStringValue(HKEY_CURRENT_USER,
-      'Environment',
-      'Path', path);
-    if Pos('%NVM_HOME%',path) = 0 then begin
-      path := path+';%NVM_HOME%';
-      StringChangeEx(path,';;',';',True);
-      RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
-    end;
-    if Pos('%NVM_SYMLINK%',path) = 0 then begin
-      path := path+';%NVM_SYMLINK%';
-      StringChangeEx(path,';;',';',True);
-      RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
+      RegWriteExpandStringValue(RegRoot(), EnvSubkey(), 'Path', path);
     end;
   end;
 end;
 
 function getSymLink(o: string): string;
 begin
-  Result := SymlinkPage.Values[0];
+  Result := SymlinkPath;
 end;
 
 function getCurrentVersion(o: string): string;
