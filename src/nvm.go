@@ -33,6 +33,7 @@ type Environment struct {
 	settings        string
 	root            string
 	symlink         string
+	use_junction    bool
 	arch            string
 	node_mirror     string
 	npm_mirror      string
@@ -49,6 +50,7 @@ var env = &Environment{
 	settings:        home,
 	root:            "",
 	symlink:         symlink,
+	use_junction:    true, // TODO figure out how to infer the best use_junction setting
 	arch:            os.Getenv("PROCESSOR_ARCHITECTURE"),
 	node_mirror:     "",
 	npm_mirror:      "",
@@ -558,9 +560,17 @@ func use(version string, cpuarch string, reload ...bool) {
 		// }
 	}
 
-	// Create new symlink
+	// Create new symlink or junction
+	var link_switch = "/D"
+	if env.use_junction {
+		link_switch = "/J"
+	}
 	var ok bool
-	ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
+	ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink %s "%s" "%s"`,
+		filepath.Join(env.root, "elevate.cmd"),
+		link_switch,
+		filepath.Clean(env.symlink),
+		filepath.Join(env.root, "v"+version)))
 	if err != nil {
 		if strings.Contains(err.Error(), "file already exists") {
 			ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
