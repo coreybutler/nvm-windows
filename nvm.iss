@@ -14,7 +14,7 @@
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=commandline
+; PrivilegesRequiredOverridesAllowed=commandline
 ; SignTool=MsSign $f
 ; SignedUninstaller=yes
 AppId={#MyAppId}
@@ -55,8 +55,10 @@ Name: "{group}\{#MyAppShortName}"; Filename: "{app}\{#MyAppExeName}"; IconFilena
 Name: "{group}\Uninstall {#MyAppShortName}"; Filename: "{uninstallexe}"
 
 [Code]
-var
-  SymlinkPath: string;
+function SymlinkLocation () : string;
+begin
+  Result := ExpandConstant('{app}\nodejs')
+end;
 
 // Used strip a directory out of a semicolon sperated string
 procedure CleanPath(path: string; dir: string);
@@ -73,7 +75,6 @@ begin
     Result := HKEY_LOCAL_MACHINE
   else
     Result := HKEY_CURRENT_USER;
-  
 end;
 
 // Registry subkey for environment variables.
@@ -147,11 +148,13 @@ end;
 
 procedure PreInstall();
 var
-  TmpResultFile, TmpJS, NodeVersion, NodePath: string;
+  TmpResultFile, TmpJS, SymlinkPath, NodeVersion, NodePath: string;
   stdout: Ansistring;
   ResultCode: integer;
   msg1, msg2, msg3, dir1: Boolean;
 begin
+  SymlinkPath := SymlinkLocation();
+
   // Create a file to check for Node.JS
   TmpJS := ExpandConstant('{tmp}') + '\nvm_check.js';
   SaveStringToFile(TmpJS, 'console.log(require("path").dirname(process.execPath));', False);
@@ -205,10 +208,7 @@ begin
   end;
 end;
 
-procedure InitializeWizard;
-begin
-  SymlinkPath := ExpandConstant('{app}\nodejs');
-end;
+
 
 function InitializeUninstall(): Boolean;
 var
@@ -240,11 +240,11 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
-    SaveStringToFile(ExpandConstant('{app}\settings.txt'), 'root: ' + ExpandConstant('{app}') + #13#10 + 'path: ' + SymlinkPath + #13#10, False);
+    SaveStringToFile(ExpandConstant('{app}\settings.txt'), 'root: ' + ExpandConstant('{app}') + #13#10 + 'path: ' + SymlinkLocation() + #13#10, False);
 
     // Add Registry settings
     RegWriteExpandStringValue(RegRoot(), EnvSubkey(),  'NVM_HOME', ExpandConstant('{app}'));
-    RegWriteExpandStringValue(RegRoot(), EnvSubkey(),  'NVM_SYMLINK', SymlinkPath);
+    RegWriteExpandStringValue(RegRoot(), EnvSubkey(),  'NVM_SYMLINK', SymlinkLocation());
    
     RegWriteStringValue(RegRoot, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppId}_is1', 'DisplayVersion', '{#MyAppVersion}');
 
@@ -265,7 +265,7 @@ end;
 
 function getSymLink(o: string): string;
 begin
-  Result := SymlinkPath;
+  Result := SymlinkLocation();
 end;
 
 function getCurrentVersion(o: string): string;
