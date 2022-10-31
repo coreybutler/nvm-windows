@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	NvmVersion = "1.1.9"
+	NvmVersion = "1.1.10"
 )
 
 type Environment struct {
@@ -77,7 +77,7 @@ func main() {
 		return
 	}
 
-	if args[1] != "version" && args[1] != "v" {
+	if args[1] != "version" && args[1] != "--version" && args[1] != "v" {
 		setup()
 	}
 
@@ -105,6 +105,8 @@ func main() {
 		}
 	case "v":
 		fmt.Println(NvmVersion)
+	case "--version":
+		fallthrough
 	case "version":
 		fmt.Println(NvmVersion)
 	case "arch":
@@ -347,6 +349,8 @@ func install(version string, cpuarch string) {
 		}
 
 		if file.Exists(filepath.Join(env.root, "v"+version, "node_modules", "npm")) {
+			npmv := getNpmVersion(version)
+			fmt.Println("npm v" + npmv + " installed successfully.")
 			fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
 			return
 		}
@@ -463,7 +467,8 @@ func uninstall(version string) {
 		fmt.Printf("Uninstalling node v" + version + "...")
 		v, _ := node.GetCurrentVersion()
 		if v == version {
-			_, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
 			if err != nil {
 				fmt.Println(fmt.Sprint(err))
 				return
@@ -483,7 +488,28 @@ func uninstall(version string) {
 }
 
 func versionNumberFrom(version string) string {
-	return strings.Replace(version, "v", "", 1)
+	reg, _ := regexp.Compile("[^0-9]")
+	for reg.Match([]byte(version[:1])) {
+		version = version[1:]
+	}
+
+	return version
+}
+
+func splitVersion(version string) map[string]int {
+	parts := strings.Split(version, ".")
+	var result = make([]int, 3)
+
+	for i, item := range parts {
+		v, _ := strconv.Atoi(item)
+		result[i] = v
+	}
+
+	return map[string]int{
+		"major": result[0],
+		"minor": result[1],
+		"patch": result[2],
+	}
 }
 
 func findLatestSubVersion(version string, localOnly ...bool) string {
@@ -509,12 +535,46 @@ func findLatestSubVersion(version string, localOnly ...bool) string {
 		}
 	}
 
+	if len(strings.Split(version, ".")) == 2 {
+		all, _, _, _, _, _ := node.GetAvailable()
+		requested := splitVersion(version + ".0")
+		for _, v := range all {
+			available := splitVersion(v)
+			if requested["major"] == available["major"] {
+				if requested["minor"] == available["minor"] {
+					if available["patch"] > requested["patch"] {
+						requested["patch"] = available["patch"]
+					}
+				}
+				if requested["minor"] > available["minor"] {
+					break
+				}
+			}
+
+			if requested["major"] > available["major"] {
+				break
+			}
+		}
+		return fmt.Sprintf("%v.%v.%v", requested["major"], requested["minor"], requested["patch"])
+	}
+
 	url := web.GetFullNodeUrl("latest-v" + version + ".x" + "/SHASUMS256.txt")
 	content := web.GetRemoteTextFile(url)
 	re := regexp.MustCompile("node-v(.+)+msi")
 	reg := regexp.MustCompile("node-v|-x.+")
 	latest := reg.ReplaceAllString(re.FindString(content), "")
 	return latest
+}
+
+func accessDenied(err error) bool {
+	fmt.Println(fmt.Sprintf("%v", err))
+
+	if strings.Contains(strings.ToLower(err.Error()), "access is denied") {
+		fmt.Println("See https://bit.ly/nvm4w-help")
+		return true
+	}
+
+	return false
 }
 
 func use(version string, cpuarch string, reload ...bool) {
@@ -546,9 +606,12 @@ func use(version string, cpuarch string, reload ...bool) {
 	// Remove symlink if it already exists
 	sym, _ := os.Stat(env.symlink)
 	if sym != nil {
-		_, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+		// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+		_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
 		if err != nil {
-			fmt.Println(fmt.Sprint(err))
+			if accessDenied(err) {
+				return
+			}
 		}
 
 		// // Return if the symlink already exists
@@ -560,10 +623,27 @@ func use(version string, cpuarch string, reload ...bool) {
 
 	// Create new symlink
 	var ok bool
-	ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
+	// ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
+	ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
 	if err != nil {
-		if strings.Contains(err.Error(), "file already exists") {
-			ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+		if strings.Contains(err.Error(), "not have sufficient privilege") || strings.Contains(strings.ToLower(err.Error()), "access is denied") {
+			// cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+			// var output bytes.Buffer
+			// var _stderr bytes.Buffer
+			// cmd.Stdout = &output
+			// cmd.Stderr = &_stderr
+			// perr := cmd.Run()
+			ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+
+			if err != nil {
+				ok = false
+				fmt.Println(fmt.Sprint(err)) // + ": " + _stderr.String())
+			} else {
+				ok = true
+			}
+		} else if strings.Contains(err.Error(), "file already exists") {
+			ok, err = elevatedRun("rmdir", filepath.Clean(env.symlink))
+			// ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
 			reloadable := true
 			if len(reload) > 0 {
 				reloadable = reload[0]
@@ -730,7 +810,8 @@ func enable() {
 }
 
 func disable() {
-	ok, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+	// ok, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+	ok, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
 	if !ok {
 		return
 	}
@@ -765,7 +846,7 @@ func help() {
 	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
-	fmt.Println("  nvm version                  : Displays the current running version of nvm for Windows. Aliased as v.")
+	fmt.Println("  nvm [--]version              : Displays the current running version of nvm for Windows. Aliased as v.")
 	fmt.Println(" ")
 }
 
@@ -857,8 +938,24 @@ func updateRootDir(path string) {
 	}
 }
 
+func elevatedRun(name string, arg ...string) (bool, error) {
+	return run(filepath.Join(env.root, "elevate.cmd"), append([]string{"cmd", "/C", name}, arg...)...)
+}
+
+func run(name string, arg ...string) (bool, error) {
+	c := exec.Command(name, arg...)
+	var stderr bytes.Buffer
+	c.Stderr = &stderr
+	err := c.Run()
+	if err != nil {
+		return false, errors.New(fmt.Sprint(err) + ": " + stderr.String())
+	}
+
+	return true, nil
+}
+
 func runElevated(command string, forceUAC ...bool) (bool, error) {
-	uac := false
+	uac := true //false
 	if len(forceUAC) > 0 {
 		uac = forceUAC[0]
 	}
@@ -866,6 +963,7 @@ func runElevated(command string, forceUAC ...bool) (bool, error) {
 	if uac {
 		// Alternative elevation option at stackoverflow.com/questions/31558066/how-to-ask-for-administer-privileges-on-windows-with-go
 		cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), command)
+
 		var output bytes.Buffer
 		var _stderr bytes.Buffer
 		cmd.Stdout = &output

@@ -198,7 +198,7 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 		if Download(url, fileName, v) {
 			// Extract the zip file
 			if strings.HasSuffix(url, ".zip") {
-				fmt.Println("Extracting...")
+				fmt.Println("Extracting node and npm...")
 				err := unzip(fileName, root+"\\v"+v)
 				if err != nil {
 					fmt.Println("Error extracting from Node archive: " + err.Error())
@@ -227,7 +227,7 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", zip)
 				}
 			}
-			fmt.Printf("Complete\n")
+			fmt.Println("Complete")
 			return true
 		} else {
 			return false
