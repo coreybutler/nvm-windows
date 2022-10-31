@@ -562,7 +562,20 @@ func use(version string, cpuarch string, reload ...bool) {
 	var ok bool
 	ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
 	if err != nil {
-		if strings.Contains(err.Error(), "file already exists") {
+		if strings.Contains(err.Error(), "not have sufficient privilege") {
+			cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+			var output bytes.Buffer
+			var _stderr bytes.Buffer
+			cmd.Stdout = &output
+			cmd.Stderr = &_stderr
+			perr := cmd.Run()
+			if perr != nil {
+				ok = false
+				fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
+			} else {
+				ok = true
+			}
+		} else if strings.Contains(err.Error(), "file already exists") {
 			ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
 			reloadable := true
 			if len(reload) > 0 {
