@@ -943,7 +943,12 @@ func updateRootDir(path string) {
 }
 
 func elevatedRun(name string, arg ...string) (bool, error) {
-	return run(filepath.Join(env.root, "elevate.cmd"), append([]string{"cmd", "/C", name}, arg...)...)
+	ok, err := run("cmd", append([]string{"/C", name}, arg...)...)
+	if err != nil {
+		ok, err = run(filepath.Join(env.root, "elevate.cmd"), append([]string{"cmd", "/C", name}, arg...)...)
+	}
+
+	return ok, err
 }
 
 func run(name string, arg ...string) (bool, error) {
