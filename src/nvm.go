@@ -77,7 +77,7 @@ func main() {
 		return
 	}
 
-	if args[1] != "version" && args[1] != "--version" && args[1] != "v" {
+	if args[1] != "version" && args[1] != "--version" && args[1] != "v" && args[1] != "-v" && args[1] != "--v" {
 		setup()
 	}
 
@@ -106,6 +106,10 @@ func main() {
 	case "v":
 		fmt.Println(NvmVersion)
 	case "--version":
+		fallthrough
+	case "--v":
+		fallthrough
+	case "-v":
 		fallthrough
 	case "version":
 		fmt.Println(NvmVersion)
