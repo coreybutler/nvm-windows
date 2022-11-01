@@ -38,7 +38,7 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
 <table style="background-color:red;padding:6px;border-radius:3px;">
   <tr><td>
     <h3>Seeking Feedback:</h3>
-    We're working on Runtime (rt), the successor to NVM For Windows. Please contribute by taking a minute to complete <a href="https://t.co/oGqQCM9FPx">this form</a>. Thank you!
+    We're working on <a href="https://github.com/coreybutler/nvm-windows/wiki/Runtime">Runtime (rt)</a>, the successor to NVM For Windows. Please contribute by taking a minute to complete <a href="https://t.co/oGqQCM9FPx">this form</a>. Thank you!
     <h3></h3>
   </td></tr>
 </table>
