@@ -164,7 +164,7 @@ The second option is to use a symlink. This concept requires putting the symlink
 
 In order to create/modify a symlink, you must be running as an admin, and you must get around Windows UAC (that annoying prompt). Luckily, this is a challenge I already solved with some helper scripts in [node-windows](https://github.com/coreybutler/node-windows). As a result, NVM for Windows maintains a single symlink that is put in the system `PATH` during installation only. Switching to different versions of node is a matter of switching the symlink target. As a result, this utility does **not** require you to run `nvm use x.x.x` every time you open a console window. When you _do_ run `nvm use x.x.x`, the active version of node is automatically updated across all open console windows. It also persists between system reboots, so you only need to use nvm when you want to make a change.
 
-NVM for Windows comes with an installer, courtesy of a byproduct of my work on [Fenix Web Server](http://fenixwebserver.com).
+NVM for Windows comes with an installer, courtesy of a byproduct of my work on [Fenix Web Server](https://preview.fenixwebserver.com).
 
 Overall, this project brings together some ideas, a few battle-hardened pieces of other modules, and support for newer versions of node.
 
