@@ -1,6 +1,6 @@
 # pathfinder
 
-This app is used to help identify NVM4W installation problems. The executable is not signed and is intended for troubleshooting purposes only. It is just a troubleshooting tool which is not an officially a supported part of NVM for Windows.
+This app is used to help identify NVM4W installation problems. The executable is not signed, nor is it designed for production user. It is just a troubleshooting tool which is not an officially a supported part of NVM for Windows.
 
 ## Usage
 
