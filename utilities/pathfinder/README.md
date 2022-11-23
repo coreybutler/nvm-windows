@@ -4,7 +4,7 @@ This app is used to help identify NVM4W installation problems. The executable is
 
 ## Usage
 
-Download pathfinder.exe and run it.
+[Download pathfinder.exe](https://github.com/coreybutler/nvm-windows/raw/master/utilities/pathfinder/pathfinder.exe) and run it.
 
 The output will look like:
 
