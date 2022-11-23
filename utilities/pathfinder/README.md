@@ -16,3 +16,5 @@ PATH directories containing node.exe:
 
 NVM for Windows is correctly positioned in the PATH.
 ```
+
+If there is a problem, such as multiple Node installation paths or incorrectly ordered installation paths, this tool will tell you.
