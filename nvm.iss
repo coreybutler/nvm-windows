@@ -19,6 +19,7 @@ PrivilegesRequired=admin
 AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+AppCopyright=Copyright (C) 2018-2022 Ecor Ventures LLC, Corey Butler, and contributors.
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
@@ -38,7 +39,12 @@ ChangesEnvironment=yes
 DisableProgramGroupPage=yes
 ArchitecturesInstallIn64BitMode=x64 ia64
 UninstallDisplayIcon={app}\{#MyIcon}
-AppCopyright=Copyright (C) 2018-2021 Ecor Ventures LLC, Corey Butler, and contributors.
+VersionInfoVersion={#MyAppVersion}
+VersionInfoCopyright=Copyright (C) 2018-2022 Ecor Ventures LLC, Corey Butler, and contributors.
+VersionInfoCompany=Ecor Ventures LLC
+VersionInfoDescription=Node version manager for Windows
+VersionInfoProductName={#MyAppShortName}
+VersionInfoProductTextVersion={#MyAppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
