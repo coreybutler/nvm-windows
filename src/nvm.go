@@ -206,8 +206,8 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 		return "", cpuarch, errors.New("A version argument is required but missing.")
 	}
 
-	// If user specifies "latest" version, find out what version is
-	if version == "latest" {
+	// If user specifies "latest" version or a generic "node", find out what the latest version is
+	if version == "latest" || version == "node" {
 		version = getLatest()
 	}
 
