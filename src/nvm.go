@@ -187,6 +187,7 @@ func update() {
 */
 
 func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (string, string, error) {
+	var err error
 	requestedVersion := version
 	cpuarch = strings.ToLower(cpuarch)
 
@@ -231,31 +232,34 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	}
 
 	version = versionNumberFrom(version)
-	v, err := semver.Make(version)
-	if err == nil {
-		err = v.Validate()
+	if len(version) > 0 {
+		v, err := semver.Make(version)
+		if err == nil {
+			err = v.Validate()
+		}
+
+		if err == nil {
+			// if the user specifies only the major/minor version, identify the latest
+			// version applicable to what was provided.
+			sv := strings.Split(version, ".")
+			if len(sv) < 3 {
+				version = findLatestSubVersion(version)
+			} else {
+				version = cleanVersion(version)
+			}
+
+			version = versionNumberFrom(version)
+		} else if strings.Contains(err.Error(), "No Major.Minor.Patch") {
+			latestLocalInstall := false
+			if len(localInstallsOnly) > 0 {
+				latestLocalInstall = localInstallsOnly[0]
+			}
+			version = findLatestSubVersion(version, latestLocalInstall)
+		}
 	}
 
-	if err == nil {
-		// if the user specifies only the major/minor version, identify the latest
-		// version applicable to what was provided.
-		sv := strings.Split(version, ".")
-		if len(sv) < 3 {
-			version = findLatestSubVersion(version)
-		} else {
-			version = cleanVersion(version)
-		}
-
-		version = versionNumberFrom(version)
-	} else if strings.Contains(err.Error(), "No Major.Minor.Patch") {
-		latestLocalInstall := false
-		if len(localInstallsOnly) > 0 {
-			latestLocalInstall = localInstallsOnly[0]
-		}
-		version = findLatestSubVersion(version, latestLocalInstall)
-		if len(version) == 0 {
-			err = errors.New("Unrecognized version: \"" + requestedVersion + "\"")
-		}
+	if len(version) == 0 {
+		err = errors.New("Unrecognized version: \"" + requestedVersion + "\"")
 	}
 
 	return version, cpuarch, err
@@ -492,8 +496,9 @@ func uninstall(version string) {
 }
 
 func versionNumberFrom(version string) string {
-	reg, _ := regexp.Compile("[^0-9]")
-	for reg.Match([]byte(version[:1])) {
+	// Removes non-numerical values from front of version string
+	reg := regexp.MustCompile("[^0-9]")
+	for len(version) > 0 && reg.Match([]byte(version[:1])) {
 		version = version[1:]
 	}
 
