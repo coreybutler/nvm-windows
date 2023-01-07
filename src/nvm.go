@@ -230,7 +230,14 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 		version = v
 	}
 
+	// Save the version input here so that we can pass it to error below.
+	tmpVersion := version
 	version = versionNumberFrom(version)
+
+	if len(version) == 0 {
+		return "", "", fmt.Errorf("The version argument '%s' is not valid.", tmpVersion)
+	}
+
 	v, err := semver.Make(version)
 	if err == nil {
 		err = v.Validate()
@@ -495,6 +502,9 @@ func versionNumberFrom(version string) string {
 	reg, _ := regexp.Compile("[^0-9]")
 	for reg.Match([]byte(version[:1])) {
 		version = version[1:]
+		if len(version) == 0 {
+			return ""
+		}
 	}
 
 	return version
