@@ -861,7 +861,7 @@ func checkLocalEnvironment() {
 			break
 		}
 
-		if _, err := os.Stat(filepath.Join(path, "node.exe")); err != nil {
+		if _, err := os.Stat(filepath.Join(path, "node.exe")); err == nil {
 			problems = append(problems, "Another Node.js installation is blocking NVM4W installations from running. Please uninstall the conflicting version or update the PATH environment variable to assure \""+current+"\" precedes \""+path+"\".")
 			break
 		} else if !errors.Is(err, os.ErrNotExist) {
