@@ -502,7 +502,7 @@ func versionNumberFrom(version string) string {
 
 	if reg.Match([]byte(version[:1])) {
 		if version[0:1] != "v" {
-			fmt.Printf("\"%v\" is not a valid version or recognized alias.\n", version)
+			fmt.Printf("\"%v\" is not a valid version or known alias.\n", version)
 			os.Exit(0)
 		}
 	}
