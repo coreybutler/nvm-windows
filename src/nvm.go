@@ -213,7 +213,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	}
 
 	// If user specifies "latest" version, find out what version is
-	if version == "latest" {
+	if version == "latest" || version == "node" {
 		version = getLatest()
 	}
 
@@ -456,7 +456,7 @@ func uninstall(version string) {
 		return
 	}
 
-	if strings.ToLower(version) == "latest" {
+	if strings.ToLower(version) == "latest" || strings.ToLower(version) == "node" {
 		version = getLatest()
 	} else if strings.ToLower(version) == "lts" {
 		version = getLTS()
@@ -502,6 +502,16 @@ func versionNumberFrom(version string) string {
 
 	if reg.Match([]byte(version[:1])) {
 		if version[0:1] != "v" {
+			url := web.GetFullNodeUrl("latest-" + version + "/SHASUMS256.txt")
+			content := strings.Split(web.GetRemoteTextFile(url), "\n")[0]
+			if strings.Contains(content, "node") {
+				parts := strings.Split(content, "-")
+				if len(parts) > 1 {
+					if parts[1][0:1] == "v" {
+						return parts[1][1:]
+					}
+				}
+			}
 			fmt.Printf("\"%v\" is not a valid version or known alias.\n", version)
 			os.Exit(0)
 		}
@@ -932,6 +942,7 @@ func help() {
 	fmt.Println("\nUsage:")
 	fmt.Println(" ")
 	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
+	fmt.Println("  nvm check                    : Check the NVM4W process for known problems (experimental troubleshooter).")
 	fmt.Println("  nvm current                  : Display active version.")
 	fmt.Println("  nvm install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
 	fmt.Println("                                 most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults")
