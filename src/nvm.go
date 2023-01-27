@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -23,6 +24,9 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/olekukonko/tablewriter"
+	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
+	"golang.org/x/text/encoding"
 )
 
 const (
@@ -153,6 +157,8 @@ func main() {
 		setNodeMirror(detail)
 	case "npm_mirror":
 		setNpmMirror(detail)
+	case "check":
+		checkLocalEnvironment()
 	default:
 		help()
 	}
@@ -306,7 +312,7 @@ func install(version string, cpuarch string) {
 	}
 
 	if checkVersionExceedsLatest(version) {
-		fmt.Println("Node.js v" + version + " is not yet released or available.")
+		fmt.Println("Node.js v" + version + " is not yet released or is not available.")
 		return
 	}
 
@@ -493,6 +499,14 @@ func uninstall(version string) {
 
 func versionNumberFrom(version string) string {
 	reg, _ := regexp.Compile("[^0-9]")
+
+	if reg.Match([]byte(version[:1])) {
+		if version[0:1] != "v" {
+			fmt.Printf("\"%v\" is not a valid version or recognized alias.\n", version)
+			os.Exit(0)
+		}
+	}
+
 	for reg.Match([]byte(version[:1])) {
 		version = version[1:]
 	}
@@ -826,6 +840,93 @@ func disable() {
 	fmt.Println("nvm disabled")
 }
 
+func checkLocalEnvironment() {
+	problems := make([]string, 0)
+
+	// Check for PATH problems
+	paths := strings.Split(os.Getenv("PATH"), ";")
+	current := env.symlink
+	if strings.HasSuffix(current, "/") || strings.HasSuffix(current, "\\") {
+		current = current[:len(current)-1]
+	}
+
+	nvmsymlinkfound := false
+	for _, path := range paths {
+		if strings.HasSuffix(path, "/") || strings.HasSuffix(path, "\\") {
+			path = path[:len(path)-1]
+		}
+
+		if strings.EqualFold(path, current) {
+			nvmsymlinkfound = true
+			break
+		}
+
+		if _, err := os.Stat(filepath.Join(path, "node.exe")); err != nil {
+			problems = append(problems, "Another Node.js installation is blocking NVM4W installations from running. Please uninstall the conflicting version or update the PATH environment variable to assure \""+current+"\" precedes \""+path+"\".")
+			break
+		} else if !errors.Is(err, os.ErrNotExist) {
+			fmt.Println("Error running environment check:\n" + err.Error())
+		}
+	}
+
+	// Check for developer mode
+	devmode := "OFF"
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock`, registry.QUERY_VALUE)
+	if err == nil {
+		value, _, err := k.GetIntegerValue("AllowDevelopmentWithoutDevLicense")
+		if err == nil {
+			if value > 0 {
+				devmode = "ON"
+			}
+		}
+	}
+	defer k.Close()
+
+	// Check for permission problems
+	admin, elevated, err := getProcessPermissions()
+	if err == nil {
+		if !admin && !elevated {
+			user, _ := user.Current()
+			username := strings.Split(user.Username, "\\")
+			fmt.Printf("\"%v\" does not have admin or elevated rights", username[len(username)-1])
+			if devmode == "ON" {
+				fmt.Printf(", but windows developer mode is enabled.\nMost commands will still work unless \"%v\" lacks rights to modify \"%v\".\n", username[len(username)-1], current)
+			} else {
+				fmt.Println(".")
+			}
+		} else {
+			if admin {
+				fmt.Println("Running NVM for Windows as an admin user.")
+			} else if elevated {
+				fmt.Println("Running NVM for Windows with elevated permissions.")
+			}
+		}
+	} else {
+		fmt.Println(err)
+	}
+
+	// Display developer mode status
+	if !admin {
+		fmt.Printf("\nWindows Developer Mode: %v\n", devmode)
+	}
+
+	if !nvmsymlinkfound {
+		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")
+	}
+
+	if len(problems) == 0 {
+		fmt.Println("\nNo problems detected.")
+		return
+	}
+
+	fmt.Println("\nProblems Detected:")
+	for _, p := range problems {
+		fmt.Println("  - " + p)
+	}
+
+	fmt.Println("\nFind help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues")
+}
+
 func help() {
 	fmt.Println("\nRunning version " + NvmVersion + ".")
 	fmt.Println("\nUsage:")
@@ -1010,7 +1111,36 @@ func runElevated(command string, forceUAC ...bool) (bool, error) {
 func saveSettings() {
 	content := "root: " + strings.Trim(env.root, " \n\r") + "\r\narch: " + strings.Trim(env.arch, " \n\r") + "\r\nproxy: " + strings.Trim(env.proxy, " \n\r") + "\r\noriginalpath: " + strings.Trim(env.originalpath, " \n\r") + "\r\noriginalversion: " + strings.Trim(env.originalversion, " \n\r")
 	content = content + "\r\nnode_mirror: " + strings.Trim(env.node_mirror, " \n\r") + "\r\nnpm_mirror: " + strings.Trim(env.npm_mirror, " \n\r")
-	ioutil.WriteFile(env.settings, []byte(content), 0644)
+	decoder := encoding.Decoder{}
+	decoded, err := decoder.String(content)
+	if err != nil {
+		fmt.Printf("Error attempting to save settings:\n%v\n", err.Error())
+		return
+	}
+	ioutil.WriteFile(env.settings, []byte(decoded), 0644)
+}
+
+func getProcessPermissions() (admin bool, elevated bool, err error) {
+	admin = false
+	elevated = false
+	var sid *windows.SID
+	err = windows.AllocateAndInitializeSid(
+		&windows.SECURITY_NT_AUTHORITY,
+		2,
+		windows.SECURITY_BUILTIN_DOMAIN_RID,
+		windows.DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&sid)
+	if err != nil {
+		return
+	}
+	defer windows.FreeSid(sid)
+
+	token := windows.Token(0)
+	elevated = token.IsElevated()
+	admin, err = token.IsMember(sid)
+
+	return
 }
 
 // NOT USED?
