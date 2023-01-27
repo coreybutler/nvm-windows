@@ -1,7 +1,7 @@
 <h1 align="center">NVM for Windows</h1>
 
 <div align="center">
-  The <a href="https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows">Microsoft</a>/<a href="https://docs.npmjs.com/cli/v7/configuring-npm/install#windows-node-version-managers">npm</a>/Google recommended Node.js version manager for <em>Windows</em>.<br/>
+  The <a href="https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows">Microsoft</a>/<a href="https://docs.npmjs.com/cli/v9/configuring-npm/install#windows-node-version-managers">npm</a>/<a href="https://cloud.google.com/nodejs/docs/setup#installing_nvm">Google</a> recommended Node.js version manager for <em>Windows</em>.<br/>
 
 <details>
 <summary><b>This is not the same thing as nvm!</b> (expand for details)</summary>
