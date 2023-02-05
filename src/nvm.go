@@ -276,6 +276,13 @@ func install(version string, cpuarch string) {
 		env.verifyssl = false
 	}
 
+	if strings.HasPrefix(version, "--") {
+		fmt.Println("\"--\" prefixes are unnecessary in NVM for Windows!")
+		version = strings.ReplaceAll(version, "-", "")
+		fmt.Printf("attempting to install \"%v\" instead...\n\n", version)
+		time.Sleep(2 * time.Second)
+	}
+
 	v, a, err := getVersion(version, cpuarch)
 	version = v
 	cpuarch = a
@@ -513,6 +520,7 @@ func versionNumberFrom(version string) string {
 				}
 			}
 			fmt.Printf("\"%v\" is not a valid version or known alias.\n", version)
+			fmt.Println("\nAvailable aliases: latest, node (latest), lts\nNamed releases (boron, dubnium, etc) are also supported.")
 			os.Exit(0)
 		}
 	}
