@@ -277,7 +277,6 @@ func GetRemoteTextFile(url string) string {
 		}
 		return string(contents)
 	}
-	os.Exit(1)
 	return ""
 }
 
