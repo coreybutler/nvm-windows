@@ -16,3 +16,6 @@ jobs:
           days-before-close: 7
           days-before-pr-close: -1
           start-date: '2021-09-15T05:00:00Z'
+          exempt-all-assignees: true
+          exempt-all-milestones: true
+          
