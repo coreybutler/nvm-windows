@@ -289,17 +289,17 @@ func GetRemoteTextFile(url string) string {
 		fmt.Println("\nCould not retrieve " + url + ".\n\n")
 		fmt.Printf("%s", httperr)
 		os.Exit(1)
-	} else {
-		defer response.Body.Close()
-		contents, readerr := ioutil.ReadAll(response.Body)
-		if readerr != nil {
-			fmt.Printf("%s", readerr)
-			os.Exit(1)
-		}
-		return string(contents)
 	}
-	os.Exit(1)
-	return ""
+
+	defer response.Body.Close()
+
+	contents, readerr := ioutil.ReadAll(response.Body)
+	if readerr != nil {
+		fmt.Printf("%s", readerr)
+		os.Exit(1)
+	}
+
+	return string(contents)
 }
 
 func IsNode64bitAvailable(v string) bool {
