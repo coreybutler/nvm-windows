@@ -89,6 +89,7 @@ var
 procedure TakeControl(np: string; nv: string);
 var
   path: string;
+  ResultCode: integer;
 begin
   // Move the existing node.js installation directory to the nvm root & update the path
   RenameFile(np,ExpandConstant('{app}')+'\'+nv);
@@ -103,15 +104,7 @@ begin
 
   RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
 
-  RegQueryStringValue(HKEY_CURRENT_USER,
-    'Environment',
-    'Path', path);
-
-  StringChangeEx(path,np+'\','',True);
-  StringChangeEx(path,np,'',True);
-  StringChangeEx(path,np+';;',';',True);
-
-  RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
+  ExecAsOriginalUser('wscript', 'setuserenv.vbs', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   nodeInUse := ExpandConstant('{app}')+'\'+nv;
 
@@ -207,6 +200,7 @@ function InitializeUninstall(): Boolean;
 var
   path: string;
   nvm_symlink: string;
+  ResultCode: integer;
 begin
   SuppressibleMsgBox('Removing NVM for Windows will remove the nvm command and all versions of node.js, including global npm modules.', mbInformation, MB_OK, IDOK);
 
@@ -223,12 +217,8 @@ begin
   RegDeleteValue(HKEY_LOCAL_MACHINE,
     'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
     'NVM_SYMLINK')
-  RegDeleteValue(HKEY_CURRENT_USER,
-    'Environment',
-    'NVM_HOME')
-  RegDeleteValue(HKEY_CURRENT_USER,
-    'Environment',
-    'NVM_SYMLINK')
+  ExecAsOriginalUser('REG', 'DELETE HKCU\Environment /F /V NVM_HOME /D', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  ExecAsOriginalUser('REG', 'DELETE HKCU\Environment /F /V NVM_SYMLINK /D', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   RegQueryStringValue(HKEY_LOCAL_MACHINE,
     'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
@@ -240,15 +230,7 @@ begin
 
   RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
 
-  RegQueryStringValue(HKEY_CURRENT_USER,
-    'Environment',
-    'Path', path);
-
-  StringChangeEx(path,'%NVM_HOME%','',True);
-  StringChangeEx(path,'%NVM_SYMLINK%','',True);
-  StringChangeEx(path,';;',';',True);
-
-  RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
+  ExecAsOriginalUser('wscript', 'unsetuserenv.vbs', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   Result := True;
 end;
@@ -257,6 +239,7 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   path: string;
+  ResultCode: Integer;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -265,8 +248,8 @@ begin
     // Add Registry settings
     RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'NVM_HOME', ExpandConstant('{app}'));
     RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'NVM_SYMLINK', SymlinkPage.Values[0]);
-    RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'NVM_HOME', ExpandConstant('{app}'));
-    RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'NVM_SYMLINK', SymlinkPage.Values[0]);
+    ExecAsOriginalUser('REG', 'ADD HKCU\Environment /F /V NVM_HOME /D "' + ExpandConstant('{app}') + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    ExecAsOriginalUser('REG', 'ADD HKCU\Environment /F /V NVM_SYMLINK /D "' + SymlinkPage.Values[0] + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
     RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppId}_is1', 'DisplayVersion', '{#MyAppVersion}');
 
@@ -284,19 +267,7 @@ begin
       StringChangeEx(path,';;',';',True);
       RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', path);
     end;
-    RegQueryStringValue(HKEY_CURRENT_USER,
-      'Environment',
-      'Path', path);
-    if Pos('%NVM_HOME%',path) = 0 then begin
-      path := path+';%NVM_HOME%';
-      StringChangeEx(path,';;',';',True);
-      RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
-    end;
-    if Pos('%NVM_SYMLINK%',path) = 0 then begin
-      path := path+';%NVM_SYMLINK%';
-      StringChangeEx(path,';;',';',True);
-      RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
-    end;
+    ExecAsOriginalUser('wscript', 'setuserenv.vbs', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 end;
 
