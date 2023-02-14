@@ -928,8 +928,31 @@ func checkLocalEnvironment() {
 		fmt.Printf("\nWindows Developer Mode: %v\n", devmode)
 	}
 
+	fmt.Printf("\nInformation\n-----------\nPath: %v\nVersion: %v\nNVM_HOME: %v\nNVM_SYMLINK: %v\n", os.Args[0], NvmVersion, home, symlink)
+
 	if !nvmsymlinkfound {
 		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")
+	}
+
+	nodelist := web.Ping(web.GetFullNodeUrl("index.json"))
+	if !nodelist {
+		if len(env.node_mirror) > 0 && env.node_mirror != "none" {
+			problems = append(problems, "Connection to "+env.node_mirror+" (mirror) cannot be established. Check the mirror server to assure it is online.")
+		} else {
+			if len(env.proxy) > 0 {
+				problems = append(problems, "Connection to nodejs.org cannot be established. Check your proxy ("+env.proxy+") and your physical internet connection.")
+			} else {
+				problems = append(problems, "Connection to nodejs.org cannot be established. Check your internet connection.")
+			}
+		}
+	}
+
+	if len(env.npm_mirror) > 0 {
+		fmt.Println("If you are experiencing npm problems, check the npm mirror (" + env.npm_mirror + ") to assure it is online and accessible.")
+	}
+
+	if _, err := os.Stat(env.settings); err != nil {
+		problems = append(problems, "Cannot find "+env.settings)
 	}
 
 	if len(problems) == 0 {

@@ -66,6 +66,27 @@ func GetFullNpmUrl(path string) string {
 	return npmBaseAddress + path
 }
 
+func Ping(url string) bool {
+	req, err := http.NewRequest("HEAD", url, nil)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	req.Header.Set("User-Agent", "NVM for Windows")
+
+	response, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+
+	if response.StatusCode == 200 {
+		return true
+	}
+
+	return false
+}
+
 func Download(url string, target string, version string) bool {
 	output, err := os.Create(target)
 	if err != nil {
