@@ -18,19 +18,21 @@ import (
 	"time"
 
 	"nvm/arch"
+	"nvm/encoding"
 	"nvm/file"
 	"nvm/node"
 	"nvm/web"
 
 	"github.com/blang/semver"
+	// "github.com/fatih/color"
+	"github.com/coreybutler/go-where"
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
-	"golang.org/x/text/encoding"
 )
 
 const (
-	NvmVersion = "1.1.10"
+	NvmVersion = "1.1.11"
 )
 
 type Environment struct {
@@ -157,7 +159,7 @@ func main() {
 		setNodeMirror(detail)
 	case "npm_mirror":
 		setNpmMirror(detail)
-	case "check":
+	case "debug":
 		checkLocalEnvironment()
 	default:
 		help()
@@ -896,7 +898,11 @@ func checkLocalEnvironment() {
 			if value > 0 {
 				devmode = "ON"
 			}
+		} else {
+			devmode = "UNKNOWN"
 		}
+	} else {
+		devmode = "UNKNOWN (user cannot read registry)"
 	}
 	defer k.Close()
 
@@ -906,15 +912,15 @@ func checkLocalEnvironment() {
 		if !admin && !elevated {
 			user, _ := user.Current()
 			username := strings.Split(user.Username, "\\")
-			fmt.Printf("\"%v\" does not have admin or elevated rights", username[len(username)-1])
+			fmt.Printf("%v is not using admin or elevated rights", username[len(username)-1])
 			if devmode == "ON" {
-				fmt.Printf(", but windows developer mode is enabled.\nMost commands will still work unless \"%v\" lacks rights to modify \"%v\".\n", username[len(username)-1], current)
+				fmt.Printf(", but windows developer mode is enabled.\nMost commands will still work unless %v lacks rights to modify %v.\n", username[len(username)-1], current)
 			} else {
 				fmt.Println(".")
 			}
 		} else {
 			if admin {
-				fmt.Println("Running NVM for Windows as an admin user.")
+				fmt.Println("Running NVM for Windows with administrator privileges.")
 			} else if elevated {
 				fmt.Println("Running NVM for Windows with elevated permissions.")
 			}
@@ -925,10 +931,24 @@ func checkLocalEnvironment() {
 
 	// Display developer mode status
 	if !admin {
-		fmt.Printf("\nWindows Developer Mode: %v\n", devmode)
+		// if devmode == "ON" {
+		// 	devmode = color.GreenString(devmode)
+		// } else if devmode == "OFF" {
+		// 	devmode = color.YellowString(devmode)
+		// } else {
+		// 	devmode = color.YellowString(devmode)
+		// }
+
+		fmt.Printf("\n%v %v\n", "Windows Developer Mode:", devmode)
 	}
 
-	fmt.Printf("\nInformation\n-----------\nPath: %v\nVersion: %v\nNVM_HOME: %v\nNVM_SYMLINK: %v\n", os.Args[0], NvmVersion, home, symlink)
+	executable := os.Args[0]
+	path, err := where.Find(executable)
+	if err != nil {
+		path = "UNKNOWN: " + err.Error()
+	}
+
+	fmt.Printf("\nPath: %v\nVersion: %v\nNVM_HOME: %v\nNVM_SYMLINK: %v\n", path, NvmVersion, home, symlink)
 
 	if !nvmsymlinkfound {
 		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")
@@ -956,16 +976,15 @@ func checkLocalEnvironment() {
 	}
 
 	if len(problems) == 0 {
-		fmt.Println("\nNo problems detected.")
-		return
+		fmt.Println("\n" + "No problems detected.")
+	} else {
+		fmt.Println("\n" + "Problems Detected:")
+		for _, p := range problems {
+			fmt.Println("  - " + p)
+		}
 	}
 
-	fmt.Println("\nProblems Detected:")
-	for _, p := range problems {
-		fmt.Println("  - " + p)
-	}
-
-	fmt.Println("\nFind help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues")
+	fmt.Println("\n" + "Find help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues")
 }
 
 func help() {
@@ -973,8 +992,8 @@ func help() {
 	fmt.Println("\nUsage:")
 	fmt.Println(" ")
 	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
-	fmt.Println("  nvm check                    : Check the NVM4W process for known problems (experimental troubleshooter).")
 	fmt.Println("  nvm current                  : Display active version.")
+	fmt.Println("  nvm debug                    : Check the NVM4W process for known problems (experimental troubleshooter).")
 	fmt.Println("  nvm install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
 	fmt.Println("                                 most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults")
 	fmt.Println("                                 to system arch). Set [arch] to \"all\" to install 32 AND 64 bit versions.")
@@ -1151,15 +1170,9 @@ func runElevated(command string, forceUAC ...bool) (bool, error) {
 }
 
 func saveSettings() {
-	content := "root: " + strings.Trim(env.root, " \n\r") + "\r\narch: " + strings.Trim(env.arch, " \n\r") + "\r\nproxy: " + strings.Trim(env.proxy, " \n\r") + "\r\noriginalpath: " + strings.Trim(env.originalpath, " \n\r") + "\r\noriginalversion: " + strings.Trim(env.originalversion, " \n\r")
-	content = content + "\r\nnode_mirror: " + strings.Trim(env.node_mirror, " \n\r") + "\r\nnpm_mirror: " + strings.Trim(env.npm_mirror, " \n\r")
-	decoder := encoding.Decoder{}
-	decoded, err := decoder.String(content)
-	if err != nil {
-		fmt.Printf("Error attempting to save settings:\n%v\n", err.Error())
-		return
-	}
-	ioutil.WriteFile(env.settings, []byte(decoded), 0644)
+	content := "root: " + strings.Trim(encode(env.root), " \n\r") + "\r\narch: " + strings.Trim(encode(env.arch), " \n\r") + "\r\nproxy: " + strings.Trim(encode(env.proxy), " \n\r") + "\r\noriginalpath: " + strings.Trim(encode(env.originalpath), " \n\r") + "\r\noriginalversion: " + strings.Trim(encode(env.originalversion), " \n\r")
+	content = content + "\r\nnode_mirror: " + strings.Trim(encode(env.node_mirror), " \n\r") + "\r\nnpm_mirror: " + strings.Trim(encode(env.npm_mirror), " \n\r")
+	ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 
 func getProcessPermissions() (admin bool, elevated bool, err error) {
@@ -1185,22 +1198,16 @@ func getProcessPermissions() (admin bool, elevated bool, err error) {
 	return
 }
 
-// NOT USED?
-/*
-func useArchitecture(a string) {
-  if strings.ContainsAny("32",os.Getenv("PROCESSOR_ARCHITECTURE")) {
-    fmt.Println("This computer only supports 32-bit processing.")
-    return
-  }
-  if a == "32" || a == "64" {
-    env.arch = a
-    saveSettings()
-    fmt.Println("Set to "+a+"-bit mode.")
-  } else {
-    fmt.Println("Cannot set architecture to "+a+". Must be 32 or 64 are acceptable values.")
-  }
+func encode(val string) string {
+	converted, err := encoding.ToUTF8([]byte(val))
+	if err != nil {
+		fmt.Printf("WARNING: [encoding error] - %v\n", err.Error())
+		return val
+	}
+
+	return converted
 }
-*/
+
 // ===============================================================
 // END | Utility functions
 // ===============================================================
