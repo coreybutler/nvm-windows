@@ -9,7 +9,7 @@ require (
 	github.com/coreybutler/go-fsutil v1.2.0
 	github.com/olekukonko/tablewriter v0.0.5
 	golang.org/x/sys v0.1.0
-	golang.org/x/text v0.3.2
+	golang.org/x/text v0.3.8
 )
 
 require github.com/mattn/go-runewidth v0.0.9 // indirect
