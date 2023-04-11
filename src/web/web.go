@@ -107,6 +107,7 @@ func Download(url string, target string, version string) bool {
 	response, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error while downloading", url, "-", err)
+		return false
 	}
 	defer response.Body.Close()
 	c := make(chan os.Signal, 2)
