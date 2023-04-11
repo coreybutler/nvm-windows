@@ -16,6 +16,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unsafe"
 
 	"nvm/arch"
 	"nvm/encoding"
@@ -217,6 +218,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	// If user specifies "latest" version, find out what version is
 	if version == "latest" || version == "node" {
 		version = getLatest()
+		fmt.Println(version)
 	}
 
 	if version == "lts" {
@@ -599,7 +601,7 @@ func findLatestSubVersion(version string, localOnly ...bool) string {
 	url := web.GetFullNodeUrl("latest-v" + version + ".x" + "/SHASUMS256.txt")
 	content := web.GetRemoteTextFile(url)
 	re := regexp.MustCompile("node-v(.+)+msi")
-	reg := regexp.MustCompile("node-v|-x.+")
+	reg := regexp.MustCompile("node-v|-[xa].+")
 	latest := reg.ReplaceAllString(re.FindString(content), "")
 	return latest
 }
@@ -914,7 +916,7 @@ func checkLocalEnvironment() {
 			username := strings.Split(user.Username, "\\")
 			fmt.Printf("%v is not using admin or elevated rights", username[len(username)-1])
 			if devmode == "ON" {
-				fmt.Printf(", but windows developer mode is enabled.\nMost commands will still work unless %v lacks rights to modify %v.\n", username[len(username)-1], current)
+				fmt.Printf(", but windows developer mode is\nenabled. Most commands will still work unless %v lacks rights to\nmodify the %v symlink.\n", username[len(username)-1], current)
 			} else {
 				fmt.Println(".")
 			}
@@ -928,6 +930,36 @@ func checkLocalEnvironment() {
 	} else {
 		fmt.Println(err)
 	}
+
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	handle, _, err := kernel32.NewProc("GetStdHandle").Call(uintptr(0xfffffff5)) // get handle for console input
+	if err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Printf("Error getting console handle: %v", err)
+	} else {
+		var mode uint32
+		result, _, _ := kernel32.NewProc("GetConsoleMode").Call(handle, uintptr(unsafe.Pointer(&mode)))
+		if result != 0 {
+			var title [256]uint16
+			_, _, err := kernel32.NewProc("GetConsoleTitleW").Call(uintptr(unsafe.Pointer(&title)), uintptr(len(title)))
+			if err != nil && err.Error() != "The operation completed successfully." {
+				fmt.Printf("Error getting console title: %v", err)
+			} else {
+				consoleTitle := syscall.UTF16ToString(title[:])
+
+				if !strings.Contains(strings.ToLower(consoleTitle), "command prompt") && !strings.Contains(strings.ToLower(consoleTitle), "powershell") {
+					problems = append(problems, fmt.Sprintf("\"%v\" is not an officially supported shell. Some features may not work as expected.\n", consoleTitle))
+				}
+
+				fmt.Printf("\n%v", consoleTitle)
+			}
+		}
+	}
+
+	// SHELL in Linux
+	// TERM in Windows
+	// COMSPEC in Windows provides the terminal path
+	// shell := os.Getenv("ConEmuANSI")
+	// fmt.Printf("Shell: %v\n", shell)
 
 	// Display developer mode status
 	if !admin {
@@ -948,10 +980,20 @@ func checkLocalEnvironment() {
 		path = "UNKNOWN: " + err.Error()
 	}
 
-	fmt.Printf("\nPath: %v\nVersion: %v\nNVM_HOME: %v\nNVM_SYMLINK: %v\n", path, NvmVersion, home, symlink)
+	out := "Unknown"
+	output, err := exec.Command(os.Getenv("NVM_SYMLINK")+"\\node.exe", "-v").Output()
+	if err == nil {
+		out = string(output)
+	}
+
+	fmt.Printf("\nPath: %v\nNVM4W Version: %v\nNVM_HOME: %v\nNVM_SYMLINK: %v\n\nActive Node.js Version: %v", path, NvmVersion, home, symlink, out)
 
 	if !nvmsymlinkfound {
 		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")
+	}
+
+	if home == symlink {
+		problems = append(problems, "NVM_HOME and NVM_SYMLINK cannot be the same value ("+symlink+"). Change NVM_SYMLINK.")
 	}
 
 	nodelist := web.Ping(web.GetFullNodeUrl("index.json"))
@@ -978,9 +1020,23 @@ func checkLocalEnvironment() {
 	if len(problems) == 0 {
 		fmt.Println("\n" + "No problems detected.")
 	} else {
-		fmt.Println("\n" + "Problems Detected:")
+		// fmt.Println("")
+		// table := tablewriter.NewWriter(os.Stdout)
+		// table.SetHeader([]string{"#", "Problems Detected"})
+		// table.SetColMinWidth(1, 40)
+		// table.SetAutoWrapText(false)
+		// // table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+		// // table.SetAlignment(tablewriter.ALIGN_LEFT)
+		// // table.SetCenterSeparator("|")
+		// data := make([][]string, 0)
+		// for i := 0; i < len(problems); i++ {
+		// 	data = append(data, []string{fmt.Sprintf(" %v ", i+1), problems[i]})
+		// }
+		// table.AppendBulk(data) // Add Bulk Data
+		// table.Render()
+		fmt.Println("\nPROBLEMS DETECTED\n-----------------")
 		for _, p := range problems {
-			fmt.Println("  - " + p)
+			fmt.Println(p + "\n")
 		}
 	}
 
@@ -993,7 +1049,7 @@ func help() {
 	fmt.Println(" ")
 	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
 	fmt.Println("  nvm current                  : Display active version.")
-	fmt.Println("  nvm debug                    : Check the NVM4W process for known problems (experimental troubleshooter).")
+	fmt.Println("  nvm debug                    : Check the NVM4W process for known problems (troubleshooter).")
 	fmt.Println("  nvm install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
 	fmt.Println("                                 most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults")
 	fmt.Println("                                 to system arch). Set [arch] to \"all\" to install 32 AND 64 bit versions.")
@@ -1028,7 +1084,7 @@ func checkVersionExceedsLatest(version string) bool {
 	url := web.GetFullNodeUrl("latest/SHASUMS256.txt")
 	content := web.GetRemoteTextFile(url)
 	re := regexp.MustCompile("node-v(.+)+msi")
-	reg := regexp.MustCompile("node-v|-x.+")
+	reg := regexp.MustCompile("node-v|-[xa].+")
 	latest := reg.ReplaceAllString(re.FindString(content), "")
 	var vArr = strings.Split(version, ".")
 	var lArr = strings.Split(latest, ".")
@@ -1073,7 +1129,7 @@ func getLatest() string {
 	url := web.GetFullNodeUrl("latest/SHASUMS256.txt")
 	content := web.GetRemoteTextFile(url)
 	re := regexp.MustCompile("node-v(.+)+msi")
-	reg := regexp.MustCompile("node-v|-x.+")
+	reg := regexp.MustCompile("node-v|-[xa].+")
 	return reg.ReplaceAllString(re.FindString(content), "")
 }
 
@@ -1199,13 +1255,13 @@ func getProcessPermissions() (admin bool, elevated bool, err error) {
 }
 
 func encode(val string) string {
-	converted, err := encoding.ToUTF8([]byte(val))
-	if err != nil {
-		fmt.Printf("WARNING: [encoding error] - %v\n", err.Error())
-		return val
-	}
+	converted := encoding.ToUTF8(val)
+	// if err != nil {
+	// 	fmt.Printf("WARNING: [encoding error] - %v\n", err.Error())
+	// 	return val
+	// }
 
-	return converted
+	return string(converted)
 }
 
 // ===============================================================
