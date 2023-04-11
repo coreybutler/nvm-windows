@@ -597,7 +597,7 @@ func findLatestSubVersion(version string, localOnly ...bool) string {
 	url := web.GetFullNodeUrl("latest-v" + version + ".x" + "/SHASUMS256.txt")
 	content := web.GetRemoteTextFile(url)
 	re := regexp.MustCompile("node-v(.+)+msi")
-	reg := regexp.MustCompile("node-v|-x.+")
+	reg := regexp.MustCompile("node-v|-[xa].+")
 	latest := reg.ReplaceAllString(re.FindString(content), "")
 	return latest
 }
@@ -1009,7 +1009,7 @@ func checkVersionExceedsLatest(version string) bool {
 	url := web.GetFullNodeUrl("latest/SHASUMS256.txt")
 	content := web.GetRemoteTextFile(url)
 	re := regexp.MustCompile("node-v(.+)+msi")
-	reg := regexp.MustCompile("node-v|-x.+")
+	reg := regexp.MustCompile("node-v|-[xa].+")
 	latest := reg.ReplaceAllString(re.FindString(content), "")
 	var vArr = strings.Split(version, ".")
 	var lArr = strings.Split(latest, ".")
@@ -1054,7 +1054,7 @@ func getLatest() string {
 	url := web.GetFullNodeUrl("latest/SHASUMS256.txt")
 	content := web.GetRemoteTextFile(url)
 	re := regexp.MustCompile("node-v(.+)+msi")
-	reg := regexp.MustCompile("node-v|-x.+")
+	reg := regexp.MustCompile("node-v|-[xa].+")
 	return reg.ReplaceAllString(re.FindString(content), "")
 }
 
