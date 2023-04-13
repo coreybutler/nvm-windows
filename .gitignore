@@ -33,3 +33,4 @@ bin/nvm/*
 
 !.gitignore
 !.gitattributes
+tests

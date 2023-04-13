@@ -986,7 +986,7 @@ func checkLocalEnvironment() {
 		out = string(output)
 	}
 
-	fmt.Printf("\nPath: %v\nNVM4W Version: %v\nNVM_HOME: %v\nNVM_SYMLINK: %v\n\nActive Node.js Version: %v", path, NvmVersion, home, symlink, out)
+	fmt.Printf("\nPath: %v\nNVM4W Version: %v\nNVM_HOME: %v\nNVM_SYMLINK: %v\nNode Installation Root: %v\n\nActive Node.js Version: %v", path, NvmVersion, home, symlink, env.root, out)
 
 	if !nvmsymlinkfound {
 		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")
