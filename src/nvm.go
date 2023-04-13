@@ -975,18 +975,20 @@ func checkLocalEnvironment() {
 	}
 
 	executable := os.Args[0]
-	path, err := where.Find(executable)
+	path, err := where.Find(filepath.Base(executable))
+
 	if err != nil {
 		path = "UNKNOWN: " + err.Error()
 	}
 
-	out := "Unknown"
+	out := "none\n(run \"nvm use <version>\" to activate a version)\n"
 	output, err := exec.Command(os.Getenv("NVM_SYMLINK")+"\\node.exe", "-v").Output()
 	if err == nil {
 		out = string(output)
 	}
 
-	fmt.Printf("\nPath: %v\nNVM4W Version: %v\nNVM_HOME: %v\nNVM_SYMLINK: %v\nNode Installation Root: %v\n\nActive Node.js Version: %v", path, NvmVersion, home, symlink, env.root, out)
+	nvmhome := os.Getenv("NVM_HOME")
+	fmt.Printf("\nNVM4W Version:      %v\nNVM4W Path:         %v\nNVM4W Settings:     %v\nNVM_HOME:           %v\nNVM_SYMLINK:        %v\nNode Installations: %v\n\nActive Node.js Version: %v", NvmVersion, path, home, nvmhome, symlink, env.root, out)
 
 	if !nvmsymlinkfound {
 		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")
