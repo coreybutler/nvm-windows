@@ -19,14 +19,14 @@ cd .\src
 go build nvm.go
 
 REM Group the file with the helper binaries
-move nvm.exe %GOBIN%
+move nvm.exe "%GOBIN%"
 cd ..\
 
 REM Codesign the executable
 echo ----------------------------
 echo Sign the nvm executable...
 echo ----------------------------
-buildtools\signtool.exe sign /debug /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /a %GOBIN%\nvm.exe
+buildtools\signtool.exe sign /debug /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /a "%GOBIN%\nvm.exe"
 
 for /f %%i in ('"%GOBIN%\nvm.exe" version') do set AppVersion=%%i
 echo nvm.exe v%AppVersion% built.
@@ -35,7 +35,7 @@ REM Create the distribution folder
 SET DIST=%CD%\dist\%AppVersion%
 
 REM Remove old build files if they exist.
-if exist %DIST% (
+if exist "%DIST%" (
   echo ----------------------------
   echo Clearing old build in %DIST%
   echo ----------------------------
@@ -54,7 +54,7 @@ echo Generating update utility...
 echo ----------------------------
 cd .\updater
 go build nvm-update.go
-move nvm-update.exe %DIST%
+move nvm-update.exe "%DIST%"
 cd ..\
 
 REM Generate the installer (InnoSetup)
@@ -66,12 +66,12 @@ buildtools\iscc "%INNOSETUP%" "/o%DIST%"
 echo ----------------------------
 echo Sign the installer
 echo ----------------------------
-buildtools\signtool.exe sign /debug /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /a %DIST%\nvm-setup.exe
+buildtools\signtool.exe sign /debug /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /a "%DIST%\nvm-setup.exe"
 
 echo ----------------------------
 echo Sign the updater...
 echo ----------------------------
-buildtools\signtool.exe sign /debug /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /a %DIST%\nvm-update.exe
+buildtools\signtool.exe sign /debug /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /a "%DIST%\nvm-update.exe"
 
 echo ----------------------------
 echo Bundle the installer...
@@ -84,20 +84,20 @@ echo Bundle the updater...
 echo ----------------------------
 buildtools\zip -j -9 -r "%DIST%\nvm-update.zip" "%DIST%\nvm-update.exe"
 
-del %DIST%\nvm-update.exe
-del %DIST%\nvm-setup.exe
+del "%DIST%\nvm-update.exe"
+del "%DIST%\nvm-setup.exe"
 
 REM Generate checksums
 echo ----------------------------
 echo Generating checksums...
 echo ----------------------------
-for %%f in (%DIST%\*.*) do (certutil -hashfile "%%f" MD5 | find /i /v "md5" | find /i /v "certutil" >> "%%f.checksum.txt")
+for %%f in ("%DIST%"\*.*) do (certutil -hashfile "%%f" MD5 | find /i /v "md5" | find /i /v "certutil" >> "%%f.checksum.txt")
 echo complete
 
 echo ----------------------------
 echo Cleaning up...
 echo ----------------------------
-del %GOBIN%\nvm.exe
+del "%GOBIN%\nvm.exe"
 echo complete
 @REM del %GOBIN%\nvm-update.exe
 @REM del %GOBIN%\nvm-setup.exe
