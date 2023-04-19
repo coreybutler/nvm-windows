@@ -1,0 +1,35 @@
+name: "⭐ Feature or enhancement request"
+title: "[Feature]: "
+description: Propose something new.
+labels:
+  - "needs review"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please be aware that NVM for Windows feature development is currently [frozen](https://github.com/coreybutler/nvm-windows/wiki/Runtime#nvm4w-feature-freeze). We are actively developing [Runtime](https://github.com/coreybutler/nvm-windows/wiki/Runtime), a new JavaScript runtime manager to succeed NVM4W.
+
+        Feature requests submitted here will be considered for Runtime. For more information, see the [new features explanation](https://github.com/coreybutler/nvm-windows/wiki/New-Features).
+
+        If you are requesting an nvm-sh feature, please recognize that it is a different project from NVM4W (nvm-windows). For more about feature parity, see [Why Aren't Some nvm for macOS/Linux Features Supported?](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#why-isnt-nvmrc-supported-why-arent-some-nvm-for-macoslinux-features-supported)
+  - type: textarea
+    attributes:
+      label: Description of the new feature / enhancement
+      placeholder: What is the expected behavior of the proposed feature?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Scenario when this would be used?
+      placeholder: What is the scenario this would be used? Why is this important to your workflow as a power user?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Supporting information
+      placeholder: "Having additional evidence, data, tweets, blog posts, research, ... anything is extremely helpful. This information provides context to the scenario that may otherwise be lost."
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: Please limit one request per issue.
