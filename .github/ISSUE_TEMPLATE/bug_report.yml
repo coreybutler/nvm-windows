@@ -91,6 +91,7 @@ body:
         - Commander
         - Hyper
         - Other
+      multiple: true
   - type: dropdown
     id: permissions
     attributes:
@@ -102,6 +103,8 @@ body:
         - Standard Use, Non-Elevated
         - I don't know (Default)
         - Other, please describe
+    validations:
+      required: true
   - type: dropdown
     id: developer-mode
     attributes:
