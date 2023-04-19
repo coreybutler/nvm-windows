@@ -30,7 +30,7 @@ body:
       label: What happened?
       description: Please provide a clear and concise description of what happened.
       placeholder: Tell us what you see!
-      value: " "
+      value: describe
     validations:
       required: true
   - type: textarea
@@ -39,7 +39,7 @@ body:
       label: What did you expect to happen?
       description: Please provide a clear and concise description of what you expected to happen.
       placeholder: Tell us what you thought you'd see!
-      value: " "
+      value: describe
     validations:
       required: true
   - type: dropdown
@@ -96,7 +96,7 @@ body:
       label: Is Developer Mode enabled?
       description: See [Enable your device for development](https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development).
       options:
-        - Yes
+        - "Yes"
         - No (Default)
   - type: textarea
     id: logs
