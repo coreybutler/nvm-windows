@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: "\u003F General Question"
     url: https://github.com/coreybutler/nvm-windows/discussions
-    about: Documentation for users of PowerToys utilities
+    about: Discuss features or general questions
   - name: "\U0001F6A8 Author.io Security Response Team"
     url: https://forms.gle/RgtxUSLZjazN7Q7v8
     about: Report security vulnerability
