@@ -7,10 +7,10 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Before submitting your issue, please do the following:**
+        ## Before submitting your issue, please do the following:
 
         1. Make sure you're running Windows. If you're using macOS, Linux, WSL/WSL2, or a Docker container using Linux, then you probably want [nvm](https://github.com/nvm-sh/nvm) (this is NVM _for Windows_).
-        1. Run `nvm debug` (v1.1.11+) to see if you can resolve your issue yourself.
+        1. **Run `nvm debug` (v1.1.11+) to see if you can resolve your issue yourself.**
         1. Review the [common issues and resolutions](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues) wiki page.
         1. **Search existing issues to see if your issue has already been opened/closed (help prevent duplicates).**
         1. Remember, there is a [wiki](https://github.com/coreybutler/nvm-windows/wiki) that answers questions about installation types, building from source, and project philosophy concerns.
@@ -78,6 +78,19 @@ body:
         - Western European
         - Asian
         - Other Non-English
+  - type: dropdown
+    attributes:
+      label: Which shell are you running NVM4W in?
+      options:
+        - "Command Prompt"
+        - PowerShell
+        - WSL or WSL2
+        - Cygwin
+        - Mingw64
+        - ConEmu
+        - Commander
+        - Hyper
+        - Other
   - type: dropdown
     id: permissions
     attributes:
