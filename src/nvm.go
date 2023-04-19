@@ -644,7 +644,7 @@ func use(version string, cpuarch string, reload ...bool) {
 	}
 
 	// Remove symlink if it already exists
-	sym, _ := os.Stat(env.symlink)
+	sym, _ := os.Lstat(env.symlink)
 	if sym != nil {
 		// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
 		_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
