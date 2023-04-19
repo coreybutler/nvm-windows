@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before submitting your issue, please do the following:
+        **Before submitting your issue, please do the following:**
 
         1. Make sure you're running Windows. If you're using macOS, Linux, WSL/WSL2, or a Docker container using Linux, then you probably want [nvm](https://github.com/nvm-sh/nvm) (this is NVM _for Windows_).
         1. Run `nvm debug` (v1.1.11+) to see if you can resolve your issue yourself.
@@ -16,7 +16,7 @@ body:
         1. Remember, there is a [wiki](https://github.com/coreybutler/nvm-windows/wiki) that answers questions about installation types, building from source, and project philosophy concerns.
         1. **[Read the README](https://github.com/coreybutler/nvm-windows)**. We took the time to write it for you. Many people ignore this.
         1. If your issue is actually a question, please use the [discussions page](https://github.com/coreybutler/nvm-windows/discussions) so the whole community can help.
-        1. If you're seeking commercial help or requesting something you really need for work, please consider sponsoring the change/fix.
+        1. If you're seeking commercial help or requesting something you really need _for work/employment_, please consider sponsoring the change/fix.
   - type: input
     id: contact
     attributes:
@@ -31,7 +31,6 @@ body:
       label: What happened?
       description: Please provide a clear and concise description of what happened.
       placeholder: Tell us what you see!
-      value: describe
     validations:
       required: true
   - type: textarea
@@ -40,7 +39,6 @@ body:
       label: What did you expect to happen?
       description: Please provide a clear and concise description of what you expected to happen.
       placeholder: Tell us what you thought you'd see!
-      value: describe
     validations:
       required: true
   - type: dropdown
@@ -104,7 +102,7 @@ body:
     attributes:
       label: Relevant log/console output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
+      render: Shell
     validations:
       required: false
   - type: textarea
