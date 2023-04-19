@@ -3,11 +3,12 @@ title: "[Feature]: "
 description: Propose something new.
 labels:
   - "needs review"
+  - "enhancement request"
 body:
   - type: markdown
     attributes:
       value: |
-        Please be aware that NVM for Windows feature development is currently [frozen](https://github.com/coreybutler/nvm-windows/wiki/Runtime#nvm4w-feature-freeze). We are actively developing [Runtime](https://github.com/coreybutler/nvm-windows/wiki/Runtime), a new JavaScript runtime manager to succeed NVM4W.
+        **Be aware that NVM for Windows feature development is currently [frozen](https://github.com/coreybutler/nvm-windows/wiki/Runtime#nvm4w-feature-freeze).** We are actively developing [Runtime](https://github.com/coreybutler/nvm-windows/wiki/Runtime), a new JavaScript runtime manager to succeed NVM4W.
 
         Feature requests submitted here will be considered for Runtime. For more information, see the [new features explanation](https://github.com/coreybutler/nvm-windows/wiki/New-Features).
 
