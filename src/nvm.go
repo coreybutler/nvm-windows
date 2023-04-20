@@ -1011,6 +1011,25 @@ func checkLocalEnvironment() {
 		}
 	}
 
+	v := node.GetInstalled(env.root)
+	invalid := make([]string, 0)
+	invalidnpm := make([]string, 0)
+	for i := 0; i < len(v); i++ {
+		if _, err = os.Stat(filepath.Join(env.root, v[i], "node.exe")); err != nil {
+			invalid = append(invalid, v[i])
+		} else if _, err = os.Stat(filepath.Join(env.root, v[i], "npm.cmd")); err != nil {
+			invalidnpm = append(invalid, v[i])
+		}
+	}
+
+	if len(invalid) > 0 {
+		problems = append(problems, "The following Node installations are invalid (missing node.exe): "+strings.Join(invalid, ", ")+" - consider reinstalling these versions")
+	}
+
+	if len(invalidnpm) > 0 {
+		fmt.Printf("\nWARNING: The following Node installations are missing npm: %v\n         (Node will still run, but npm will not work on these versions)\n", strings.Join(invalidnpm, ", "))
+	}
+
 	if len(env.npm_mirror) > 0 {
 		fmt.Println("If you are experiencing npm problems, check the npm mirror (" + env.npm_mirror + ") to assure it is online and accessible.")
 	}
