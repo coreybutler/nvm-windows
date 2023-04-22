@@ -17,14 +17,6 @@ body:
         1. **[Read the README](https://github.com/coreybutler/nvm-windows)**. We took the time to write it for you. Many people ignore this.
         1. If your issue is actually a question, please use the [discussions page](https://github.com/coreybutler/nvm-windows/discussions) so the whole community can help.
         1. If you're seeking commercial help or requesting something you really need _for work/employment_, please consider [sponsoring](https://github.com/sponsors/coreybutler) the change/fix.
-  - type: input
-    id: contact
-    attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
-    validations:
-      required: false
   - type: textarea
     id: issue
     attributes:
