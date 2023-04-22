@@ -122,6 +122,11 @@ body:
     validations:
       required: false
   - type: textarea
+    attributes:
+      label: Debug Output
+      description: If possible, please provide the output of `nvm debug`
+      render: Shell
+  - type: textarea
     id: misc
     attributes:
       label: Anything else?
