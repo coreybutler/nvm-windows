@@ -1,0 +1,96 @@
+name: Auto Label Issues
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove invited labels
+        if: github.event.action != 'opened'
+        uses: actions/github-script@v6.4.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          script: |
+            const issue = context.payload.issue
+            // remove All of the labels
+            github.rest.issues.removeAllLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+            });
+      - name: Add new labels
+        uses: actions/github-script@v6.4.1
+        with:
+          script: |
+            const issue = context.payload.issue
+
+            const labelsToAdd = []
+            const labelConditions = [
+              {label: 'bug', keywords: ['Bug', 'bug', 'error', 'Error']},
+              {label: 'vulnerability', keywords: ['vulnerability', 'Vulnerability', 'leak', 'Leak']},
+              {label: 'enhancement', keywords: ['suggestion', 'enhancement', 'feature request', 'Feature request', 'Feature Request']},
+              {label: 'documentation', keywords: ['docs', 'documentation', 'Wiki', 'wiki']},
+              {label: 'help wanted', keywords: ['help wanted']},
+              {label: 'question', keywords: ['question', 'Question', 'Why', 'why', 'How', 'how']},]},
+            ]
+
+            // Add tags based on conditions
+            for (const {label, keywords} of labelConditions) {
+                for (const keyword of keywords) {
+                    if (issue.title.includes(keyword)) {
+                        labelsToAdd.push(label)
+                        break
+                    }
+                }
+            }
+
+            if (labelsToAdd.length == 0) {
+                labelsToAdd.push('triage-needed')
+            }
+
+            console.log("All of tags:", labelsToAdd)
+
+            // Add tags
+            if (labelsToAdd.length > 0){
+              github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labelsToAdd
+              })
+            } else {
+              console.warn('No label needs to add')
+            }
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add assignees
+        if: github.event.sender.login != github.repository_owner && github.event.action == 'opened'
+        uses: actions/github-script@v6.4.1
+        with:
+          script: |
+            const assignees = ['coreybutler']
+            const assignee = assignees[Math.floor(Math.random() * assignees.length)]
+            console.log(`The question will assign to ${assignee}`)
+
+            // Add assignees
+            github.rest.issues.addAssignees({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                assignees: [assignee]
+            })
+
+            // Add comment
+            await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `*Automated*:\n 👋 Thanks for reporting this issue. @${assignee} will review it shortly. In the meantime, please check to see if there are any similar issues already closed.`
+            })
+          github-token: ${{ secrets.GITHUB_TOKEN }}
