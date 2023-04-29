@@ -1,5 +1,5 @@
 name: Go Package Build
-on: [pull_request]
+on: [pull_request, workflow_dispatch]
 
 jobs:
  build:
