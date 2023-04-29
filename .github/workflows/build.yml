@@ -12,6 +12,7 @@ jobs:
       with:
         # Path to the go.mod or go.work file.
         go-version-file: ./src/go.mod
+        cache-dependency-path: ./src/go.sum
     - name: Build Go Package
       run: build.bat
       shell: cmd
