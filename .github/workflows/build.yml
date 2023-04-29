@@ -1,0 +1,17 @@
+name: Go Package Build
+on: [pull_request]
+
+jobs:
+ build:
+  runs-on: windows-latest
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Setup Go environment
+      uses: actions/setup-go@v4.0.0
+      with:
+        # Path to the go.mod or go.work file.
+        go-version-file: ./src/go.mod
+    - name: Build Go Package
+      run: cmd.exe /c build.bat
+      shell: cmd
