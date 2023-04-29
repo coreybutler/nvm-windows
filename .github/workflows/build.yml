@@ -13,5 +13,8 @@ jobs:
         # Path to the go.mod or go.work file.
         go-version-file: ./src/go.mod
     - name: Build Go Package
-      run: cmd.exe /c build.bat
+      run: build.bat
       shell: cmd
+    - uses: actions/upload-artifact@v3
+      with:
+        path: ./dist/*
