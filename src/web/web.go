@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -15,11 +16,13 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"archive/zip"
 
 	"github.com/blang/semver"
 	fs "github.com/coreybutler/go-fsutil"
+	"github.com/schollz/progressbar/v3"
 )
 
 var client = &http.Client{}
@@ -129,13 +132,25 @@ func Download(url string, target string, version string) bool {
 		os.Exit(1)
 	}()
 	var body []byte
+	bar := progressbar.NewOptions64(
+		response.ContentLength,
+		progressbar.OptionSetDescription("Download progress"), //set prefix
+		progressbar.OptionSetPredictTime(true),                //Attempt to predict remaining time
+		progressbar.OptionSetWriter(os.Stderr),                //Write standard error
+		progressbar.OptionShowCount(),
+		progressbar.OptionShowBytes(true),
+		progressbar.OptionSetWidth(10),
+		progressbar.OptionThrottle(100*time.Millisecond), //Update once every 100ms
+	)
 	if response.StatusCode != 200 {
-		body, err = ioutil.ReadAll(response.Body)
+		buf := new(bytes.Buffer)
+		_, err = io.Copy(io.MultiWriter(buf, bar), response.Body)
+		body = buf.Bytes()
 		if err != nil {
 			fmt.Println("Failed to read response body: " + err.Error())
 		}
 	} else {
-		_, err = io.Copy(output, response.Body)
+		_, err = io.Copy(io.MultiWriter(output, bar), response.Body)
 		if err != nil {
 			fmt.Println("Error while downloading", url, "-", err)
 		}
