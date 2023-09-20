@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"os"
 
 	// "../semver"
 	"github.com/blang/semver"
@@ -95,7 +96,7 @@ func GetInstalled(root string) []string {
 	files, _ := ioutil.ReadDir(root)
 
 	for i := len(files) - 1; i >= 0; i-- {
-		if files[i].IsDir() {
+		if files[i].IsDir() || (files[i].Mode()&os.ModeSymlink == os.ModeSymlink) {
 			isnode, _ := regexp.MatchString("v", files[i].Name())
 
 			if isnode {
