@@ -119,7 +119,7 @@ body:
       description: |
         If possible, please provide the output of `nvm debug`.
 
-        The output of `nvm debug` looks like this:
+        The output of `nvm debug` looks like this
         ```
 <username> is not using admin or elevated rights.
 
