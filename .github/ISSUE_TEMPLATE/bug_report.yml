@@ -157,7 +157,7 @@ body:
           nvm list [available]         : List the node.js installations. Type "available" at the end to see what can be installed. Aliased as ls.
           nvm on                       : Enable node.js version management.
           nvm off                      : Disable node.js version management.
-      ```
+        ```
       render: Shell
     validations:
       required: true
