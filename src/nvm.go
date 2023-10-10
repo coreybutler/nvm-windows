@@ -511,7 +511,7 @@ func uninstall(version string) {
 func versionNumberFrom(version string) string {
 	reg, _ := regexp.Compile("[^0-9]")
 
-	if reg.Match([]byte(version[:1])) {
+	if reg.MatchString(version[:1]) {
 		if version[0:1] != "v" {
 			url := web.GetFullNodeUrl("latest-" + version + "/SHASUMS256.txt")
 			content := strings.Split(web.GetRemoteTextFile(url), "\n")[0]
@@ -529,7 +529,7 @@ func versionNumberFrom(version string) string {
 		}
 	}
 
-	for reg.Match([]byte(version[:1])) {
+	for reg.MatchString(version[:1]) {
 		version = version[1:]
 	}
 
