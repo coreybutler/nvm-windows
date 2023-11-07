@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"nvm/arch"
@@ -66,6 +67,34 @@ func GetFullNpmUrl(path string) string {
 	return npmBaseAddress + path
 }
 
+func IsLocalIPv6() (bool, error) {
+	conn, err := net.Dial("tcp", "[::1]:80")
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "no connection") {
+			return false, nil
+		}
+
+		return false, err
+	}
+	defer conn.Close()
+
+	return true, nil
+	// addrs, err := net.InterfaceAddrs()
+	// if err != nil {
+	// 	return false, err
+	// }
+
+	// for _, addr := range addrs {
+	// 	fmt.Println(addr.String())
+	// 	if strings.Contains(addr.String(), ":") {
+	// 		return true, nil
+	// 	}
+	// }
+
+	// return false, nil
+}
+
+// Returns whether the address can be pinged and whether it is using IPv6 or not
 func Ping(url string) bool {
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {

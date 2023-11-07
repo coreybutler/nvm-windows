@@ -70,6 +70,11 @@ func main() {
 	detail := ""
 	procarch := arch.Validate(env.arch)
 
+	if !isTerminal() {
+		alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
+		os.Exit(0)
+	}
+
 	// Capture any additional arguments
 	if len(args) > 2 {
 		detail = args[2]
@@ -178,6 +183,102 @@ func setNodeMirror(uri string) {
 func setNpmMirror(uri string) {
 	env.npm_mirror = uri
 	saveSettings()
+}
+
+func isTerminal() bool {
+	fileInfo, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return (fileInfo.Mode() & os.ModeCharDevice) != 0
+}
+
+// const (
+// 	MB_YESNOCANCEL     = 0x00000003
+// 	MB_ICONINFORMATION = 0x00000040
+// 	IDYES              = 6
+// 	IDNO               = 7
+// 	IDCANCEL           = 2
+// )
+
+// func openTerminal(msg string, caption ...string) {
+// 	title := "Alert"
+// 	if len(caption) > 0 {
+// 		title = caption[0]
+// 	}
+
+// 	labels := []string{"Open CMD", "Open PowerShell", "Close"}
+// 	var buttons []*uint16
+// 	for _, label := range labels {
+// 		buttons = append(buttons, syscall.StringToUTF16Ptr(label))
+// 	}
+// 	buttons = append(buttons, nil)
+
+// 	user32 := windows.NewLazySystemDLL("user32.dll")
+// 	mbox := user32.NewProc("MessageBoxW")
+
+// 	ret, _, _ := mbox.Call(
+// 		uintptr(0),
+// 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(msg))),
+// 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(title))),
+// 		MB_YESNOCANCEL|MB_ICONINFORMATION,
+// 		uintptr(0),
+// 		uintptr(unsafe.Pointer(&buttons[0])),
+// 	)
+
+// 	getActiveWindow := user32.NewProc("GetActiveWindow")
+// 	activeWindow, _, _ := getActiveWindow.Call()
+// 	hwnd := windows.Handle(activeWindow)
+
+// 	// Command to open the program or file
+
+// 	switch ret {
+// 	case IDYES:
+// 		cmd := exec.Command("cmd", "/C", "start", "cmd", "/K", "echo Run \"nvm\" for help...")
+// 		err := cmd.Start()
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+// 	case IDNO:
+// 		cmd := exec.Command("cmd", "/C", "start", "powershell", "/K", "echo Run \"nvm\" for help...")
+// 		err := cmd.Start()
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+// 	case IDCANCEL:
+// 		fmt.Println("User clicked 'Custom Cancel'")
+// 		// Handle 'Custom Cancel' button click here
+// 	default:
+// 		fmt.Println("User closed the message box")
+// 		// Handle message box close event here
+// 	}
+
+// 	postMessage := user32.NewProc("PostMessageW")
+// 	wmClose := 0x0010
+// 	_, _, _ = postMessage.Call(
+// 		uintptr(hwnd),
+// 		uintptr(wmClose),
+// 		0,
+// 		0,
+// 	)
+// }
+
+func alert(msg string, caption ...string) {
+	user32 := windows.NewLazySystemDLL("user32.dll")
+	mbox := user32.NewProc("MessageBoxW")
+	getForegroundWindow := user32.NewProc("GetForegroundWindow")
+	var hwnd uintptr
+	ret, _, _ := getForegroundWindow.Call()
+	if ret != 0 {
+		hwnd = ret
+	}
+
+	title := "Alert"
+	if len(caption) > 0 {
+		title = caption[0]
+	}
+
+	mbox.Call(hwnd, uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(msg))), uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(title))), uintptr(windows.MB_OK))
 }
 
 /*
@@ -862,6 +963,21 @@ func disable() {
 	fmt.Println("nvm disabled")
 }
 
+const (
+	VER_PLATFORM_WIN32s        = 0
+	VER_PLATFORM_WIN32_WINDOWS = 1
+	VER_PLATFORM_WIN32_NT      = 2
+)
+
+type OSVersionInfoEx struct {
+	OSVersionInfoSize uint32
+	MajorVersion      uint32
+	MinorVersion      uint32
+	BuildNumber       uint32
+	PlatformId        uint32
+	CSDVersion        [128]uint16
+}
+
 func checkLocalEnvironment() {
 	problems := make([]string, 0)
 
@@ -955,6 +1071,19 @@ func checkLocalEnvironment() {
 		}
 	}
 
+	// Get Windows details
+	getVersionEx := kernel32.NewProc("GetVersionExW")
+	versionInfo := OSVersionInfoEx{
+		OSVersionInfoSize: uint32(unsafe.Sizeof(OSVersionInfoEx{})),
+	}
+	ret, _, _ := getVersionEx.Call(uintptr(unsafe.Pointer(&versionInfo)))
+	if ret == 0 {
+		fmt.Println("Failed to retrieve version information.")
+	}
+	// fmt.Printf(" %d.%d\n", versionInfo.MajorVersion, versionInfo.MinorVersion)
+	maj, min, patch := windows.RtlGetNtVersionNumbers()
+	fmt.Printf("\nWindows Version: %d.%d (Build %d)\n", maj, min, patch)
+
 	// SHELL in Linux
 	// TERM in Windows
 	// COMSPEC in Windows provides the terminal path
@@ -987,8 +1116,10 @@ func checkLocalEnvironment() {
 		out = string(output)
 	}
 
+	v := node.GetInstalled(env.root)
+
 	nvmhome := os.Getenv("NVM_HOME")
-	fmt.Printf("\nNVM4W Version:      %v\nNVM4W Path:         %v\nNVM4W Settings:     %v\nNVM_HOME:           %v\nNVM_SYMLINK:        %v\nNode Installations: %v\n\nActive Node.js Version: %v", NvmVersion, path, home, nvmhome, symlink, env.root, out)
+	fmt.Printf("\nNVM4W Version:      %v\nNVM4W Path:         %v\nNVM4W Settings:     %v\nNVM_HOME:           %v\nNVM_SYMLINK:        %v\nNode Installations: %v\n\nTotal Node.js Versions: %v\nActive Node.js Version: %v", NvmVersion, path, home, nvmhome, symlink, env.root, len(v), out)
 
 	if !nvmsymlinkfound {
 		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")
@@ -996,6 +1127,33 @@ func checkLocalEnvironment() {
 
 	if home == symlink {
 		problems = append(problems, "NVM_HOME and NVM_SYMLINK cannot be the same value ("+symlink+"). Change NVM_SYMLINK.")
+	}
+
+	fileInfo, err := os.Lstat(symlink)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("NVM_SYMLINK does not exist yet. This is auto-created when \"nvm use\" is run.")
+		} else {
+			problems = append(problems, "Could not determine if NVM_SYMLINK is actually a symlink: "+err.Error())
+		}
+	} else {
+		if fileInfo.Mode()&os.ModeSymlink != 0 {
+			targetPath, _ := os.Readlink(symlink)
+			targetFileInfo, _ := os.Lstat(targetPath)
+
+			if !targetFileInfo.Mode().IsDir() {
+				problems = append(problems, "NVM_SYMLINK is a symlink linking to a file instead of a directory.")
+			}
+		} else {
+			problems = append(problems, "NVM_SYMLINK ("+symlink+") is not a valid symlink.")
+		}
+	}
+
+	ipv6, err := web.IsLocalIPv6()
+	if err != nil {
+		problems = append(problems, "Connection type cannot be determined: "+err.Error())
+	} else if !ipv6 {
+		fmt.Println("\nIPv6 is enabled. This can slow downloads significantly.")
 	}
 
 	nodelist := web.Ping(web.GetFullNodeUrl("index.json"))
@@ -1011,7 +1169,6 @@ func checkLocalEnvironment() {
 		}
 	}
 
-	v := node.GetInstalled(env.root)
 	invalid := make([]string, 0)
 	invalidnpm := make([]string, 0)
 	for i := 0; i < len(v); i++ {
