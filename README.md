@@ -1,3 +1,5 @@
+<div align="center"><h2>Notice: We have started full time work on <a href="https://github.com/coreybutler/nvm-windows/wiki/Runtime">Runtime</a>, the successor to NVM for Windows.</h2>Complete <a href="https://t.co/oGqQCM9FPx">this form</a> to provide your thoughts and sign up for progress updates</div>
+<br/><br/>
 <h1 align="center">NVM for Windows</h1>
 
 <div align="center">
@@ -26,6 +28,12 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
       <td colspan="4" align="center">
         <a href="https://github.com/sponsors/coreybutler"><img src="https://img.shields.io/github/sponsors/coreybutler?label=Individual%20Sponsors&logo=github&style=social"/></a>
         &nbsp;<a href="https://github.com/sponsors/coreybutler"><img src="https://img.shields.io/badge/-Become%20a%20Sponsor-yellow"/></a>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4" align="center">
+        <img src="https://github.blog/wp-content/uploads/2020/09/github-stars-logo_Color.png" width="50"/><br/>
+        <b>Can't sponsor?</b><br/>Consider <a href="https://stars.github.com/nominate/" target="_blank">nominating @coreybutler for a Github star</a>.
       </td>
     </tr>
   </table>
@@ -61,7 +69,18 @@ There are situations where the ability to switch between different versions of N
 
 #### :star: :star: Uninstall any pre-existing Node installations!! :star: :star:
 
-Uninstall any existing versions of Node.js before installing NVM for Windows (otherwise you'll have conflicting versions). Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
+The simplest (recommended) way to get NVM for Windows running properly is to uninstall any prior Node installation _before_ installing NVM for Windows. It avoids all of the pitfalls listed below. However; you may not wish to nuke your Node installation if you've highly customized it. NVM for Windows _can_ assume management of an existing installation, but there are nuances to this (dependent entirely on the permissions of the user running the installation). If you have an administrative account, it's relatively safe to install NVM for Windows before uninstalling the original Node version. If you are working in a closed environment, such as a corporate Active Directory environment where installations/uninstallations are controlled by group policy, you should really consider removing the original version of Node before installing NVM4W.
+
+_Permission Problems_
+For security reasons, Windows will not allow an application from one vendor to "uninstall" an application from a different vendor. The official NVM4W installer will attempt assume management of an existing installation of Node., but it cannot actually uninstall the original Node.js version. To work around this, NVM for Windows installer attempts to copy the original Node.js installation files to the NVM root. This includes global npm modules and configurations. Once this process is complete, the original Node.js installation can be uninstalled without losing data.
+
+_PATH Installation Problems_
+If you attempt to configure the `NVM_SYMLINK` to use an existing directory (like `C:\Program Files\nodejs`), it will fail because a symlink cannot overwrite a physical directory. This is not a problem if you choose a different symlink path (such as `C:\nvm\node`).
+
+_PATH Conflicts_
+If you do not uninstall the original version, running `nvm use` may appear to do nothing at all. Running `node -v` will always show the original installation version. This is due to a [`PATH` conflict](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#why-do-i-need-to-uninstall-nodejs-before-installing-nvm-for-windows) that presents when the same application is installed multiple times. In NVM4W 1.1.11+, run `nvm debug` to determine if you have a `PATH` conflict.
+
+For simpliciy, we recommend uninstalling any existing versions of Node.js before using NVM for Windows. Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory. 
 
 :eyes: **Backup any global `npmrc` config** :eyes:
 (e.g. `%AppData%\npm\etc\npmrc`)

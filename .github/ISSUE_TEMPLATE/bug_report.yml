@@ -116,8 +116,51 @@ body:
   - type: textarea
     attributes:
       label: Debug Output
-      description: If possible, please provide the output of `nvm debug`
+      description: |
+        If possible, please provide the output of `nvm debug`.
+
+        The output of `nvm debug` looks like this
+        ```
+        <username> is not using admin or elevated rights.
+        
+        PowerShell
+        Windows Developer Mode: UNKNOWN (user cannot read registry)
+        
+        NVM4W Version:      1.1.11
+        NVM4W Path:         C:\Users\username\AppData\Roaming\nvm\nvm.exe
+        NVM4W Settings:     C:\Users\username\AppData\Roaming\nvm\settings.txt
+        NVM_HOME:           C:\Users\uername\AppData\Roaming\nvm
+        NVM_SYMLINK:        C:\Program Files\nodejs
+        Node Installations: C:\Users\username\AppData\Roaming\nvm
+        
+        Active Node.js Version: v20.7.0
+        
+        No problems detected.
+        
+        Find help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues
+        ```
+
+        If you only see the standard help menu (as shown below), then you are probably running v1.1.10 or below. Upgrade to NVM4W 1.1.11+.
+
+        ```sh
+        Running version 1.1.11.
+        
+        Usage:
+        
+          nvm arch                     : Show if node is running in 32 or 64 bit mode.
+          nvm current                  : Display active version.
+          nvm debug                    : Check the NVM4W process for known problems (troubleshooter).
+          nvm install <version> [arch] : The version can be a specific version, "latest" for the latest current version, or "lts" for the
+                                         most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults
+                                         to system arch). Set [arch] to "all" to install 32 AND 64 bit versions.
+                                         Add --insecure to the end of this command to bypass SSL validation of the remote download server.
+          nvm list [available]         : List the node.js installations. Type "available" at the end to see what can be installed. Aliased as ls.
+          nvm on                       : Enable node.js version management.
+          nvm off                      : Disable node.js version management.
+        ```
       render: Shell
+    validations:
+      required: true
   - type: textarea
     id: misc
     attributes:

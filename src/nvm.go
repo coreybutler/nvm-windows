@@ -612,7 +612,7 @@ func uninstall(version string) {
 func versionNumberFrom(version string) string {
 	reg, _ := regexp.Compile("[^0-9]")
 
-	if reg.Match([]byte(version[:1])) {
+	if reg.MatchString(version[:1]) {
 		if version[0:1] != "v" {
 			url := web.GetFullNodeUrl("latest-" + version + "/SHASUMS256.txt")
 			content := strings.Split(web.GetRemoteTextFile(url), "\n")[0]
@@ -630,7 +630,7 @@ func versionNumberFrom(version string) string {
 		}
 	}
 
-	for reg.Match([]byte(version[:1])) {
+	for reg.MatchString(version[:1]) {
 		version = version[1:]
 	}
 
@@ -1339,16 +1339,19 @@ func updateRootDir(path string) {
 }
 
 func elevatedRun(name string, arg ...string) (bool, error) {
-	ok, err := run("cmd", append([]string{"/C", name}, arg...)...)
+	ok, err := run("cmd", nil, append([]string{"/C", name}, arg...)...)
 	if err != nil {
-		ok, err = run(filepath.Join(env.root, "elevate.cmd"), append([]string{"cmd", "/C", name}, arg...)...)
+		ok, err = run("elevate.cmd", &env.root, append([]string{"cmd", "/C", name}, arg...)...)
 	}
 
 	return ok, err
 }
 
-func run(name string, arg ...string) (bool, error) {
+func run(name string, dir *string, arg ...string) (bool, error) {
 	c := exec.Command(name, arg...)
+	if dir != nil {
+		c.Dir = *dir
+	}
 	var stderr bytes.Buffer
 	c.Stderr = &stderr
 	err := c.Run()
