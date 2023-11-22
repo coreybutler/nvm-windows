@@ -1138,8 +1138,12 @@ func checkLocalEnvironment() {
 		}
 	} else {
 		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			targetPath, _ := os.Readlink(symlink)
-			targetFileInfo, _ := os.Lstat(targetPath)
+			targetPath, err := os.Readlink(symlink)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			targetFileInfo, err := os.Lstat(targetPath)
 
 			if !targetFileInfo.Mode().IsDir() {
 				problems = append(problems, "NVM_SYMLINK is a symlink linking to a file instead of a directory.")
@@ -1312,7 +1316,14 @@ func getLatest() string {
 }
 
 func getLTS() string {
-	_, ltsList, _, _, _, _ := node.GetAvailable()
+	all, ltsList, current, stable, unstable, npm := node.GetAvailable()
+	fmt.Println(all)
+	fmt.Println(ltsList)
+	fmt.Println(current)
+	fmt.Println(stable)
+	fmt.Println(unstable)
+	fmt.Println(npm)
+	// _, ltsList, _, _, _, _ := node.GetAvailable()
 	// ltsList has already been numerically sorted
 	return ltsList[0]
 }

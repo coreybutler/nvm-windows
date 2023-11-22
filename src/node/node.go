@@ -2,14 +2,15 @@ package node
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"nvm/arch"
 	"nvm/file"
 	"nvm/web"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
-	"os"
 
 	// "../semver"
 	"github.com/blang/semver"
@@ -208,13 +209,20 @@ func GetAvailable() ([]string, []string, []string, []string, []string, map[strin
 
 	// Check the service to make sure the version is available
 	text := web.GetRemoteTextFile(url)
+	if len(text) == 0 {
+		fmt.Println("Error retrieving version list: \"" + url + "\" returned blank results. This can happen when the remote file is being updated. Please try again in a few minutes.")
+		os.Exit(0)
+	}
 
 	// Parse
 	var data = make([]map[string]interface{}, 0)
-	json.Unmarshal([]byte(text), &data)
+	err := json.Unmarshal([]byte(text), &data)
+	if err != nil {
+		fmt.Printf("Error retrieving versions from \"%s\": %v", url, err.Error())
+		os.Exit(1)
+	}
 
 	for _, element := range data {
-
 		var version = element["version"].(string)[1:]
 		all = append(all, version)
 

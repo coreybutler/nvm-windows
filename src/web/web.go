@@ -321,6 +321,11 @@ func GetRemoteTextFile(url string) string {
 		os.Exit(1)
 	}
 
+	if response.StatusCode != 200 {
+		fmt.Printf("Error retrieving \"%s\": HTTP Status %v\n", url, response.StatusCode)
+		os.Exit(0)
+	}
+
 	defer response.Body.Close()
 
 	contents, readerr := ioutil.ReadAll(response.Body)
