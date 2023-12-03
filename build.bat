@@ -4,7 +4,7 @@ SET ORIG=%CD%
 REM SET GOPATH=%CD%\src
 SET GOBIN=%CD%\bin
 REM Support for older architectures
-SET GOARCH=386
+SET GOARCH=amd64
 
 REM Cleanup existing build if it exists
 if exist src\nvm.exe (

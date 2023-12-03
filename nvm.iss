@@ -37,7 +37,7 @@ Compression=lzma
 SolidCompression=yes
 ChangesEnvironment=yes
 DisableProgramGroupPage=yes
-ArchitecturesInstallIn64BitMode=x64 ia64
+ArchitecturesInstallIn64BitMode=x64 ia64 arm64
 UninstallDisplayIcon={app}\{#MyIcon}
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCopyright=Copyright (C) 2018-2022 Ecor Ventures LLC, Corey Butler, and contributors.
@@ -60,6 +60,21 @@ Name: "{group}\{#MyAppShortName}"; Filename: "{app}\{#MyAppExeName}"; IconFilena
 Name: "{group}\Uninstall {#MyAppShortName}"; Filename: "{uninstallexe}"
 
 [Code]
+function InstallX64: Boolean;
+begin
+  Result := Is64BitInstallMode and (ProcessorArchitecture = paX64);
+end;
+
+function InstallARM64: Boolean;
+begin
+  Result := Is64BitInstallMode and (ProcessorArchitecture = paARM64);
+end;
+
+function InstallOtherArch: Boolean;
+begin
+  Result := not InstallX64 and not InstallARM64;
+end;
+
 var
   SymlinkPage: TInputDirWizardPage;
 
