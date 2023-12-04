@@ -53,7 +53,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "{#ProjectRoot}\bin\install.cmd"
+Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "{#ProjectRoot}\bin\install.cmd {#ProjectRoot}\bin\nvm-arm64.exe {#ProjectRoot}\bin\nvm-64.exe {#ProjectRoot}\bin\nvm.exe"
+Source: "{#ProjectRoot}\bins\nvm-arm64.exe"; DestDir: "{app}"; DestName: "nvm.exe"; Check: InstallARM64; Flags: solidbreak
+Source: "{#ProjectRoot}\bins\nvm-64.exe"; DestDir: "{app}"; DestName: "nvm.exe"; Check: InstallX64; Flags: solidbreak
+Source: "{#ProjectRoot}\bins\nvm.exe"; DestDir: "{app}"; DestName: "nvm.exe"; Check: InstallOtherArch; 
 
 [Icons]
 Name: "{group}\{#MyAppShortName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{#MyIcon}"
