@@ -62,14 +62,13 @@ func Bit(path string) string {
 
 func Validate(str string) (string){
   if str == "" {
-    str = os.Getenv("PROCESSOR_ARCHITECTURE")
+    str = strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))
   }
   if strings.Contains(str, "arm64") {
 	  return "arm64"
   }
-  if strings.ContainsAny(str, "64") {
+  if strings.Contains(str, "64") {
     return "64"
-  } else {
-    return "32"
-  }
+  } 
+  return "32"
 }
