@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	NvmVersion = "1.1.11"
+	NvmVersion = "1.1.13"
 )
 
 type Environment struct {
@@ -47,6 +47,7 @@ type Environment struct {
 	originalpath    string
 	originalversion string
 	verifyssl       bool
+	ignore_terminal bool
 }
 
 var home = filepath.Clean(os.Getenv("NVM_HOME") + "\\settings.txt")
@@ -63,17 +64,13 @@ var env = &Environment{
 	originalpath:    "",
 	originalversion: "",
 	verifyssl:       true,
+	ignore_terminal: false,
 }
 
 func main() {
 	args := os.Args
 	detail := ""
 	procarch := arch.Validate(env.arch)
-
-	if !isTerminal() {
-		alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
-		os.Exit(0)
-	}
 
 	// Capture any additional arguments
 	if len(args) > 2 {
@@ -91,6 +88,11 @@ func main() {
 
 	if args[1] != "version" && args[1] != "--version" && args[1] != "v" && args[1] != "-v" && args[1] != "--v" {
 		setup()
+	}
+
+	if !isTerminal() && !env.ignore_terminal {
+		alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
+		os.Exit(0)
 	}
 
 	// Run the appropriate method
@@ -167,6 +169,17 @@ func main() {
 		setNpmMirror(detail)
 	case "debug":
 		checkLocalEnvironment()
+	case "ignore_terminal":
+		if detail == "" {
+			fmt.Println("Ignore Terminal: " + strconv.FormatBool(env.ignore_terminal))
+		} else {
+			ignoreTerminalVal, err := strconv.ParseBool(strings.Trim(detail, " \r\n"))
+			if err != nil {
+				fmt.Println("Incorrect formatting for setting the ignore_terminal command. Expected: nvm ignore_terminal [true/false]")
+			}
+			env.ignore_terminal = ignoreTerminalVal
+			saveSettings()
+		}
 	default:
 		help()
 	}
@@ -1251,6 +1264,8 @@ func help() {
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
 	fmt.Println("  nvm [--]version              : Displays the current running version of nvm for Windows. Aliased as v.")
+	fmt.Println("  nvm ignore_terminal [bool]   : Switches whether the terminal type will be ignored or displays the current value")
+	fmt.Println("                                 if not specified. Set [bool] to be true or false.")
 	fmt.Println(" ")
 }
 
@@ -1419,7 +1434,7 @@ func runElevated(command string, forceUAC ...bool) (bool, error) {
 
 func saveSettings() {
 	content := "root: " + strings.Trim(encode(env.root), " \n\r") + "\r\narch: " + strings.Trim(encode(env.arch), " \n\r") + "\r\nproxy: " + strings.Trim(encode(env.proxy), " \n\r") + "\r\noriginalpath: " + strings.Trim(encode(env.originalpath), " \n\r") + "\r\noriginalversion: " + strings.Trim(encode(env.originalversion), " \n\r")
-	content = content + "\r\nnode_mirror: " + strings.Trim(encode(env.node_mirror), " \n\r") + "\r\nnpm_mirror: " + strings.Trim(encode(env.npm_mirror), " \n\r")
+	content = content + "\r\nnode_mirror: " + strings.Trim(encode(env.node_mirror), " \n\r") + "\r\nnpm_mirror: " + strings.Trim(encode(env.npm_mirror), " \n\r") + "\r\nignore_terminal: " + strings.Trim(encode(strconv.FormatBool(env.ignore_terminal)), " \n\r")
 	ioutil.WriteFile(env.settings, []byte(content), 0644)
 }
 
@@ -1509,6 +1524,14 @@ func setup() {
 				env.proxy = res.String()
 			}
 		}
+	}
+
+	if val, ok := m["ignore_terminal"]; ok {
+		ignoreTerminalVal, err := strconv.ParseBool(strings.Trim(val, " \r\n"))
+		if err != nil {
+			fmt.Println("Incorrect formatting in the settings.txt for the ignore_terminal property. Expected: ignore_terminal: <true/false>")
+		}
+		env.ignore_terminal = ignoreTerminalVal
 	}
 
 	web.SetMirrors(env.node_mirror, env.npm_mirror)
