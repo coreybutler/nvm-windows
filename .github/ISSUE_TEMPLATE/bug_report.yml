@@ -37,7 +37,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: What version are you running? Run `nvm --version` to find out. **Please don't assume. Check the version.**
+      description: What version are you running? Run `nvm version` to find out. **Please don't assume. Check the version.**
       options:
         - 1.1.11 or newer (Default)
         - 1.1.10
