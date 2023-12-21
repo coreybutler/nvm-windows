@@ -34,3 +34,7 @@ bin/nvm/*
 !.gitignore
 !.gitattributes
 tests
+
+#Jetbrains IDE
+.idea/
+.run
