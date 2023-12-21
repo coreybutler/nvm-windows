@@ -35,6 +35,6 @@ bin/nvm/*
 !.gitattributes
 tests
 
-#Jetbrains IDE
+# Jetbrains IDE
 .idea/
 .run
