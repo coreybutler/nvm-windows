@@ -37,14 +37,9 @@ body:
     id: version
     attributes:
       label: Version
-      description: What version are you running? Run `nvm version` to find out. **Please don't assume. Check the version.**
-      options:
+      description: What version are you running? Run `nvm --version` to find out. **We only support latest 2 versions! So Kindly update to the latest version**
         - 1.1.11 or newer (Default)
         - 1.1.10
-        - 1.1.9
-        - 1.1.8
-        - 1.1.7
-        - 1.1.6 or older
     validations:
       required: true
   - type: dropdown
