@@ -3,10 +3,10 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/coreybutler/nvm-windows/arch"
+	"github.com/coreybutler/nvm-windows/file"
+	"github.com/coreybutler/nvm-windows/web"
 	"io/ioutil"
-	"nvm/arch"
-	"nvm/file"
-	"nvm/web"
 	"os"
 	"os/exec"
 	"regexp"

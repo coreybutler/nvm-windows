@@ -32,7 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	exe := filepath.Join(root, "nvm.exe")
+	exe := filepath.Join(root, "github.com/coreybutler/nvm-windows.exe")
 	currentNvmVersion, err := semver.Make(strings.TrimSpace(run(exe, "version")))
 	if err != nil {
 		fmt.Println("NVM for Windows installation not found in " + root)
@@ -78,7 +78,7 @@ func main() {
 	fsutil.Touch(tmpdir)
 
 	fmt.Println("Downloading NVM for Windows v" + version)
-	success := web.Download("https://github.com/coreybutler/nvm-windows/releases/download/"+version+"/nvm-noinstall.zip", zipfile)
+	success := web.Download("https://github.com/coreybutler/nvm-windows/releases/download/"+version+"/github.com/coreybutler/nvm-windows-noinstall.zip", zipfile)
 	if !success {
 		os.RemoveAll(tmpdir)
 		os.Exit(1)

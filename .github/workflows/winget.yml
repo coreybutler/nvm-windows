@@ -12,5 +12,5 @@ jobs:
         with:
           identifier: CoreyButler.NVMforWindows
           version: ${{ github.event.release.tag_name }}
-          installers-regex: 'nvm-setup\.exe$'
+          installers-regex: 'github.com/coreybutler/nvm-windows-setup\.exe$'
           token: ${{ secrets.WINGET_TOKEN }}

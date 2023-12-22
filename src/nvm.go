@@ -18,11 +18,11 @@ import (
 	"time"
 	"unsafe"
 
-	"nvm/arch"
-	"nvm/encoding"
-	"nvm/file"
-	"nvm/node"
-	"nvm/web"
+	"github.com/coreybutler/nvm-windows/arch"
+	"github.com/coreybutler/nvm-windows/encoding"
+	"github.com/coreybutler/nvm-windows/file"
+	"github.com/coreybutler/nvm-windows/node"
+	"github.com/coreybutler/nvm-windows/web"
 
 	"github.com/blang/semver"
 	// "github.com/fatih/color"
@@ -155,7 +155,7 @@ func main() {
 		if err != nil {
 			fmt.Println(inuse)
 		} else if inuse == "Unknown" {
-			fmt.Println("No current version. Run 'nvm use x.x.x' to set a version.")
+			fmt.Println("No current version. Run 'github.com/coreybutler/nvm-windows use x.x.x' to set a version.")
 		} else {
 			fmt.Println("v" + inuse)
 		}
@@ -234,13 +234,13 @@ func isTerminal() bool {
 
 // 	switch ret {
 // 	case IDYES:
-// 		cmd := exec.Command("cmd", "/C", "start", "cmd", "/K", "echo Run \"nvm\" for help...")
+// 		cmd := exec.Command("cmd", "/C", "start", "cmd", "/K", "echo Run \"github.com/coreybutler/nvm-windows\" for help...")
 // 		err := cmd.Start()
 // 		if err != nil {
 // 			log.Fatal(err)
 // 		}
 // 	case IDNO:
-// 		cmd := exec.Command("cmd", "/C", "start", "powershell", "/K", "echo Run \"nvm\" for help...")
+// 		cmd := exec.Command("cmd", "/C", "start", "powershell", "/K", "echo Run \"github.com/coreybutler/nvm-windows\" for help...")
 // 		err := cmd.Start()
 // 		if err != nil {
 // 			log.Fatal(err)
@@ -329,7 +329,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	if version == "newest" {
 		installed := node.GetInstalled(env.root)
 		if len(installed) == 0 {
-			return version, "", errors.New("No versions of node.js found. Try installing the latest by typing nvm install latest.")
+			return version, "", errors.New("No versions of node.js found. Try installing the latest by typing github.com/coreybutler/nvm-windows install latest.")
 		}
 
 		version = installed[0]
@@ -473,7 +473,7 @@ func install(version string, cpuarch string) {
 		if file.Exists(filepath.Join(env.root, "v"+version, "node_modules", "npm")) {
 			npmv := getNpmVersion(version)
 			fmt.Println("npm v" + npmv + " installed successfully.")
-			fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
+			fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\ngithub.com/coreybutler/nvm-windows use " + version)
 			return
 		}
 
@@ -483,18 +483,18 @@ func install(version string, cpuarch string) {
 		if success {
 			fmt.Printf("Installing npm v" + npmv + "...")
 
-			// new temp directory under the nvm root
+			// new temp directory under the github.com/coreybutler/nvm-windows root
 			tempDir := filepath.Join(env.root, "temp")
 
 			// Extract npm to the temp directory
-			err := file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
+			err := file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "github.com/coreybutler/nvm-windows-npm"))
 
 			// Copy the npm and npm.cmd files to the installation directory
-			tempNpmBin := filepath.Join(tempDir, "nvm-npm", "cli-"+npmv, "bin")
+			tempNpmBin := filepath.Join(tempDir, "github.com/coreybutler/nvm-windows-npm", "cli-"+npmv, "bin")
 
 			// Support npm < 6.2.0
 			if file.Exists(tempNpmBin) == false {
-				tempNpmBin = filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin")
+				tempNpmBin = filepath.Join(tempDir, "github.com/coreybutler/nvm-windows-npm", "npm-"+npmv, "bin")
 			}
 
 			if file.Exists(tempNpmBin) == false {
@@ -511,10 +511,10 @@ func install(version string, cpuarch string) {
 				os.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(env.root, "v"+version, "npx.cmd"))
 			}
 
-			npmSourcePath := filepath.Join(tempDir, "nvm-npm", "npm-"+npmv)
+			npmSourcePath := filepath.Join(tempDir, "github.com/coreybutler/nvm-windows-npm", "npm-"+npmv)
 
 			if file.Exists(npmSourcePath) == false {
-				npmSourcePath = filepath.Join(tempDir, "nvm-npm", "cli-"+npmv)
+				npmSourcePath = filepath.Join(tempDir, "github.com/coreybutler/nvm-windows-npm", "cli-"+npmv)
 			}
 
 			moveNpmErr := os.Rename(npmSourcePath, filepath.Join(env.root, "v"+version, "node_modules", "npm"))
@@ -535,7 +535,7 @@ func install(version string, cpuarch string) {
 				// may consider keep the temp files here
 				os.RemoveAll(tempDir)
 
-				fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
+				fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\ngithub.com/coreybutler/nvm-windows use " + version)
 			} else if moveNpmErr != nil {
 				fmt.Println("Error: Unable to move directory " + npmSourcePath + " to node_modules: " + moveNpmErr.Error())
 			} else {
@@ -575,7 +575,7 @@ func uninstall(version string) {
 	} else if strings.ToLower(version) == "newest" {
 		installed := node.GetInstalled(env.root)
 		if len(installed) == 0 {
-			fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest.")
+			fmt.Println("No versions of node.js found. Try installing the latest by typing github.com/coreybutler/nvm-windows install latest.")
 			return
 		}
 
@@ -604,7 +604,7 @@ func uninstall(version string) {
 			fmt.Printf(" done")
 		}
 	} else {
-		fmt.Println("node v" + version + " is not installed. Type \"nvm list\" to see what is installed.")
+		fmt.Println("node v" + version + " is not installed. Type \"github.com/coreybutler/nvm-windows list\" to see what is installed.")
 	}
 	return
 }
@@ -733,12 +733,12 @@ func use(version string, cpuarch string, reload ...bool) {
 		fmt.Println("node v" + version + " (" + cpuarch + "-bit) is not installed.")
 		if cpuarch == "32" {
 			if node.IsVersionInstalled(env.root, version, "64") {
-				fmt.Println("\nDid you mean node v" + version + " (64-bit)?\nIf so, type \"nvm use " + version + " 64\" to use it.")
+				fmt.Println("\nDid you mean node v" + version + " (64-bit)?\nIf so, type \"github.com/coreybutler/nvm-windows use " + version + " 64\" to use it.")
 			}
 		}
 		if cpuarch == "64" {
 			if node.IsVersionInstalled(env.root, version, "32") {
-				fmt.Println("\nDid you mean node v" + version + " (32-bit)?\nIf so, type \"nvm use " + version + " 32\" to use it.")
+				fmt.Println("\nDid you mean node v" + version + " (32-bit)?\nIf so, type \"github.com/coreybutler/nvm-windows use " + version + " 32\" to use it.")
 			}
 		}
 		return
@@ -845,7 +845,7 @@ func list(listtype string) {
 		listtype = "installed"
 	}
 	if listtype != "installed" && listtype != "available" {
-		fmt.Println("\nInvalid list option.\n\nPlease use on of the following\n  - nvm list\n  - nvm list installed\n  - nvm list available")
+		fmt.Println("\nInvalid list option.\n\nPlease use on of the following\n  - github.com/coreybutler/nvm-windows list\n  - github.com/coreybutler/nvm-windows list installed\n  - github.com/coreybutler/nvm-windows list available")
 		help()
 		return
 	}
@@ -942,11 +942,11 @@ func enable() {
 			}
 		}
 	}
-	fmt.Println("nvm enabled")
+	fmt.Println("github.com/coreybutler/nvm-windows enabled")
 	if dir != "" {
 		use(strings.Trim(regexp.MustCompile("v").ReplaceAllString(dir, ""), " \n\r"), env.arch)
 	} else {
-		fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest")
+		fmt.Println("No versions of node.js found. Try installing the latest by typing github.com/coreybutler/nvm-windows install latest")
 	}
 }
 
@@ -960,7 +960,7 @@ func disable() {
 		fmt.Print(fmt.Sprint(err))
 	}
 
-	fmt.Println("nvm disabled")
+	fmt.Println("github.com/coreybutler/nvm-windows disabled")
 }
 
 const (
@@ -1110,7 +1110,7 @@ func checkLocalEnvironment() {
 		path = "UNKNOWN: " + err.Error()
 	}
 
-	out := "none\n(run \"nvm use <version>\" to activate a version)\n"
+	out := "none\n(run \"github.com/coreybutler/nvm-windows use <version>\" to activate a version)\n"
 	output, err := exec.Command(os.Getenv("NVM_SYMLINK")+"\\node.exe", "-v").Output()
 	if err == nil {
 		out = string(output)
@@ -1132,7 +1132,7 @@ func checkLocalEnvironment() {
 	fileInfo, err := os.Lstat(symlink)
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("NVM_SYMLINK does not exist yet. This is auto-created when \"nvm use\" is run.")
+			fmt.Println("NVM_SYMLINK does not exist yet. This is auto-created when \"github.com/coreybutler/nvm-windows use\" is run.")
 		} else {
 			problems = append(problems, "Could not determine if NVM_SYMLINK is actually a symlink: "+err.Error())
 		}
@@ -1229,28 +1229,28 @@ func help() {
 	fmt.Println("\nRunning version " + NvmVersion + ".")
 	fmt.Println("\nUsage:")
 	fmt.Println(" ")
-	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
-	fmt.Println("  nvm current                  : Display active version.")
-	fmt.Println("  nvm debug                    : Check the NVM4W process for known problems (troubleshooter).")
-	fmt.Println("  nvm install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
+	fmt.Println("  github.com/coreybutler/nvm-windows arch                     : Show if node is running in 32 or 64 bit mode.")
+	fmt.Println("  github.com/coreybutler/nvm-windows current                  : Display active version.")
+	fmt.Println("  github.com/coreybutler/nvm-windows debug                    : Check the NVM4W process for known problems (troubleshooter).")
+	fmt.Println("  github.com/coreybutler/nvm-windows install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
 	fmt.Println("                                 most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults")
 	fmt.Println("                                 to system arch). Set [arch] to \"all\" to install 32 AND 64 bit versions.")
 	fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
-	fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
-	fmt.Println("  nvm on                       : Enable node.js version management.")
-	fmt.Println("  nvm off                      : Disable node.js version management.")
-	fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
+	fmt.Println("  github.com/coreybutler/nvm-windows list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
+	fmt.Println("  github.com/coreybutler/nvm-windows on                       : Enable node.js version management.")
+	fmt.Println("  github.com/coreybutler/nvm-windows off                      : Disable node.js version management.")
+	fmt.Println("  github.com/coreybutler/nvm-windows proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
 	fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
-	fmt.Println("  nvm node_mirror [url]        : Set the node mirror. Defaults to https://nodejs.org/dist/. Leave [url] blank to use default url.")
-	fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
-	fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
-	//  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
-	fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally use \"latest\", \"lts\", or \"newest\".")
+	fmt.Println("  github.com/coreybutler/nvm-windows node_mirror [url]        : Set the node mirror. Defaults to https://nodejs.org/dist/. Leave [url] blank to use default url.")
+	fmt.Println("  github.com/coreybutler/nvm-windows npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
+	fmt.Println("  github.com/coreybutler/nvm-windows uninstall <version>      : The version must be a specific version.")
+	//  fmt.Println("  github.com/coreybutler/nvm-windows update                   : Automatically update github.com/coreybutler/nvm-windows to the latest version.")
+	fmt.Println("  github.com/coreybutler/nvm-windows use [version] [arch]     : Switch to use the specified version. Optionally use \"latest\", \"lts\", or \"newest\".")
 	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
-	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
-	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
+	fmt.Println("                                 github.com/coreybutler/nvm-windows use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
+	fmt.Println("  github.com/coreybutler/nvm-windows root [path]              : Set the directory where github.com/coreybutler/nvm-windows should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
-	fmt.Println("  nvm [--]version              : Displays the current running version of nvm for Windows. Aliased as v.")
+	fmt.Println("  github.com/coreybutler/nvm-windows [--]version              : Displays the current running version of github.com/coreybutler/nvm-windows for Windows. Aliased as v.")
 	fmt.Println(" ")
 }
 

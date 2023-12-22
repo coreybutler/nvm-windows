@@ -1,4 +1,4 @@
-module github.com/nvm-windows/nvm
+module github.com/coreybutler/nvm-windows
 
 go 1.21
 
