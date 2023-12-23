@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	NvmVersion = "1.1.11"
+	NvmVersion = "1.1.12"
 )
 
 type Environment struct {
@@ -70,10 +70,10 @@ func main() {
 	detail := ""
 	procarch := arch.Validate(env.arch)
 
-	if !isTerminal() {
-		alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
-		os.Exit(0)
-	}
+	//if !isTerminal() {
+	//	alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
+	//	os.Exit(0)
+	//}
 
 	// Capture any additional arguments
 	if len(args) > 2 {

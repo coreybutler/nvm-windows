@@ -18,7 +18,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-var version = "1.1.11"
+var version = "1.1.12"
 
 func main() {
 	// baseVersion := version
