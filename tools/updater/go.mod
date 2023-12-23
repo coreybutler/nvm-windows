@@ -1,4 +1,4 @@
-module github.com/coreybutler/nvm-windows/updater
+module github.com/coreybutler/nvm-windows/nvm-updater
 
 go 1.21
 

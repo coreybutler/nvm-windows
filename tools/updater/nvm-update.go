@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/coreybutler/nvm-windows/updater/web"
+	"github.com/coreybutler/nvm-windows/nvm-updater/web"
 	"log"
 	"log/slog"
 	"os"
