@@ -35,7 +35,9 @@ func main() {
 	}
 
 	exe := filepath.Join(root, "nvm.exe")
-	currentNvmVersion, err := semver.Make(strings.TrimSpace(run(exe, "version")))
+	nvmVersion := strings.TrimSpace(run(exe, "version"))
+	slog.Info("nvm version ", nvmVersion)
+	currentNvmVersion, err := semver.Make(nvmVersion)
 	if err != nil {
 		slog.Error("nvm not found", err)
 		log.Fatal("NVM for Windows installation not found in " + root)
@@ -43,8 +45,8 @@ func main() {
 
 	err = currentNvmVersion.Validate()
 	if err != nil {
-		fmt.Println("NVM for Windows installation not found in " + root)
-		os.Exit(1)
+		slog.Error("nvm version validation failed", err)
+		log.Fatal("exiting due to failure in validation of existing nvm")
 	}
 
 	if !contains(args, "/S") && !contains(args, "/s") {
