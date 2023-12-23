@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -37,7 +38,12 @@ func Download(url string, target string) bool {
 		fmt.Println("Error while creating", target, "-", err)
 		return false
 	}
-	defer output.Close()
+	defer func(output *os.File) {
+		err := output.Close()
+		if err != nil {
+			slog.Error("[download]", err)
+		}
+	}(output)
 
 	response, err := client.Get(url)
 	if err != nil {
