@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/coreybutler/nvm-windows/updater/web"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -35,6 +36,7 @@ func main() {
 	exe := filepath.Join(root, "nvm.exe")
 	currentNvmVersion, err := semver.Make(strings.TrimSpace(run(exe, "version")))
 	if err != nil {
+		slog.Error("nvm not found", err)
 		fmt.Println("NVM for Windows installation not found in " + root)
 		os.Exit(1)
 	}
