@@ -3,9 +3,9 @@ package node
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/coreybutler/nvm-windows/arch"
-	"github.com/coreybutler/nvm-windows/file"
-	"github.com/coreybutler/nvm-windows/web"
+	"github.com/coreybutler/nvm-windows/nvm/arch"
+	"github.com/coreybutler/nvm-windows/nvm/file"
+	"github.com/coreybutler/nvm-windows/nvm/web"
 	"io/ioutil"
 	"os"
 	"os/exec"

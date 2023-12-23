@@ -3,8 +3,8 @@ package web
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/coreybutler/nvm-windows/arch"
-	"github.com/coreybutler/nvm-windows/file"
+	"github.com/coreybutler/nvm-windows/nvm/arch"
+	"github.com/coreybutler/nvm-windows/nvm/file"
 	"io"
 	"io/ioutil"
 	"net"

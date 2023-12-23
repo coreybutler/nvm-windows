@@ -1,10 +1,8 @@
-module github.com/coreybutler/nvm-windows
+module github.com/coreybutler/nvm-windows/nvm
 
 go 1.21
 
 toolchain go1.21.5
-
-// replace github.com/coreybutler/go-fsutil => C:\Users\corey\OneDrive\Documents\workspace\oss\coreybutler\go-fsutil
 
 require (
 	github.com/blang/semver v3.5.1+incompatible

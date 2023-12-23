@@ -18,11 +18,11 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/coreybutler/nvm-windows/arch"
-	"github.com/coreybutler/nvm-windows/encoding"
-	"github.com/coreybutler/nvm-windows/file"
-	"github.com/coreybutler/nvm-windows/node"
-	"github.com/coreybutler/nvm-windows/web"
+	"github.com/coreybutler/nvm-windows/nvm/arch"
+	"github.com/coreybutler/nvm-windows/nvm/encoding"
+	"github.com/coreybutler/nvm-windows/nvm/file"
+	"github.com/coreybutler/nvm-windows/nvm/node"
+	"github.com/coreybutler/nvm-windows/nvm/web"
 
 	"github.com/blang/semver"
 	// "github.com/fatih/color"
