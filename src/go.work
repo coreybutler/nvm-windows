@@ -4,5 +4,5 @@ toolchain go1.21.5
 
 use (
 	.
-	../tools/updater
+	..\tools\updater
 )
