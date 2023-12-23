@@ -110,6 +110,9 @@ func main() {
 }
 
 func run(command ...string) string {
+	powershell := []string{"powershell", "-nologo", "-noprofile"}
+	command = append(powershell, command...)
+
 	base := command[0]
 	args := command[1:]
 	cmd := exec.Command(base, args...)
