@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -313,7 +314,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	}
 
 	if version == "" {
-		return "", cpuarch, errors.New("A version argument is required but missing.")
+		return "", cpuarch, errors.New("Found no .nvmrc nor a version argument.")
 	}
 
 	// If user specifies "latest" version, find out what version is
@@ -719,6 +720,43 @@ func accessDenied(err error) bool {
 }
 
 func use(version string, cpuarch string, reload ...bool) {
+	if len(version) == 0 {
+		// Get the current dir and look for the .nvmrc
+		currentDirectory, curentDirErr := os.Getwd()
+		if curentDirErr != nil {
+			fmt.Println("An error occured, could not get the workig directory.", curentDirErr)
+			return
+		}
+		directory, dirErr := os.Open(currentDirectory)
+		if dirErr != nil {
+			fmt.Println("An error occured.")
+			return
+		}
+		files, filesErr := directory.ReadDir(0)
+		if filesErr != nil {
+			fmt.Println("An error occured.")
+			return
+		}
+		targetFile := ".nvmrc"
+		for i := 0; i < len(files); i++ {
+			if files[i].Name() == targetFile {
+				nvmRc, nvmRcErr := os.Open(targetFile)
+				if nvmRcErr != nil {
+					fmt.Println("Error reading the .nvmrc")
+					return
+				}
+				defer nvmRc.Close()
+				nvmVersion, nvmVersionErr := io.ReadAll(nvmRc)
+				if nvmVersionErr != nil {
+					fmt.Println("Error reading the .nvmrc")
+					return
+				}
+				version = string(nvmVersion)
+				break
+			}
+		}
+	}
+
 	version, cpuarch, err := getVersion(version, cpuarch, true)
 
 	if err != nil {
@@ -728,9 +766,8 @@ func use(version string, cpuarch string, reload ...bool) {
 		}
 	}
 
-	// Make sure the version is installed. If not, warn.
 	if !node.IsVersionInstalled(env.root, version, cpuarch) {
-		fmt.Println("node v" + version + " (" + cpuarch + "-bit) is not installed.")
+		fmt.Println("node v" + version + " (" + cpuarch + "-bit) is not installed. Run\nnvm install v" + version + "\nTo install the needed version.")
 		if cpuarch == "32" {
 			if node.IsVersionInstalled(env.root, version, "64") {
 				fmt.Println("\nDid you mean node v" + version + " (64-bit)?\nIf so, type \"nvm use " + version + " 64\" to use it.")
