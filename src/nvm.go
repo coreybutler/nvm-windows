@@ -64,7 +64,7 @@ var env = &Environment{
 	originalpath:    "",
 	originalversion: "",
 	verifyssl:       true,
-	ignore_terminal: false,
+	ignore_terminal: true,
 }
 
 func main() {
