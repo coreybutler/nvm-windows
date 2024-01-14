@@ -1352,7 +1352,7 @@ func updateRootDir(path string) {
 func elevatedRun(name string, arg ...string) (bool, error) {
 	ok, err := run("cmd", nil, append([]string{"/C", name}, arg...)...)
 	if err != nil {
-		ok, err = run("elevate.cmd", &env.root, append([]string{"cmd", "/C", name}, arg...)...)
+		ok, err = run(".\\elevate.cmd", &env.root, append([]string{"cmd", "/C", name}, arg...)...)
 	}
 
 	return ok, err
