@@ -119,7 +119,7 @@ npm install -g yarn
 NVM for Windows is a command line tool. Simply type `nvm` in the console for help. The basic commands are:
 
 - **`nvm arch [32|64]`**: Show if node is running in 32 or 64 bit mode. Specify 32 or 64 to override the default architecture.
-- **`nvm check`**: Check the NVM4W process for known problems.
+- **`nvm debug`**: Check the NVM4W process for known problems.
 - **`nvm current`**: Display active version.
 - **`nvm install <version> [arch]`**:  The version can be a specific version, "latest" for the latest current version, or "lts" for the most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set [arch] to "all" to install 32 AND 64 bit versions. Add `--insecure` to the end of this command to bypass SSL validation of the remote download server.
 - **`nvm list [available]`**: List the node.js installations. Type `available` at the end to show a list of versions available for download.
