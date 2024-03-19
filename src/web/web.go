@@ -231,6 +231,12 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 		} else {
 			vpre = "x64/"
 		}
+	} else if a == "arm64" {
+		if main > 0 {
+			vpre = "win-arm64/"
+		} else {
+			vpre = "arm64/"
+		}
 	}
 
 	url := getNodeUrl(v, vpre, a, append)
@@ -354,8 +360,32 @@ func IsNode64bitAvailable(v string) bool {
 	return true
 }
 
+func IsNodeArm64bitAvailable(v string) bool {
+	if v == "latest" {
+		return true
+	}
+
+	// Anything below version 8 doesn't have a 64 bit version
+	vers := strings.Fields(strings.Replace(v, ".", " ", -1))
+	main, _ := strconv.ParseInt(vers[0], 0, 0)
+	minor, _ := strconv.ParseInt(vers[1], 0, 0)
+	fmt.Println("main "+ strconv.FormatInt(main,10) + " minor "+strconv.FormatInt(minor,10))
+	if main < 19 {
+		return false
+	}
+	if minor < 9{
+		return false
+	}
+	
+	// TODO: fixme. Assume a 64 bit version exists
+	return true
+}
+
 func getNodeUrl(v string, vpre string, arch string, append bool) string {
 	a := "x86"
+	if arch == "arm64" {
+		a = "arm64"
+	}
 	if arch == "64" {
 		a = "x64"
 	}
