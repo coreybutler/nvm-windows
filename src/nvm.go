@@ -70,9 +70,19 @@ func main() {
 	detail := ""
 	procarch := arch.Validate(env.arch)
 
-	if !isTerminal() {
-		alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
-		os.Exit(0)
+	// When we don't have any args (the command `nvm` was run by itself):
+	//
+	// If it's not a terminal (i.e., clicked `nvm.exe`), pop up a warning;
+	// Otherwise, just show the help screen.
+	//
+	if len(args) < 2 {
+		if !isTerminal() {
+			alert("NVM for Windows should be run from a terminal such as CMD or PowerShell. If you are currently in a terminal, try running `nvm help`.", "Terminal Only")
+			os.Exit(0)
+		}
+
+		help()
+		return
 	}
 
 	// Capture any additional arguments
