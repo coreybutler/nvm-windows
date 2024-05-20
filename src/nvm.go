@@ -37,32 +37,34 @@ const (
 )
 
 type Environment struct {
-	settings        string
-	root            string
-	symlink         string
-	arch            string
-	node_mirror     string
-	npm_mirror      string
-	proxy           string
-	originalpath    string
-	originalversion string
-	verifyssl       bool
+	settings         string
+	root             string
+	symlink          string
+	symlink_junction bool
+	arch             string
+	node_mirror      string
+	npm_mirror       string
+	proxy            string
+	originalpath     string
+	originalversion  string
+	verifyssl        bool
 }
 
 var home = filepath.Clean(os.Getenv("NVM_HOME") + "\\settings.txt")
 var symlink = filepath.Clean(os.Getenv("NVM_SYMLINK"))
 
 var env = &Environment{
-	settings:        home,
-	root:            "",
-	symlink:         symlink,
-	arch:            os.Getenv("PROCESSOR_ARCHITECTURE"),
-	node_mirror:     "",
-	npm_mirror:      "",
-	proxy:           "none",
-	originalpath:    "",
-	originalversion: "",
-	verifyssl:       true,
+	settings:         home,
+	root:             "",
+	symlink:          symlink,
+	symlink_junction: false,
+	arch:             os.Getenv("PROCESSOR_ARCHITECTURE"),
+	node_mirror:      "",
+	npm_mirror:       "",
+	proxy:            "none",
+	originalpath:     "",
+	originalversion:  "",
+	verifyssl:        true,
 }
 
 func main() {
@@ -765,7 +767,11 @@ func use(version string, cpuarch string, reload ...bool) {
 	// Create new symlink
 	var ok bool
 	// ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
-	ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+	if env.symlink_junction {
+		ok, err = elevatedRun("mklink", "/J", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+	} else {
+		ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+	}
 	if err != nil {
 		if strings.Contains(err.Error(), "not have sufficient privilege") || strings.Contains(strings.ToLower(err.Error()), "access is denied") {
 			// cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
@@ -774,7 +780,11 @@ func use(version string, cpuarch string, reload ...bool) {
 			// cmd.Stdout = &output
 			// cmd.Stderr = &_stderr
 			// perr := cmd.Run()
-			ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+			if env.symlink_junction {
+				ok, err = elevatedRun("mklink", "/J", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+			} else {
+				ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+			}
 
 			if err != nil {
 				ok = false
@@ -1419,8 +1429,8 @@ func runElevated(command string, forceUAC ...bool) (bool, error) {
 
 func saveSettings() {
 	content := "root: " + strings.Trim(encode(env.root), " \n\r") + "\r\narch: " + strings.Trim(encode(env.arch), " \n\r") + "\r\nproxy: " + strings.Trim(encode(env.proxy), " \n\r") + "\r\noriginalpath: " + strings.Trim(encode(env.originalpath), " \n\r") + "\r\noriginalversion: " + strings.Trim(encode(env.originalversion), " \n\r")
-	content = content + "\r\nnode_mirror: " + strings.Trim(encode(env.node_mirror), " \n\r") + "\r\nnpm_mirror: " + strings.Trim(encode(env.npm_mirror), " \n\r")
-	ioutil.WriteFile(env.settings, []byte(content), 0644)
+	content = content + "\r\nnode_mirror: " + strings.Trim(encode(env.node_mirror), " \n\r") + "\r\nnpm_mirror: " + strings.Trim(encode(env.npm_mirror), " \n\r") + "\r\nsymlink_junction: " + strings.Trim(strconv.FormatBool(env.symlink_junction), " \n\r")
+	os.WriteFile(env.settings, []byte(content), 0644)
 }
 
 func getProcessPermissions() (admin bool, elevated bool, err error) {
@@ -1496,6 +1506,9 @@ func setup() {
 	}
 	if val, ok := m["npm_mirror"]; ok {
 		env.npm_mirror = val
+	}
+	if val, ok := m["symlink_junction"]; ok {
+		env.symlink_junction = val == strconv.FormatBool(true)
 	}
 
 	if val, ok := m["proxy"]; ok {
