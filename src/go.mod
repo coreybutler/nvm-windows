@@ -10,7 +10,13 @@ require (
 	github.com/coreybutler/go-where v1.0.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
-	golang.org/x/sys v0.1.0
+	github.com/schollz/progressbar/v3 v3.13.1
+	golang.org/x/sys v0.6.0
 )
 
-require github.com/mattn/go-runewidth v0.0.9 // indirect
+require (
+	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
+)
