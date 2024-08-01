@@ -365,7 +365,7 @@ func IsNodeArm64bitAvailable(v string) bool {
 		return true
 	}
 
-	// Anything below version 8 doesn't have a 64 bit version
+	// Anything below version 19.9 doesn't have a arm64 bit version
 	vers := strings.Fields(strings.Replace(v, ".", " ", -1))
 	main, _ := strconv.ParseInt(vers[0], 0, 0)
 	minor, _ := strconv.ParseInt(vers[1], 0, 0)
@@ -373,7 +373,7 @@ func IsNodeArm64bitAvailable(v string) bool {
 	if main < 19 {
 		return false
 	}
-	if minor < 9{
+	if main == 19 && minor < 9{
 		return false
 	}
 	
