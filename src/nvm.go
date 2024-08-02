@@ -728,6 +728,13 @@ func use(version string, cpuarch string, reload ...bool) {
 		}
 	}
 
+	// Check if a change is needed
+	curVersion, curCpuarch := node.GetCurrentVersion()
+	if version == curVersion && cpuarch == curCpuarch {
+		fmt.Println("node v" + version + " (" + cpuarch + "-bit) is already in use.")
+		return
+	}
+
 	// Make sure the version is installed. If not, warn.
 	if !node.IsVersionInstalled(env.root, version, cpuarch) {
 		fmt.Println("node v" + version + " (" + cpuarch + "-bit) is not installed.")
