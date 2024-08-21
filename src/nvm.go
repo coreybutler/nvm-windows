@@ -12,6 +12,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -69,6 +70,7 @@ func main() {
 	args := os.Args
 	detail := ""
 	procarch := arch.Validate(env.arch)
+	aliasArg := ""
 
 	if !isTerminal() {
 		alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
@@ -82,6 +84,8 @@ func main() {
 	if len(args) > 3 {
 		if args[3] == "32" || args[3] == "64" {
 			procarch = args[3]
+		}else {
+			aliasArg = args[3]
 		}
 	}
 	if len(args) < 2 {
@@ -167,6 +171,10 @@ func main() {
 		setNpmMirror(detail)
 	case "debug":
 		checkLocalEnvironment()
+	case "alias":
+		alias(detail, aliasArg)
+	case "a":
+		alias(detail, aliasArg)
 	default:
 		help()
 	}
@@ -582,6 +590,11 @@ func uninstall(version string) {
 		version = installed[0]
 	}
 
+	versionAlias, err := getAliasVersion(version)
+	if err == nil {
+		version = versionAlias
+	}
+
 	version = cleanVersion(version)
 
 	// Determine if the version exists and skip if it doesn't
@@ -595,6 +608,10 @@ func uninstall(version string) {
 				fmt.Println(fmt.Sprint(err))
 				return
 			}
+		}
+		aliases := getVersionAliases(version)
+		for i := 0; i < len(aliases); i++ {
+			deleteAlias(aliases[i])
 		}
 		e := os.RemoveAll(filepath.Join(env.root, "v"+version))
 		if e != nil {
@@ -719,6 +736,10 @@ func accessDenied(err error) bool {
 }
 
 func use(version string, cpuarch string, reload ...bool) {
+	aliasVersion, aliasErr := getAliasVersion(version)
+	if aliasErr == nil {
+		version = aliasVersion
+	}
 	version, cpuarch, err := getVersion(version, cpuarch, true)
 
 	if err != nil {
@@ -1225,6 +1246,73 @@ func checkLocalEnvironment() {
 	fmt.Println("\n" + "Find help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues")
 }
 
+func alias(version string, alias string) {
+	// Make sure a version and alias are specified
+	if version == "" {
+		fmt.Println("No version specified.")
+		help()
+		return
+	} else if alias == "" {
+		// If no alias is specified, show all aliases for the version
+		aliases := getVersionAliases(version)
+		if len(aliases) == 0 {
+			fmt.Println("No aliases found for version " + version)
+			fmt.Println("To create an alias, type \"nvm alias " + version + " <alias>\"")
+			return
+		} else {
+			fmt.Println("Aliases to the version " + version + ": " + strings.Join(aliases, ", "))
+			return
+		}
+	}
+	if len(alias) == 0 || len(version) == 0 {
+		fmt.Println("Provide an alias and the version it should point to.")
+		help()
+		return
+	}
+	// If instead version is "rm", remove the alias
+	if strings.ToLower(version) == "rm" {
+		deleteAlias(alias)
+		fmt.Println("Alias " + alias + " removed.")
+		return
+	}
+
+	// Allow for aliases to be set to "latest", "lts" and "newest"
+	if strings.ToLower(version) == "latest" || strings.ToLower(version) == "node" {
+		version = getLatest()
+	} else if strings.ToLower(version) == "lts" {
+		version = getLTS()
+	} else if strings.ToLower(version) == "newest" {
+		installed := node.GetInstalled(env.root)
+		if len(installed) == 0 {
+			fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest.")
+			return
+		}
+
+		version = installed[0]
+	}
+
+	version = cleanVersion(version)
+	// Determine if the version exists and skip if it doesn't
+	if node.IsVersionInstalled(env.root, version, "32") || node.IsVersionInstalled(env.root, version, "64") {
+		// Save the alias to the 'aliases' file in the version folder
+		errSaving := saveAliasesVersion(version, alias)
+		if errSaving != nil {
+			fmt.Println("Error saving alias, try again as admnistrator.")
+			return
+		}
+		// Create the alias file in the root directory for easy access
+		path := filepath.Join(env.root, alias)
+		err := os.WriteFile(path, []byte(version), 0644)
+		if err != nil {
+			fmt.Println("Error creating alias: " + err.Error())
+		} else {
+			fmt.Println("Alias " + alias + " created for version " + version)
+		}
+	} else {
+		fmt.Println("Version " + version + " is not installed.")
+	}
+}
+
 func help() {
 	fmt.Println("\nRunning version " + NvmVersion + ".")
 	fmt.Println("\nUsage:")
@@ -1248,6 +1336,9 @@ func help() {
 	fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally use \"latest\", \"lts\", or \"newest\".")
 	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
 	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
+	fmt.Println("  nvm alias <version> [alias]  : Set an alias to the specified version. Without the alias paramater, it shows all aliases to the version.")
+	fmt.Println("                                 After setting an alias, you can use the alias instead of a version number. Aliased as a.")
+	fmt.Println("  nvm alias rm <alias>       	: Removes the specified alias.")
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
 	fmt.Println("  nvm [--]version              : Displays the current running version of nvm for Windows. Aliased as v.")
@@ -1454,6 +1545,101 @@ func encode(val string) string {
 	// }
 
 	return string(converted)
+}
+
+func getAliasVersion(alias string) (string, error) {
+	alias = filepath.Join(env.root, alias)
+	ver, err := os.ReadFile(alias)
+	return string(ver), err
+}
+
+func getVersionAliases(version string) []string {
+	path := filepath.Join(env.root, "v"+version, "aliases")
+	aliases, err := os.ReadFile(path)
+	if err != nil {
+		return []string{}
+	}else {
+		return strings.Split(string(aliases), "\n")
+	}
+}
+
+func saveAliasesVersion(version string, alias string) error {
+	aliasesFile, errFile := getAliasesFile(version)
+	if errFile != nil {
+		return errFile
+	}
+
+	aliasesList := getVersionAliases(version)
+	if !slices.Contains(aliasesList, alias) || len(aliasesList) == 0{
+		_, errW := aliasesFile.WriteString(alias+"\n")
+		if errW != nil {
+			return errW
+		}
+	}
+	return nil
+}
+
+func deleteAlias(alias string) {
+	path := filepath.Join(env.root, alias)
+	removeAliasFromFile(alias)
+	err := os.Remove(path)
+	if err != nil {
+		elevatedRun("del", path)
+	}
+}
+
+func removeAliasFromFile(alias string) {
+	version, err := getAliasVersion(alias)
+	if err != nil {
+		return
+	}
+	aliases := getVersionAliases(version)
+	fmt.Println("Aliases before removing: ", aliases)
+	aliasPos := pos(alias, aliases)
+	if aliasPos == -1 {
+		return
+	}
+	aliases[aliasPos] = aliases[len(aliases) - 1]
+	aliases = aliases[:len(aliases) - 1]
+	fmt.Println("Aliases after removing: ", aliases)
+	aliasesFile, errFile := newAliasesFile(version)
+	if errFile != nil {
+		return
+	}
+	for _, v := range aliases {
+		if len(v) != 0 {
+			aliasesFile.WriteString(v + "\n")
+		}
+	}
+}
+
+func pos(value string, slice []string) int {
+	for p, v := range slice {
+			if (v == value) {
+					return p
+			}
+	}
+	return -1
+}
+
+func getAliasesFile(version string) (*os.File, error) {
+	path := filepath.Join(env.root, "v"+ version, "aliases")
+	aliasesFile, errFile := os.OpenFile(path, os.O_APPEND, 0644)
+	if(errFile != nil){
+		aliasesFile, errFile = newAliasesFile(version)
+	}
+	return aliasesFile, errFile
+}
+
+func newAliasesFile(version string) (*os.File, error) {
+	path := filepath.Join(env.root, "v"+ version, "aliases")
+	os.Remove(path)
+	aliasesFile, errFile := os.OpenFile(path, os.O_CREATE, 0644)
+	if errFile != nil {
+		return aliasesFile, errFile
+	}
+
+	return aliasesFile, errFile
 }
 
 // ===============================================================
