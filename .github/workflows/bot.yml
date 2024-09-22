@@ -18,4 +18,4 @@ jobs:
           start-date: '2021-09-15T05:00:00Z'
           exempt-all-assignees: true
           exempt-all-milestones: true
-          exempt-issue-labels: 'help wanted,consider for rt'
+          exempt-issue-labels: 'bug,not stale,help wanted,consider for rt'
