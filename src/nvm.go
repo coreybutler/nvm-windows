@@ -56,7 +56,7 @@ var env = &Environment{
 	settings:        home,
 	root:            "",
 	symlink:         symlink,
-	arch:            os.Getenv("PROCESSOR_ARCHITECTURE"),
+	arch:            strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE")),
 	node_mirror:     "",
 	npm_mirror:      "",
 	proxy:           "none",
@@ -80,7 +80,7 @@ func main() {
 		detail = args[2]
 	}
 	if len(args) > 3 {
-		if args[3] == "32" || args[3] == "64" {
+		if args[3] == "32" || args[3] == "arm64" || args[3] == "64" {
 			procarch = args[3]
 		}
 	}
@@ -128,8 +128,8 @@ func main() {
 	case "arch":
 		if strings.Trim(detail, " \r\n") != "" {
 			detail = strings.Trim(detail, " \r\n")
-			if detail != "32" && detail != "64" {
-				fmt.Println("\"" + detail + "\" is an invalid architecture. Use 32 or 64.")
+			if detail != "32" && detail != "64" && detail != "arm64" {
+				fmt.Println("\"" + detail + "\" is an invalid architecture. Use 32 or 64 or arm64.")
 				return
 			}
 			env.arch = detail
@@ -301,8 +301,8 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	cpuarch = strings.ToLower(cpuarch)
 
 	if cpuarch != "" {
-		if cpuarch != "32" && cpuarch != "64" && cpuarch != "all" {
-			return version, cpuarch, errors.New("\"" + cpuarch + "\" is not a valid CPU architecture. Must be 32 or 64.")
+		if cpuarch != "32" && cpuarch != "arm64" && cpuarch != "64" && cpuarch != "all" {
+			return version, cpuarch, errors.New("\"" + cpuarch + "\" is not a valid CPU architecture. Must be 32 or 64 or arm64.")
 		}
 	} else {
 		cpuarch = env.arch
@@ -335,7 +335,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 		version = installed[0]
 	}
 
-	if version == "32" || version == "64" {
+	if version == "32" || version == "arm64" || version == "64" {
 		cpuarch = version
 		v, _ := node.GetCurrentVersion()
 		version = v
@@ -433,6 +433,11 @@ func install(version string, cpuarch string) {
 		return
 	}
 
+	if cpuarch == "arm64" && !web.IsNodeArm64bitAvailable(version) {
+		fmt.Println("Node.js v" + version + " is only available in 64 and 32-bit.")
+		return
+	}
+
 	// Check to see if the version is already installed
 	if !node.IsVersionInstalled(env.root, version, cpuarch) {
 		if !node.IsVersionAvailable(version) {
@@ -451,22 +456,31 @@ func install(version string, cpuarch string) {
 		}
 
 		// Download node
-		append32 := node.IsVersionInstalled(env.root, version, "64")
-		append64 := node.IsVersionInstalled(env.root, version, "32")
-		if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "32") {
-			success := web.GetNodeJS(env.root, version, "32", append32)
+		if (cpuarch == "arm64") && !node.IsVersionInstalled(env.root, version, "arm64") {
+			success := web.GetNodeJS(env.root, version, "arm64", false)
 			if !success {
 				os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
-				fmt.Println("Could not download node.js v" + version + " 32-bit executable.")
+				fmt.Println("Could not download node.js v" + version + " arm64-bit executable.")
 				return
 			}
-		}
-		if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "64") {
-			success := web.GetNodeJS(env.root, version, "64", append64)
-			if !success {
-				os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
-				fmt.Println("Could not download node.js v" + version + " 64-bit executable.")
-				return
+		} else {
+			append32 := node.IsVersionInstalled(env.root, version, "64")
+			append64 := node.IsVersionInstalled(env.root, version, "32")
+			if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "32") {
+				success := web.GetNodeJS(env.root, version, "32", append32)
+				if !success {
+					os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
+					fmt.Println("Could not download node.js v" + version + " 32-bit executable.")
+					return
+				}
+			}
+			if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "64") {
+				success := web.GetNodeJS(env.root, version, "64", append64)
+				if !success {
+					os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
+					fmt.Println("Could not download node.js v" + version + " 64-bit executable.")
+					return
+				}
 			}
 		}
 
@@ -585,7 +599,7 @@ func uninstall(version string) {
 	version = cleanVersion(version)
 
 	// Determine if the version exists and skip if it doesn't
-	if node.IsVersionInstalled(env.root, version, "32") || node.IsVersionInstalled(env.root, version, "64") {
+	if node.IsVersionInstalled(env.root, version, "32") || node.IsVersionInstalled(env.root, version, "64") || node.IsVersionInstalled(env.root, version, "arm64") {
 		fmt.Printf("Uninstalling node v" + version + "...")
 		v, _ := node.GetCurrentVersion()
 		if v == version {
@@ -838,7 +852,11 @@ func useArchitecture(a string) {
 		fmt.Println("This computer only supports 32-bit processing.")
 		return
 	}
-	if a == "32" || a == "64" {
+	if strings.Contains("arm64",strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))) {
+		fmt.Println("This computer only supports arm64-bit processing.")
+		return
+	}
+	if a == "32" || a == "64" || a == "arm64" {
 		env.arch = a
 		saveSettings()
 		fmt.Println("Set to " + a + "-bit mode")

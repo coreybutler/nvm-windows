@@ -37,7 +37,7 @@ Compression=lzma
 SolidCompression=yes
 ChangesEnvironment=yes
 DisableProgramGroupPage=yes
-ArchitecturesInstallIn64BitMode=x64 ia64
+ArchitecturesInstallIn64BitMode=x64 ia64 arm64
 UninstallDisplayIcon={app}\{#MyIcon}
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCopyright=Copyright (C) 2018-2022 Ecor Ventures LLC, Corey Butler, and contributors.
@@ -53,13 +53,31 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "{#ProjectRoot}\bin\install.cmd"
+Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "{#ProjectRoot}\bin\install.cmd {#ProjectRoot}\bin\nvm-arm64.exe {#ProjectRoot}\bin\nvm-64.exe {#ProjectRoot}\bin\nvm.exe"
+Source: "{#ProjectRoot}\bins\nvm-arm64.exe"; DestDir: "{app}"; DestName: "nvm.exe"; Check: InstallARM64; Flags: solidbreak
+Source: "{#ProjectRoot}\bins\nvm-64.exe"; DestDir: "{app}"; DestName: "nvm.exe"; Check: InstallX64; Flags: solidbreak
+Source: "{#ProjectRoot}\bins\nvm.exe"; DestDir: "{app}"; DestName: "nvm.exe"; Check: InstallOtherArch; 
 
 [Icons]
 Name: "{group}\{#MyAppShortName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{#MyIcon}"
 Name: "{group}\Uninstall {#MyAppShortName}"; Filename: "{uninstallexe}"
 
 [Code]
+function InstallX64: Boolean;
+begin
+  Result := Is64BitInstallMode and (ProcessorArchitecture = paX64);
+end;
+
+function InstallARM64: Boolean;
+begin
+  Result := Is64BitInstallMode and (ProcessorArchitecture = paARM64);
+end;
+
+function InstallOtherArch: Boolean;
+begin
+  Result := not InstallX64 and not InstallARM64;
+end;
+
 var
   SymlinkPage: TInputDirWizardPage;
 
