@@ -361,7 +361,7 @@ func getNodeUrl(v string, vpre string, arch string, append bool) string {
 	}
 
 	//url := "http://nodejs.org/dist/v"+v+"/" + vpre + "/node.exe"
-	url := GetFullNodeUrl("v" + v + "/" + vpre + "/node.exe")
+	url := GetFullNodeUrl("v" + v + "/" + vpre + "node.exe")
 
 	if !append {
 		version, err := semver.Make(v)
