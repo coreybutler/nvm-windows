@@ -51,10 +51,11 @@ type Environment struct {
 
 var home = filepath.Clean(os.Getenv("NVM_HOME") + "\\settings.txt")
 var symlink = filepath.Clean(os.Getenv("NVM_SYMLINK"))
+var root = filepath.Clean(os.Getenv("NVM_HOME"))
 
 var env = &Environment{
 	settings:        home,
-	root:            "",
+	root:            root,
 	symlink:         symlink,
 	arch:            strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE")),
 	node_mirror:     "",
@@ -1446,6 +1447,7 @@ func saveSettings() {
 	content := "root: " + strings.Trim(encode(env.root), " \n\r") + "\r\narch: " + strings.Trim(encode(env.arch), " \n\r") + "\r\nproxy: " + strings.Trim(encode(env.proxy), " \n\r") + "\r\noriginalpath: " + strings.Trim(encode(env.originalpath), " \n\r") + "\r\noriginalversion: " + strings.Trim(encode(env.originalversion), " \n\r")
 	content = content + "\r\nnode_mirror: " + strings.Trim(encode(env.node_mirror), " \n\r") + "\r\nnpm_mirror: " + strings.Trim(encode(env.npm_mirror), " \n\r")
 	ioutil.WriteFile(env.settings, []byte(content), 0644)
+	os.Setenv("NVM_HOME", strings.Trim(encode(env.root), " \n\r"))
 }
 
 func getProcessPermissions() (admin bool, elevated bool, err error) {
@@ -1504,9 +1506,6 @@ func setup() {
 		m[res[0]] = strings.TrimSpace(strings.Join(res[1:], ":"))
 	}
 
-	if val, ok := m["root"]; ok {
-		env.root = filepath.Clean(val)
-	}
 	if val, ok := m["originalpath"]; ok {
 		env.originalpath = filepath.Clean(val)
 	}
