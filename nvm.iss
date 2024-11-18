@@ -1,8 +1,8 @@
 #define MyAppName "NVM for Windows"
 #define MyAppShortName "nvm"
 #define MyAppLCShortName "nvm"
-#define MyAppVersion "1.1.11"
-#define MyAppPublisher "Ecor Ventures LLC"
+#define MyAppVersion "1.2.0"
+#define MyAppPublisher "Author Software Inc."
 #define MyAppURL "https://github.com/coreybutler/nvm-windows"
 #define MyAppExeName "nvm.exe"
 #define MyIcon "bin\nodejs.ico"
@@ -19,7 +19,7 @@ PrivilegesRequired=admin
 AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-AppCopyright=Copyright (C) 2018-2022 Ecor Ventures LLC, Corey Butler, and contributors.
+AppCopyright=Copyright (C) 2018-2024 Author Software Inc., Ecor Ventures LLC, Corey Butler, and contributors.
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
@@ -40,8 +40,8 @@ DisableProgramGroupPage=yes
 ArchitecturesInstallIn64BitMode=x64 ia64
 UninstallDisplayIcon={app}\{#MyIcon}
 VersionInfoVersion={#MyAppVersion}
-VersionInfoCopyright=Copyright (C) 2018-2022 Ecor Ventures LLC, Corey Butler, and contributors.
-VersionInfoCompany=Ecor Ventures LLC
+VersionInfoCopyright=Copyright (C) 2018-20234 Author Software Inc., Ecor Ventures LLC, Corey Butler, and contributors.
+VersionInfoCompany=Author Software Inc.
 VersionInfoDescription=Node version manager for Windows
 VersionInfoProductName={#MyAppShortName}
 VersionInfoProductTextVersion={#MyAppVersion}
