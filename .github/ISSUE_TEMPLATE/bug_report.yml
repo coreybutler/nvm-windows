@@ -39,7 +39,9 @@ body:
       label: Version
       description: What version are you running? Run `nvm --version` to find out. **Please don't assume. Check the version.**
       options:
-        - 1.1.11 or newer (Default)
+        - 1.2.0 or newer (Default)
+        - 1.1.12
+        - 1.1.11
         - 1.1.10
         - 1.1.9
         - 1.1.8
@@ -53,11 +55,13 @@ body:
       label: Which version of Windows?
       multiple: true
       options:
-        - Windows 11+
-        - Windows 10 (Default)
+        - Windows 11+ (Default)
+        - Windows 10
         - Windows 8.1
         - Windows 8
         - Windows 7
+        - Windows Server 2022
+        - Windows Server 2019
         - Older
   - type: dropdown
     id: os-language
@@ -122,31 +126,31 @@ body:
         The output of `nvm debug` looks like this
         ```
         <username> is not using admin or elevated rights.
-        
+
         PowerShell
         Windows Developer Mode: UNKNOWN (user cannot read registry)
-        
-        NVM4W Version:      1.1.11
+
+        NVM4W Version:      1.2.0
         NVM4W Path:         C:\Users\username\AppData\Roaming\nvm\nvm.exe
         NVM4W Settings:     C:\Users\username\AppData\Roaming\nvm\settings.txt
         NVM_HOME:           C:\Users\uername\AppData\Roaming\nvm
         NVM_SYMLINK:        C:\Program Files\nodejs
         Node Installations: C:\Users\username\AppData\Roaming\nvm
-        
+
         Active Node.js Version: v20.7.0
-        
+
         No problems detected.
-        
+
         Find help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues
         ```
 
         If you only see the standard help menu (as shown below), then you are probably running v1.1.10 or below. Upgrade to NVM4W 1.1.11+.
 
         ```sh
-        Running version 1.1.11.
-        
+        Running version 1.1.12.
+
         Usage:
-        
+
           nvm arch                     : Show if node is running in 32 or 64 bit mode.
           nvm current                  : Display active version.
           nvm debug                    : Check the NVM4W process for known problems (troubleshooter).
