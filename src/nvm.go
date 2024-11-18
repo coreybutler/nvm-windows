@@ -22,10 +22,12 @@ import (
 	"nvm/encoding"
 	"nvm/file"
 	"nvm/node"
+	"nvm/upgrade"
 	"nvm/web"
 
 	"github.com/blang/semver"
 	// "github.com/fatih/color"
+
 	"github.com/coreybutler/go-where"
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/sys/windows"
@@ -33,7 +35,7 @@ import (
 )
 
 const (
-	NvmVersion = "1.1.11"
+	NvmVersion = "1.2.0"
 )
 
 type Environment struct {
@@ -70,10 +72,10 @@ func main() {
 	detail := ""
 	procarch := arch.Validate(env.arch)
 
-	if !isTerminal() {
-		alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
-		os.Exit(0)
-	}
+	// if !isTerminal() {
+	// 	alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
+	// 	os.Exit(0)
+	// }
 
 	// Capture any additional arguments
 	if len(args) > 2 {
@@ -99,6 +101,8 @@ func main() {
 		install(detail, procarch)
 	case "uninstall":
 		uninstall(detail)
+	case "reinstall":
+		reinstall(detail, procarch)
 	case "use":
 		use(detail, procarch)
 	case "list":
@@ -167,6 +171,8 @@ func main() {
 		setNpmMirror(detail)
 	case "debug":
 		checkLocalEnvironment()
+	case "upgrade":
+		upgrade.Run(NvmVersion)
 	default:
 		help()
 	}
@@ -185,13 +191,13 @@ func setNpmMirror(uri string) {
 	saveSettings()
 }
 
-func isTerminal() bool {
-	fileInfo, err := os.Stdout.Stat()
-	if err != nil {
-		return false
-	}
-	return (fileInfo.Mode() & os.ModeCharDevice) != 0
-}
+// func isTerminal() bool {
+// 	fileInfo, err := os.Stdout.Stat()
+// 	if err != nil {
+// 		return false
+// 	}
+// 	return (fileInfo.Mode() & os.ModeCharDevice) != 0
+// }
 
 // const (
 // 	MB_YESNOCANCEL     = 0x00000003
@@ -263,23 +269,23 @@ func isTerminal() bool {
 // 	)
 // }
 
-func alert(msg string, caption ...string) {
-	user32 := windows.NewLazySystemDLL("user32.dll")
-	mbox := user32.NewProc("MessageBoxW")
-	getForegroundWindow := user32.NewProc("GetForegroundWindow")
-	var hwnd uintptr
-	ret, _, _ := getForegroundWindow.Call()
-	if ret != 0 {
-		hwnd = ret
-	}
+// func alert(msg string, caption ...string) {
+// 	user32 := windows.NewLazySystemDLL("user32.dll")
+// 	mbox := user32.NewProc("MessageBoxW")
+// 	getForegroundWindow := user32.NewProc("GetForegroundWindow")
+// 	var hwnd uintptr
+// 	ret, _, _ := getForegroundWindow.Call()
+// 	if ret != 0 {
+// 		hwnd = ret
+// 	}
 
-	title := "Alert"
-	if len(caption) > 0 {
-		title = caption[0]
-	}
+// 	title := "Alert"
+// 	if len(caption) > 0 {
+// 		title = caption[0]
+// 	}
 
-	mbox.Call(hwnd, uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(msg))), uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(title))), uintptr(windows.MB_OK))
-}
+// 	mbox.Call(hwnd, uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(msg))), uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(title))), uintptr(windows.MB_OK))
+// }
 
 /*
 func update() {
@@ -474,6 +480,7 @@ func install(version string, cpuarch string) {
 			npmv := getNpmVersion(version)
 			fmt.Println("npm v" + npmv + " installed successfully.")
 			fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
+			// fmt.Printf("Installed to %v\n", filepath.Join(env.root, "v"+version))
 			return
 		}
 
@@ -557,7 +564,57 @@ func install(version string, cpuarch string) {
 		fmt.Println("Version " + version + " is already installed.")
 		return
 	}
+}
 
+func reinstall(version, cpuarch string) {
+	// Make sure a version is specified
+	if len(version) == 0 {
+		fmt.Println("Provide the version you want to uninstall.")
+		help()
+		return
+	}
+
+	if strings.ToLower(version) == "latest" || strings.ToLower(version) == "node" {
+		version = getLatest()
+	} else if strings.ToLower(version) == "lts" {
+		version = getLTS()
+	} else if strings.ToLower(version) == "newest" {
+		installed := node.GetInstalled(env.root)
+		if len(installed) == 0 {
+			fmt.Println("No versions of node.js found. Try installing the latest by typing nvm install latest.")
+			return
+		}
+
+		version = installed[0]
+	}
+
+	version = cleanVersion(version)
+
+	// Determine if the version exists and skip if it doesn't
+	if node.IsVersionInstalled(env.root, version, "32") || node.IsVersionInstalled(env.root, version, "64") {
+		v, _ := node.GetCurrentVersion()
+
+		fmt.Printf("Removing v%v...\n", version)
+
+		if v == version {
+			// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
+			if err != nil {
+				fmt.Println(fmt.Sprint(err))
+				return
+			}
+		}
+
+		e := os.RemoveAll(filepath.Join(env.root, "v"+version))
+		if e != nil {
+			fmt.Printf("error: failed to remove v%v: %v\n", version, e)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Printf("node v%v is not installed. Type \"nvm list\" to see what is installed.\n", version)
+	}
+
+	install(version, cpuarch)
 }
 
 func uninstall(version string) {
@@ -1062,11 +1119,9 @@ func checkLocalEnvironment() {
 			} else {
 				consoleTitle := syscall.UTF16ToString(title[:])
 
-				if !strings.Contains(strings.ToLower(consoleTitle), "command prompt") && !strings.Contains(strings.ToLower(consoleTitle), "powershell") {
-					problems = append(problems, fmt.Sprintf("\"%v\" is not an officially supported shell. Some features may not work as expected.\n", consoleTitle))
+				if !strings.Contains(strings.ToLower(consoleTitle), "command prompt") && !strings.Contains(strings.ToLower(consoleTitle), "powershell") && !strings.Contains(strings.ToLower(consoleTitle), "cmd.exe") && !strings.Contains(strings.ToLower(consoleTitle), "pwsh.exe") {
+					problems = append(problems, fmt.Sprintf("\"%v\" not recognized: the Command Prompt and Powershell are the only officially supported consoles. Some features may not work as expected.\n", consoleTitle))
 				}
-
-				fmt.Printf("\n%v", consoleTitle)
 			}
 		}
 	}
@@ -1082,7 +1137,7 @@ func checkLocalEnvironment() {
 	}
 	// fmt.Printf(" %d.%d\n", versionInfo.MajorVersion, versionInfo.MinorVersion)
 	maj, min, patch := windows.RtlGetNtVersionNumbers()
-	fmt.Printf("\nWindows Version: %d.%d (Build %d)\n", maj, min, patch)
+	fmt.Printf("\nWindows Version:        %d.%d (Build %d)\n", maj, min, patch)
 
 	// SHELL in Linux
 	// TERM in Windows
@@ -1119,7 +1174,15 @@ func checkLocalEnvironment() {
 	v := node.GetInstalled(env.root)
 
 	nvmhome := os.Getenv("NVM_HOME")
-	fmt.Printf("\nNVM4W Version:      %v\nNVM4W Path:         %v\nNVM4W Settings:     %v\nNVM_HOME:           %v\nNVM_SYMLINK:        %v\nNode Installations: %v\n\nTotal Node.js Versions: %v\nActive Node.js Version: %v", NvmVersion, path, home, nvmhome, symlink, env.root, len(v), out)
+	mirrors := "No mirrors configured"
+	if len(env.node_mirror) > 0 && len(env.npm_mirror) > 0 {
+		mirrors = env.node_mirror + " (node) and " + env.npm_mirror + " (npm)"
+	} else if len(env.node_mirror) > 0 {
+		mirrors = env.node_mirror + " (node)"
+	} else if len(env.npm_mirror) > 0 {
+		mirrors = env.npm_mirror + " (npm)"
+	}
+	fmt.Printf("\nNVM4W Version:          %v\nNVM4W Path:             %v\nNVM4W Settings:         %v\nNVM_HOME:               %v\nNVM_SYMLINK:            %v\nNode Installations:     %v\nDefault Architecture:   %v-bit\nMirrors:                %v\nHTTP Proxy:             %v\n\nTotal Node.js Versions: %v\nActive Node.js Version: %v", NvmVersion, path, home, nvmhome, symlink, env.root, env.arch, mirrors, env.proxy, len(v), out)
 
 	if !nvmsymlinkfound {
 		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")
@@ -1138,12 +1201,8 @@ func checkLocalEnvironment() {
 		}
 	} else {
 		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			targetPath, err := os.Readlink(symlink)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			targetFileInfo, err := os.Lstat(targetPath)
+			targetPath, _ := os.Readlink(symlink)
+			targetFileInfo, _ := os.Lstat(targetPath)
 
 			if !targetFileInfo.Mode().IsDir() {
 				problems = append(problems, "NVM_SYMLINK is a symlink linking to a file instead of a directory.")
@@ -1153,11 +1212,15 @@ func checkLocalEnvironment() {
 		}
 	}
 
+	if strings.Contains(symlink, home) {
+		problems = append(problems, "Storing the NVM_SYMLINK ("+symlink+") within the NVM_HOME directory ("+home+") has been known to cause problems in many Windows environments. Change NVM_SYMLINK to a different directory that does not already exist.")
+	}
+
 	ipv6, err := web.IsLocalIPv6()
 	if err != nil {
 		problems = append(problems, "Connection type cannot be determined: "+err.Error())
 	} else if !ipv6 {
-		fmt.Println("\nIPv6 is enabled. This can slow downloads significantly.")
+		fmt.Println("\nIPv6 is enabled. This has been known to slow downloads significantly.")
 	}
 
 	nodelist := web.Ping(web.GetFullNodeUrl("index.json"))
@@ -1179,6 +1242,7 @@ func checkLocalEnvironment() {
 		if _, err = os.Stat(filepath.Join(env.root, v[i], "node.exe")); err != nil {
 			invalid = append(invalid, v[i])
 		} else if _, err = os.Stat(filepath.Join(env.root, v[i], "npm.cmd")); err != nil {
+			fmt.Println(err)
 			invalidnpm = append(invalid, v[i])
 		}
 	}
@@ -1222,6 +1286,36 @@ func checkLocalEnvironment() {
 		}
 	}
 
+	// Check for updates
+	colorize := true
+	if err := upgrade.EnableVirtualTerminalProcessing(); err != nil {
+		colorize = false
+	}
+	update, checkerr := upgrade.Get()
+	if checkerr == nil {
+		if len(update.Warnings) > 0 {
+			fmt.Println("")
+		}
+		for _, warning := range update.Warnings {
+			upgrade.Warn(warning, colorize)
+		}
+		if len(update.Warnings) > 0 {
+			fmt.Println("")
+		}
+	}
+
+	if checkerr != nil {
+		fmt.Println("error checking for updates: " + checkerr.Error())
+	} else {
+		newVersion, available, err := update.Available(NvmVersion)
+		if err != nil {
+			fmt.Println("Error checking for updates: " + err.Error())
+		} else if available {
+			upgrade.Warn(fmt.Sprintf("An upgrade is available: v%s", newVersion), colorize)
+			fmt.Println("   run \"nvm upgrade\" to update.\n")
+		}
+	}
+
 	fmt.Println("\n" + "Find help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues")
 }
 
@@ -1244,10 +1338,11 @@ func help() {
 	fmt.Println("  nvm node_mirror [url]        : Set the node mirror. Defaults to https://nodejs.org/dist/. Leave [url] blank to use default url.")
 	fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
 	fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
-	//  fmt.Println("  nvm update                   : Automatically update nvm to the latest version.")
+	fmt.Println("  nvm upgrade [restore]        : Update nvm to the latest version. Use \"restore\" to revert to the previously installed version.")
 	fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally use \"latest\", \"lts\", or \"newest\".")
 	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
 	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
+	fmt.Println("  nvm reinstall <version>      : A shortcut method to clean and reinstall a specific version.")
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
 	fmt.Println("  nvm [--]version              : Displays the current running version of nvm for Windows. Aliased as v.")
@@ -1304,6 +1399,10 @@ func cleanVersion(version string) string {
 // Given a node.js version, returns the associated npm version
 func getNpmVersion(nodeversion string) string {
 	_, _, _, _, _, npm := node.GetAvailable()
+	if len(npm) == 0 {
+		fmt.Println("Error looking up versions: Remote host returned no results. This usually indicates a problem with with Node.js web server. Please try again in a few minutes.")
+		os.Exit(0)
+	}
 	return npm[nodeversion]
 }
 
@@ -1316,14 +1415,20 @@ func getLatest() string {
 }
 
 func getLTS() string {
-	all, ltsList, current, stable, unstable, npm := node.GetAvailable()
-	fmt.Println(all)
-	fmt.Println(ltsList)
-	fmt.Println(current)
-	fmt.Println(stable)
-	fmt.Println(unstable)
-	fmt.Println(npm)
-	// _, ltsList, _, _, _, _ := node.GetAvailable()
+	// all, ltsList, current, stable, unstable, npm := node.GetAvailable()
+	// fmt.Println(all)
+	// fmt.Println(ltsList)
+	// fmt.Println(current)
+	// fmt.Println(stable)
+	// fmt.Println(unstable)
+	// fmt.Println(npm)
+	_, ltsList, _, _, _, _ := node.GetAvailable()
+
+	if len(ltsList) == 0 {
+		fmt.Println("Error looking up LTS version: Remote host returned no results. This usually indicates a problem with with Node.js web server. Please try again in a few minutes.")
+		os.Exit(0)
+	}
+
 	// ltsList has already been numerically sorted
 	return ltsList[0]
 }
