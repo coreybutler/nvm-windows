@@ -59,9 +59,21 @@ Source: "{#ProjectRoot}\bin\*"; DestDir: "{app}"; BeforeInstall: PreInstall; Fla
 Name: "{group}\{#MyAppShortName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{#MyIcon}"
 Name: "{group}\Uninstall {#MyAppShortName}"; Filename: "{uninstallexe}"
 
+[Registry]
+; Register the URL protocol 'nvm'
+Root: HKCR; Subkey: "{#MyAppShortName}"; ValueType: string; ValueName: ""; ValueData: "URL:NVM Protocol"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "{#MyAppShortName}"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCR; Subkey: "{#MyAppShortName}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
+Root: HKCR; Subkey: "{#MyAppShortName}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+
 [Code]
 var
   SymlinkPage: TInputDirWizardPage;
+  NotificationOptionPage: TInputOptionWizardPage;
+  EmailPage: TWizardPage;
+  EmailEdit: TEdit;
+  EmailLabel: TLabel;
+  PreText: TLabel;
 
 function IsDirEmpty(dir: string): Boolean;
 var
@@ -193,14 +205,148 @@ begin
   end;
 end;
 
+function IsSymbolicLink(const Path: string): Boolean;
+var
+  FindRec: TFindRec;
+begin
+  Result := False;
+  if FindFirst(Path, FindRec) then
+  begin
+    Result := (FindRec.Attributes and FILE_ATTRIBUTE_REPARSE_POINT) <> 0;
+    FindClose(FindRec);
+  end;
+end;
+
+procedure SymlinkPageChange(Sender: TObject);
+var
+  NewPath: string;
+begin
+  // Append '\nodejs' to the path if it is not already appended
+  NewPath := AddBackslash(SymlinkPage.Values[0]) + 'nodejs';
+  if Copy(SymlinkPage.Values[0], Length(SymlinkPage.Values[0]) - Length('\nodejs') + 1, Length('\nodejs')) <> '\nodejs' then
+    SymlinkPage.Values[0] := NewPath;
+
+  // Check if the new path exists and is not a symbolic link
+  if DirExists(NewPath) and not IsSymbolicLink(NewPath) then
+  begin
+    MsgBox('The directory "' + NewPath + '" already exists as a physical directory. Please choose a different location.', mbError, MB_OK);
+    SymlinkPage.Values[0] := '';
+  end;
+end;
+
 procedure InitializeWizard;
 begin
   SymlinkPage := CreateInputDirPage(wpSelectDir,
-    'Set Node.js Symlink', 'The active version of Node.js will always be available here.',
+    'Active Version Location',
+    'The active version of Node.js will always be available at this location.',
     'Select the folder in which Setup should create the symlink, then click Next.',
     False, '');
   SymlinkPage.Add('This directory will automatically be added to your system path.');
-  SymlinkPage.Values[0] := ExpandConstant('{pf}\nodejs');
+  SymlinkPage.Values[0] := ExpandConstant('C:\nvm4w\nodejs');
+
+  // Assign the OnChange event handler
+  SymlinkPage.Edits[0].OnChange := @SymlinkPageChange;
+
+  // Notification option page (after the Symlink page)
+  NotificationOptionPage := CreateInputOptionPage(
+    SymlinkPage.ID, // Ensures the Notification page appears right after the Symlink page
+    'Desktop Notifications (PREVIEW)',
+    'NVM for Windows supports the basic (free) edition of Author Notifications.',
+    'Select the events you wish to be notified of. Your choices can be modified at any time in the future.',
+    FALSE,
+    FALSE);
+
+  // Pre-checked checkbox
+  NotificationOptionPage.AddEx('Node.js LTS releases (Long-Term Support/Stable)', 0, FALSE);
+  NotificationOptionPage.AddEx('Node.js Current releases (Latest/Testing)', 0, FALSE);
+  NotificationOptionPage.AddEx('NVM For Windows releases', 0, FALSE);
+  NotificationOptionPage.AddEx('Author updates and releases (upcoming NVM for Windows successor)', 0, FALSE);
+  NotificationOptionPage.Values[0] := TRUE;
+  NotificationOptionPage.Values[1] := TRUE;
+  NotificationOptionPage.Values[2] := TRUE;
+  NotificationOptionPage.Values[3] := TRUE;
+
+  // Email Input Page
+  EmailPage := CreateCustomPage(
+    NotificationOptionPage.ID,
+    'Author Progress Email Signup',
+    'Get details about Author development milestones in your inbox.');
+
+  // Add introductory text above the input field
+  PreText := TLabel.Create(WizardForm);
+  PreText.Parent := EmailPage.Surface;
+  PreText.Caption := 'Author is the upcoming successor to NVM for Windows. Provide your email address to be informed of development milestones, release timelines, and enterprise capabilities. ' +
+                     'Leave it blank if you do not wish to receive notifications.';
+  PreText.Left := 10;
+  PreText.Top := 10;
+  PreText.Width := 600; // Adjust width to fit the text
+  PreText.WordWrap := True; // Ensures the text wraps if it exceeds the width
+
+  // Add a label for the email input field
+  EmailLabel := TLabel.Create(WizardForm);
+  EmailLabel.Parent := EmailPage.Surface;
+  EmailLabel.Caption := 'Email Address: (Optional)';
+  EmailLabel.Font.Style := [fsBold];
+  EmailLabel.Left := 10;  // Position from the left
+  EmailLabel.Top := 80;   // Position from the top
+
+  // Add an email input field on the EmailPage
+  EmailEdit := TEdit.Create(WizardForm);
+  EmailEdit.Parent := EmailPage.Surface;
+  EmailEdit.Left := 10;   // Align with the label
+  EmailEdit.Top := 110;    // Position just below the label
+  EmailEdit.Width := 610;
+  EmailEdit.Text := ''; // Default value
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  Email: string;
+begin
+  Result := True; // Allow navigation by default
+
+  if CurPageID = SymlinkPage.ID then
+  begin
+    // Check if the directory is empty
+    if DirExists(SymlinkPage.Values[0]) then
+    begin
+      if IsDirEmpty(SymlinkPage.Values[0]) then
+      begin
+        // If the directory is empty, just delete it since it will be recreated anyway.
+        RemoveDir(SymlinkPage.Values[0]);
+      end
+      else
+      begin
+        // Show a warning if the directory is not empty
+        MsgBox('The selected directory is not empty. Please choose a different path.', mbError, MB_OK);
+        Result := False; // Prevent navigation to the next page
+      end;
+    end;
+  end;
+
+  if CurPageID = EmailPage.ID then
+  begin
+    Email := Trim(EmailEdit.Text); // Remove leading/trailing spaces
+    if (Email <> '') and not ((Pos('@', Email) > 1) and (Pos('.', Email) > Pos('@', Email) + 1)) then
+    begin
+      MsgBox('Please enter a valid email address or leave the field blank.', mbError, MB_OK);
+      Result := False; // Prevent navigation to the next page
+    end;
+  end;
+
+  // Handle the Notification page logic
+  if CurPageID = NotificationOptionPage.ID then
+  begin
+    if NotificationOptionPage.Values[0] then
+    begin
+      Log('User opted to enable Node.js release notifications.');
+      // Add your logic for enabling notifications here
+    end
+    else
+    begin
+      Log('User opted out of Node.js release notifications.');
+    end;
+  end;
 end;
 
 function InitializeUninstall(): Boolean;
@@ -300,6 +446,21 @@ begin
   end;
 end;
 
+function GetNotificationParameters: string;
+begin
+  Result := '';
+  if NotificationOptionPage.Values[0] then
+    Result := Result + '--lts ';
+  if NotificationOptionPage.Values[1] then
+    Result := Result + '--current ';
+  if NotificationOptionPage.Values[2] then
+    Result := Result + '--nvm4w ';
+  if NotificationOptionPage.Values[3] then
+    Result := Result + '--author ';
+  // Trim the trailing space
+  Result := Trim(Result);
+end;
+
 function getSymLink(o: string): string;
 begin
   Result := SymlinkPage.Values[0];
@@ -316,7 +477,11 @@ begin
 end;
 
 [Run]
+Filename: "{app}\nvm.exe"; Parameters: "register {code:GetNotificationParameters}"; Flags: runhidden;
 Filename: "{cmd}"; Parameters: "/C ""mklink /D ""{code:getSymLink}"" ""{code:getCurrentVersion}"""" "; Check: isNodeAlreadyInUse; Flags: runhidden;
+
+[UninstallRun]
+Filename: "{app}\nvm.exe"; Parameters: "unregister --lts --current --nvm4w --author"; Flags: runhidden;
 
 [UninstallDelete]
 Type: files; Name: "{app}\nvm.exe";
@@ -324,4 +489,5 @@ Type: files; Name: "{app}\elevate.cmd";
 Type: files; Name: "{app}\elevate.vbs";
 Type: files; Name: "{app}\nodejs.ico";
 Type: files; Name: "{app}\settings.txt";
-Type: filesandordirs; Name: "{app}";
+Type: dir; Name: "{app}";
+Type: regkey; Name: "HKCR\Software\{#MyAppShortName}";
