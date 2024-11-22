@@ -173,6 +173,10 @@ func main() {
 		checkLocalEnvironment()
 	case "upgrade":
 		upgrade.Run(NvmVersion)
+	case "register":
+		upgrade.Register()
+	case "unregister":
+		upgrade.Unregister()
 	default:
 		help()
 	}
@@ -598,6 +602,7 @@ func reinstall(version, cpuarch string) {
 
 		if v == version {
 			// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			abortOnBadSymlink(env.symlink)
 			_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
 			if err != nil {
 				fmt.Println(fmt.Sprint(err))
@@ -647,6 +652,7 @@ func uninstall(version string) {
 		v, _ := node.GetCurrentVersion()
 		if v == version {
 			// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			abortOnBadSymlink(env.symlink)
 			_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
 			if err != nil {
 				fmt.Println(fmt.Sprint(err))
@@ -775,6 +781,14 @@ func accessDenied(err error) bool {
 	return false
 }
 
+func isSymlink(path string) (bool, error) {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return false, err
+	}
+	return info.Mode()&os.ModeSymlink != 0, nil
+}
+
 func use(version string, cpuarch string, reload ...bool) {
 	version, cpuarch, err := getVersion(version, cpuarch, true)
 
@@ -804,6 +818,7 @@ func use(version string, cpuarch string, reload ...bool) {
 	// Remove symlink if it already exists
 	sym, _ := os.Lstat(env.symlink)
 	if sym != nil {
+		abortOnBadSymlink(env.symlink)
 		// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
 		_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
 		if err != nil {
@@ -840,6 +855,7 @@ func use(version string, cpuarch string, reload ...bool) {
 				ok = true
 			}
 		} else if strings.Contains(err.Error(), "file already exists") {
+			abortOnBadSymlink(env.symlink)
 			ok, err = elevatedRun("rmdir", filepath.Clean(env.symlink))
 			// ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
 			reloadable := true
@@ -881,6 +897,19 @@ func use(version string, cpuarch string, reload ...bool) {
 		os.Rename(node64path, nodepath) // node64.exe -> node.exe
 	}
 	fmt.Println("Now using node v" + version + " (" + cpuarch + "-bit)")
+}
+
+func abortOnBadSymlink(symlinkpath string) {
+	symlinkpath = filepath.Clean(symlinkpath)
+	// Prevent deletion if the symlink has been set to a physical directpry/file.
+	// This isn't supposed to ever happen, but users have manually changed the settings.txt,
+	// removing the physical file/directory unintentionally.
+	// This is an anti-footgun.
+	if symlink, err := isSymlink(symlinkpath); !symlink && err == nil {
+		fmt.Printf("NVM_SYMLINK cannot overwrite the physical file/directory at %s\n", env.symlink)
+		fmt.Println("Please remove the location and try again, or select a different location for NVM_SYMLINK.")
+		os.Exit(1)
+	}
 }
 
 func useArchitecture(a string) {
@@ -1009,6 +1038,7 @@ func enable() {
 
 func disable() {
 	// ok, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+	abortOnBadSymlink(env.symlink)
 	ok, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
 	if !ok {
 		return
