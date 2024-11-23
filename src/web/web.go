@@ -131,7 +131,7 @@ func Download(url string, target string, version string) bool {
 	}
 
 	// TODO: Add version to user agent
-	req.Header.Set("User-Agent", "NVM for Windows")
+	req.Header.Set("User-Agent", fmt.Sprintf("NVM for Windows %s", version))
 
 	response, err := client.Do(req)
 	if err != nil {
