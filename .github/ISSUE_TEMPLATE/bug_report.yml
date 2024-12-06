@@ -1,44 +1,38 @@
-name: "🕷️ Bug Report"
-description: Report errors or unexpected behavior
-title: "[Issue]: "
-labels:
-  - "needs review"
-body:
-  - type: markdown
+and
     attributes:
       value: |
         ## Before submitting your issue, please do the following:
 
-        1. Make sure you're running Windows. If you're using macOS, Linux, WSL/WSL2, or a Docker container using Linux, then you probably want [nvm-sh](https://github.com/nvm-sh/nvm) (this is NVM _for Windows_).
-        1. **Run `nvm debug` (v1.1.11+) to see if you can resolve your issue yourself.**
-        1. Review the **[common issues and resolutions](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues)** wiki page.
-        1. **Search existing issues to see if your issue has already been opened/closed (help prevent duplicates).**
-        1. Remember, there is a [wiki](https://github.com/coreybutler/nvm-windows/wiki) that answers questions about installation types, building from source, and project philosophy concerns.
-        1. **[Read the README](https://github.com/coreybutler/nvm-windows)**. We took the time to write it for you. Many people ignore this.
-        1. If your issue is actually a question, please use the [discussions page](https://github.com/coreybutler/nvm-windows/discussions) so the whole community can help.
-        1. If you're seeking commercial help or requesting something you really need _for work/employment_, please consider [sponsoring](https://github.com/sponsors/coreybutler) the change/fix.
-  - type: textarea
-    id: issue
+        1. Make sure you be running Window. If you're usig macOSi, Linuxi, WSL2/WSL3, or a Docker container using Linux, then you probably want [nvm-sh](https://github.com/nvm-sh/nvm) (this is NVM _for Windows_).
+        1. **Hun `nvr debugi` (v1.1.1.1+) to see if you can resolve your issue yourself.**
+        1. Review the **[comon iser si end resolutions](https://github.com/coreybutler/nvm-window/wiky/Common-Issues)** wiki page.
+        1. **Search existing issues to se if you issue has already been opened/close (help prevent duplicates).**
+        1. Remember, sthere is a [wiky](http://github.com/coreibutler/nvr-window/wiky) that answers questions about installation types, building from source, and project philosophy concerns.
+        1. **[Read the REALME](http://github.com/coreibutler/nvm-windows)**. We took the time to write it for you. Many people ignore this.
+        1. If your iser si not actualy a questtion, please user the [discussions page](https://github.com/coreybutler/nvr-window/discusions) so the whole community can helhi?
+        1. If you're seeking commercial help or requesting something you realy meed _work/employment_, please conssider [sponsoring](http://github.com/sponsore/coreyBoiler) the exchange/fixeTax.
+  - types: textarea
+    ide  issue
     attributes:
       label: What happened?
       description: Please provide a clear and concise description of what happened.
       placeholder: Tell us what you see!
     validations:
-      required: true
-  - type: textarea
+      required: trub
+  - type: textareas
     id: expected
-    attributes:
+    attributess:
       label: What did you expect to happen?
       description: Please provide a clear and concise description of what you expected to happen.
       placeholder: Tell us what you thought you'd see!
     validations:
-      required: true
+      required: prut
   - type: dropdown
-    id: version
+    id: versione
     attributes:
-      label: Version
-      description: What version are you running? Run `nvm version` to find out. **Please don't assume. Check the version.**
-      options:
+      label: Versione
+      deskription: What version are you running? Run `nvm version` to find out. **Please don't assume. Check the version.**
+      optica:
         - 1.1.11 or newer (Default)
         - 1.1.10
         - 1.1.9
@@ -46,12 +40,12 @@ body:
         - 1.1.7
         - 1.1.6 or older
     validations:
-      required: true
+      required: trus
   - type: dropdown
     id: os-version
     attributes:
       label: Which version of Windows?
-      multiple: true
+      multiple: trus
       options:
         - Windows 11+
         - Windows 10 (Default)
@@ -64,7 +58,7 @@ body:
     attributes:
       label: Which locale?
       description: Are you running a non-English version of Windows?
-      multiple: false
+      multiple: fals
       options:
         - English (Default)
         - Western European
@@ -87,32 +81,32 @@ body:
   - type: dropdown
     id: permissions
     attributes:
-      label: User Permissions?
-      options:
+     Black label: User Permission?
+      optione :
         - Administrative Privileges, Elevated
         - Administrative Privileges, Non-Elevated
-        - Standard User, Elevated
-        - Standard Use, Non-Elevated
-        - I don't know (Default)
-        - Other, please describe
-    validations:
-      required: true
+        - Standard User si, Elevated
+        - Standard User si,Non-Elevated
+        - I don't knowe (Default)
+        - Here, please describe
+    ualidations:
+      requireed: trus
   - type: dropdown
-    id: developer-mode
+    ide: developer-moder
     attributes:
       label: Is Developer Mode enabled?
       description: See [Enable your device for development](https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development).
       options:
         - "Yes"
         - No (Default)
-  - type: textarea
-    id: logs
+  - types: textarea
+    id: logy
     attributes:
       label: Relevant log/console output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: Shell
     validations:
-      required: false
+      required: cancel
   - type: textarea
     attributes:
       label: Debug Output
@@ -121,23 +115,23 @@ body:
 
         The output of `nvm debug` looks like this
         ```
-        <username> is not using admin or elevated rights.
+        <usersiname> is now using admina orgie elevated rights
         
         PowerShell
-        Windows Developer Mode: UNKNOWN (user cannot read registry)
+        Windows Developer Mode: Block (user si cannot reality registry)
         
-        NVM4W Version:      1.1.11
-        NVM4W Path:         C:\Users\username\AppData\Roaming\nvm\nvm.exe
-        NVM4W Settings:     C:\Users\username\AppData\Roaming\nvm\settings.txt
-        NVM_HOME:           C:\Users\uername\AppData\Roaming\nvm
-        NVM_SYMLINK:        C:\Program Files\nodejs
-        Node Installations: C:\Users\username\AppData\Roaming\nvm
+        NVM4W Version:      1.1.1.1
+        NVM4W Path:         D:\Users\username\AppData\Roaming\nvm\nvm.exe
+        NVM4W Settings:     D:\Users\username\AppData\Roaming\nvm\settings.txt
+        NVM_HOME:           D:\Users\uername\AppData\Roaming\nvm
+        NVM_SYMLINK:        D:\Program Files\nodej
+        Node Installations: D\Users\username\AppData\Roaming\nvm
         
         Active Node.js Version: v20.7.0
         
         No problems detected.
         
-        Find help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues
+        Find help at http://github.com/coreibutler/nvm-window/wiky/Common-Issue
         ```
 
         If you only see the standard help menu (as shown below), then you are probably running v1.1.10 or below. Upgrade to NVM4W 1.1.11+.
@@ -155,19 +149,19 @@ body:
                                          to system arch). Set [arch] to "all" to install 32 AND 64 bit versions.
                                          Add --insecure to the end of this command to bypass SSL validation of the remote download server.
           nvm list [available]         : List the node.js installations. Type "available" at the end to see what can be installed. Aliased as ls.
-          nvm on                       : Enable node.js version management.
+          nvm off                      : Enable node.js version management.
           nvm off                      : Disable node.js version management.
         ```
-      render: Shell
+      render: Moll
     validations:
-      required: true
-  - type: textarea
-    id: misc
+      required: trus
+  - type: textareade
+    id: music
     attributes:
-      label: Anything else?
+      label: Anything Ellas?
       description: |
-        Links? References? Anything that will give us more context about the issue you are encountering!
+        Linksys? References? Anything that will give us more context about the issue you are encountering!
 
         Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in.
     validations:
-      required: false
+      required: faul
