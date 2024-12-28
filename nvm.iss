@@ -2,11 +2,11 @@
 #define MyAppShortName "nvm"
 #define MyAppLCShortName "nvm"
 #define MyAppVersion "1.5.0"
-#define MyAppPublisher "Ecor Ventures LLC"
-#define MyAppURL "https://github.com/coreybutler/nvm-windows"
+#define MyAppPublisher "Alessandro Ramos da Silva"
+#define MyAppURL "https://github.com/alessandro-ramos/nvm-windows"
 #define MyAppExeName "nvm.exe"
 #define MyIcon "bin\nodejs.ico"
-#define MyAppId "40078385-F676-4C61-9A9C-F9028599D6D3"
+#define MyAppId "933EB6BB-BCEF-4B19-8BF2-77E76CB2465B"
 #define ProjectRoot "."
 
 [Setup]
@@ -19,7 +19,7 @@ PrivilegesRequired=admin
 AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-AppCopyright=Copyright (C) 2018-2022 Ecor Ventures LLC, Corey Butler, and contributors.
+AppCopyright=Copyright (C) 2024 Alessandro Ramos da Silva, and contributors. Based on the work of Corey Butler.
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
@@ -40,8 +40,8 @@ DisableProgramGroupPage=yes
 ArchitecturesInstallIn64BitMode=x64 ia64 arm64
 UninstallDisplayIcon={app}\{#MyIcon}
 VersionInfoVersion={#MyAppVersion}
-VersionInfoCopyright=Copyright (C) 2018-2022 Ecor Ventures LLC, Corey Butler, and contributors.
-VersionInfoCompany=Ecor Ventures LLC
+VersionInfoCopyright=Copyright (C) 2024 Alessandro Ramos da Silva, and contributors. Based on the work of Corey Butler.
+VersionInfoCompany=Alessandro Ramos da Silva
 VersionInfoDescription=Node version manager for Windows
 VersionInfoProductName={#MyAppShortName}
 VersionInfoProductTextVersion={#MyAppVersion}
