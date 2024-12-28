@@ -1,62 +1,31 @@
-<div align="center"><h2>Notice: We have started full time work on <a href="https://github.com/coreybutler/nvm-windows/wiki/Runtime">Runtime</a>, the successor to NVM for Windows.</h2>Complete <a href="https://t.co/oGqQCM9FPx">this form</a> to provide your thoughts and sign up for progress updates.<br/><br/>Updates will also be posted on the <A href="https://linkedin.com/company/authorsoftware">Author Software LinkedIn Page</a>.</div>
-<br/><br/>
 <h1 align="center">NVM for Windows</h1>
 
 <div align="center">
-  The <a href="https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows">Microsoft</a>/<a href="https://docs.npmjs.com/cli/v9/configuring-npm/install#windows-node-version-managers">npm</a>/<a href="https://cloud.google.com/nodejs/docs/setup#installing_nvm">Google</a> recommended Node.js version manager for <em>Windows</em>.<br/>
+  Based on the <a href="https://docs.microsoft.com/en-us/windows/nodejs/setup-on-windows">Microsoft</a>/<a href="https://docs.npmjs.com/cli/v9/configuring-npm/install#windows-node-version-managers">npm</a>/<a href="https://cloud.google.com/nodejs/docs/setup#installing_nvm">Google</a> recommended Node.js version manager for <em>Windows</em>.<br/>
 
 <details>
 <summary><b>This is not the same thing as nvm!</b> (expand for details)</summary>
 
-_The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in [Why another version manager?](#bulb-why-another-version-manager) and [what&#39;s the big difference?](#bulb-whats-the-big-difference).
+_The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in [Why another version manager?](#bulb-why-another-version-manager) and [what&#39;s the big difference?](#bulb-whats-the-big-difference).<br>
+
+The original NVM for Windows was discontinued in 2023 by Corey Butler.<br>
+
+This fork was started by Alessandro Ramos da Silva in 2024 because he noticed NVM was very useful for the community and planned new small features for the tool.
 </details>
 
-[![Download Now](https://img.shields.io/badge/-Download%20Now!-%2322A6F2)](https://github.com/coreybutler/nvm-windows/releases) [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/coreybutler/nvm-windows?label=Latest%20Release&style=social&x=1)]((https://github.com/coreybutler/nvm-windows/releases)) ![GitHub Release Date](https://img.shields.io/github/release-date/coreybutler/nvm-windows?label=Released&style=social) ![GitHub all releases](https://img.shields.io/github/downloads/coreybutler/nvm-windows/total?label=Downloads&style=social) [![Discuss](https://img.shields.io/badge/-Discuss-blue)](https://github.com/coreybutler/nvm-windows/discussions) [![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Fintent%2Ftweet%3Fhashtags%3Dnodejs%26original_referer%3Dhttp%253A%252F%252F127.0.0.1%253A91%252F%26text%3DCheck%2520out%2520NVM%2520for%2520Windows%21%26tw_p%3Dtweetbutton%26url%3Dhttp%253A%252F%252Fgithub.com%252Fcoreybutler%252Fnvm-windows%26via%3Dgoldglovecb)](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb)
 </div>
 
-<h5 align="center">Sponsors</h5>
-
-<div align="center">
-  <table cellpadding="5" cellspacing="0" border="0" align="center">
-    <tr>
-      <td><a href="https://linkedin.com/company/authorsoftware"><img src="https://github.com/coreybutler/staticassets/blob/master/sponsors/logo_author_software_flat.png" width="200px"/></a></td>
-      <!--<td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>-->
-      <td><a href="https://enabledb.com"><img src="https://github.com/coreybutler/staticassets/raw/master/images/logos/logo_enabledb_w_text.png" width="200px"/></a></td>
-      <td><a href="https://butlerlogic.com"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/butlerlogic_logo.png" width="200px"/></a></td>
-      <td width="25%" align="center"><a href="https://github.com/microsoft"><img src="https://user-images.githubusercontent.com/770982/195955265-5c3dca78-7140-4ec6-b05a-f308518643ee.png" height="30px"/></a></td>
-    </tr>
-    <tr>
-      <td colspan="4" align="center">
-        <a href="https://github.com/sponsors/coreybutler"><img src="https://img.shields.io/github/sponsors/coreybutler?label=Individual%20Sponsors&logo=github&style=social"/></a>
-        &nbsp;<a href="https://github.com/sponsors/coreybutler"><img src="https://img.shields.io/badge/-Become%20a%20Sponsor-yellow"/></a>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4" align="center">
-        <img src="https://github.blog/wp-content/uploads/2020/09/github-stars-logo_Color.png" width="50"/><br/>
-        <b>Can't sponsor?</b><br/>Consider <a href="https://stars.github.com/nominate/" target="_blank">nominating @coreybutler for a Github star</a>.
-      </td>
-    </tr>
-  </table>
-</div>
 <br/>
 
-<div align="center"><b>Running into issues?</b> See the <a href="https://github.com/coreybutler/nvm-windows/wiki/Common-Issues">common issues wiki</a>.</div>
+<div align="center"><b>Running into issues?</b> See the <a href="https://github.com/alessandro-ramos/nvm-windows/wiki/Common-Issues">common issues wiki</a>.</div>
 
 <br/>
-<table style="background-color:red;padding:6px;border-radius:3px;">
-  <tr><td>
-    <h3>Seeking Feedback:</h3>
-    We're working on <a href="https://github.com/coreybutler/nvm-windows/wiki/Runtime">Runtime (rt)</a>, the successor to NVM For Windows. Please contribute by taking a minute to complete <a href="https://t.co/oGqQCM9FPx">this form</a>. Thank you!
-    <h3></h3>
-  </td></tr>
-</table>
 
 ## Overview
 
 Manage multiple installations of node.js on a Windows computer.
 
-**tl;dr** Similar (not identical) to [nvm](https://github.com/creationix/nvm), but for Windows. Has an installer. [Download Now](https://github.com/coreybutler/nvm-windows/releases)!
+**tl;dr** Similar (not identical) to [nvm](https://github.com/creationix/nvm), but for Windows. Has an installer. [Download Now](https://github.com/alessandro-ramos/nvm-windows/releases)!
 
 This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. Node 4+ is supported. Remember when running `nvm install` or `nvm use`, Windows usually requires administrative rights (to create symlinks). To install the latest version of Node.js, run `nvm install latest`. To install the latest stable version, run `nvm install lts`.
 
@@ -79,7 +48,7 @@ _PATH Installation Problems_
 If you attempt to configure the `NVM_SYMLINK` to use an existing directory (like `C:\Program Files\nodejs`), it will fail because a symlink cannot overwrite a physical directory. This is not a problem if you choose a different symlink path (such as `C:\nvm\node`).
 
 _PATH Conflicts_
-If you do not uninstall the original version, running `nvm use` may appear to do nothing at all. Running `node -v` will always show the original installation version. This is due to a [`PATH` conflict](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#why-do-i-need-to-uninstall-nodejs-before-installing-nvm-for-windows) that presents when the same application is installed multiple times. In NVM4W 1.1.11+, run `nvm debug` to determine if you have a `PATH` conflict.
+If you do not uninstall the original version, running `nvm use` may appear to do nothing at all. Running `node -v` will always show the original installation version. This is due to a [`PATH` conflict](https://github.com/alessandro-ramos/nvm-windows/wiki/Common-Issues#why-do-i-need-to-uninstall-nodejs-before-installing-nvm-for-windows) that presents when the same application is installed multiple times. In NVM4W 1.1.11+, run `nvm debug` to determine if you have a `PATH` conflict.
 
 For simplicity, we recommend uninstalling any existing versions of Node.js before using NVM for Windows. Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory. 
 
@@ -90,7 +59,7 @@ Alternatively, copy the settings to the user config `%UserProfile%\.npmrc`. Dele
 
 #### Install nvm-windows
 
-Use the [latest installer](https://github.com/coreybutler/nvm/releases) (comes with an uninstaller). Alternatively, follow the  [manual installation](https://github.com/coreybutler/nvm-windows/wiki#manual-installation) guide.
+Use the [latest installer](https://github.com/alessandro-ramos/nvm/releases) (comes with an uninstaller). Alternatively, follow the  [manual installation](https://github.com/alessandro-ramos/nvm-windows/wiki#manual-installation) guide.
 
 _If NVM4W doesn't appear to work immediately after installation, restart the terminal/powershell (not the whole computer)._
 
@@ -134,7 +103,7 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 - **`nvm node_mirror <node_mirror_url>`**: Set the node mirror.People in China can use *https://npmmirror.com/mirrors/node/*
 - **`nvm npm_mirror <npm_mirror_url>`**: Set the npm mirror.People in China can use *https://npmmirror.com/mirrors/npm/*
 
-### :warning: Gotcha!
+### :warning: Attention!
 
 Please note that any global npm modules you may have installed are **not** shared between the various versions of node.js you have installed. Additionally, some npm modules may not be supported in the version of node you're using, so be aware of your environment as you work.
 
@@ -142,15 +111,11 @@ Please note that any global npm modules you may have installed are **not** share
 
 Users have reported some problems using antivirus, specifically McAfee. It appears the antivirus software is manipulating access to the VBScript engine. See [issue #133](https://github.com/coreybutler/nvm-windows/issues/133) for details and resolution.
 
-**v1.1.8 is not code signed**, but all other versions are signed by [Ecor Ventures LLC](https://ecorventures.com)/[Author.io](https://author.io). This should help prevent false positives with most antivirus software.
-
-> v1.1.8+ was not code signed due to an expired certificate (see the [release notes](https://github.com/coreybutler/nvm-windows/releases/tag/1.1.8) for reasons). **v1.1.9 _is_ code signed** thanks to [ajyong](https://github.com/ajyong), who sponsored the new certificate.
-
 ### Using Yarn
 
 **tldr;** `npm i -g yarn`
 
-See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how-do-i-use-yarn-with-nvm-windows) for details.
+See the [wiki](https://github.com/alessandro-ramos/nvm-windows/wiki/Common-Issues#how-do-i-use-yarn-with-nvm-windows) for details.
 
 ### Build from source
 
@@ -183,7 +148,7 @@ The control mechanism is also quite different. There are two general ways to sup
 
 The second option is to use a symlink. This concept requires putting the symlink in the system `PATH`, then updating its target to the node installation directory you want to use. This is a straightforward approach, and seems to be what people recommend.... until they realize just how much of a pain symlinks are on Windows. This is why it hasn't happened before.
 
-In order to create/modify a symlink, you must be running as an admin, and you must get around Windows UAC (that annoying prompt). Luckily, this is a challenge I already solved with some helper scripts in [node-windows](https://github.com/coreybutler/node-windows). As a result, NVM for Windows maintains a single symlink that is put in the system `PATH` during installation only. Switching to different versions of node is a matter of switching the symlink target. As a result, this utility does **not** require you to run `nvm use x.x.x` every time you open a console window. When you _do_ run `nvm use x.x.x`, the active version of node is automatically updated across all open console windows. It also persists between system reboots, so you only need to use nvm when you want to make a change.
+In order to create/modify a symlink, you must be running as an admin, and you must get around Windows UAC (that annoying prompt). Luckily, this is a challenge I already solved with some helper scripts in [node-windows](https://github.com/alessandro-ramos/node-windows). As a result, NVM for Windows maintains a single symlink that is put in the system `PATH` during installation only. Switching to different versions of node is a matter of switching the symlink target. As a result, this utility does **not** require you to run `nvm use x.x.x` every time you open a console window. When you _do_ run `nvm use x.x.x`, the active version of node is automatically updated across all open console windows. It also persists between system reboots, so you only need to use nvm when you want to make a change.
 
 NVM for Windows comes with an installer, courtesy of a byproduct of my work on [Fenix Web Server](https://preview.fenixwebserver.com).
 
@@ -203,11 +168,8 @@ I chose Go because it is cross-platform, felt like less overhead than Java, has 
 
 Thanks to everyone who has submitted issues on and off Github, made suggestions, and generally helped make this a better project. Special thanks to
 
-- [@vkbansal](https://github.com/vkbansal), who provided significant early feedback throughout the early releases.
-- [@rainabba](https://github.com/rainabba) and [@sullivanpt](https://github.com/sullivanpt) for getting Node v4 support integrated.
-- [@s-h-a-d-o-w](https://github.com/s-h-a-d-o-w) who resolved the longstanding space escaping issue in path names ([#355](https://github.com/coreybutler/nvm-windows/pull/355)).
-- [ajyong](https://github.com/ajyong) who sponsored the code signing certificate in late 2021.
+- [@coreybutler](https://github.com/coreybutler), who created the original version
 
 <br/>
 
-![Contributors](https://contrib.rocks/image?repo=coreybutler/nvm-windows)
+![Contributors](https://contrib.rocks/image?repo=alessandro-ramos/nvm-windows)
