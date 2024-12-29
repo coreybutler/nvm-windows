@@ -1538,6 +1538,17 @@ func checkLocalEnvironment() {
 
 	v := node.GetInstalled(env.root)
 
+	// Make sure author-nvm.exe is available and runs
+	exe, _ := os.Executable()
+	valueBytes, err := exec.Command(exe, "author", "version").Output()
+	authorNvmVersion := "Not Detected"
+	if err != nil {
+		// fmt.Println("Error running author-nvm.exe: " + err.Error())
+		problems = append(problems, "The author-nvm.exe file is missing or not executable.")
+	} else {
+		authorNvmVersion = strings.TrimSpace(string(valueBytes))
+	}
+
 	nvmhome := os.Getenv("NVM_HOME")
 	mirrors := "No mirrors configured"
 	if len(env.node_mirror) > 0 && len(env.npm_mirror) > 0 {
@@ -1547,7 +1558,7 @@ func checkLocalEnvironment() {
 	} else if len(env.npm_mirror) > 0 {
 		mirrors = env.npm_mirror + " (npm)"
 	}
-	fmt.Printf("\nNVM4W Version:          %v\nNVM4W Path:             %v\nNVM4W Settings:         %v\nNVM_HOME:               %v\nNVM_SYMLINK:            %v\nNode Installations:     %v\nDefault Architecture:   %v-bit\nMirrors:                %v\nHTTP Proxy:             %v\n\nTotal Node.js Versions: %v\nActive Node.js Version: %v", NvmVersion, path, home, nvmhome, symlink, env.root, env.arch, mirrors, env.proxy, len(v), out)
+	fmt.Printf("\nNVM4W Version:          %v\nNVM4W Author Bridge:    %v\nNVM4W Path:             %v\nNVM4W Settings:         %v\nNVM_HOME:               %v\nNVM_SYMLINK:            %v\nNode Installations:     %v\nDefault Architecture:   %v-bit\nMirrors:                %v\nHTTP Proxy:             %v\n\nTotal Node.js Versions: %v\nActive Node.js Version: %v", NvmVersion, authorNvmVersion, path, home, nvmhome, symlink, env.root, env.arch, mirrors, env.proxy, len(v), out)
 
 	if !nvmsymlinkfound {
 		problems = append(problems, "The NVM4W symlink ("+env.symlink+") was not found in the PATH environment variable.")

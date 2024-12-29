@@ -46,8 +46,10 @@ func Bridge(args ...string) {
 	}
 
 	if len(args) < 2 {
-		fmt.Printf("error: invalid number of arguments passed to author bridge: %d\n", len(args))
-		os.Exit(1)
+		if !(len(args) == 1 && args[0] == "version") {
+			fmt.Printf("error: invalid number of arguments passed to author bridge: %d\n", len(args))
+			os.Exit(1)
+		}
 	}
 
 	command := args[0]
