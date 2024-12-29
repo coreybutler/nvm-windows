@@ -57,11 +57,10 @@ type Environment struct {
 
 var home = filepath.Clean(os.Getenv("NVM_HOME") + "\\settings.txt")
 var symlink = filepath.Clean(os.Getenv("NVM_SYMLINK"))
-var root = filepath.Clean(os.Getenv("NVM_HOME"))
 
 var env = &Environment{
 	settings:        home,
-	root:            root,
+	root:            "",
 	symlink:         symlink,
 	arch:            strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE")),
 	node_mirror:     "",
@@ -228,15 +227,15 @@ func main() {
 		} else {
 			fmt.Println("\nCurrent Root: " + env.root)
 		}
-	case "-version":
+	case "v":
 		fallthrough
 	case "--version":
+		fallthrough
+	case "-version":
 		fallthrough
 	case "--v":
 		fallthrough
 	case "-v":
-		fallthrough
-	case "v":
 		fallthrough
 	case "version":
 		fmt.Println(NvmVersion)
@@ -244,7 +243,7 @@ func main() {
 		if strings.Trim(detail, " \r\n") != "" {
 			detail = strings.Trim(detail, " \r\n")
 			if detail != "32" && detail != "64" && detail != "arm64" {
-				fmt.Println("\"" + detail + "\" is an invalid architecture. Use 32 or 64 or arm64.")
+				fmt.Println("\"" + detail + "\" is an invalid architecture. Use 32, 64, or arm64.")
 				return
 			}
 			env.arch = detail
@@ -314,8 +313,8 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	cpuarch = strings.ToLower(cpuarch)
 
 	if cpuarch != "" {
-		if cpuarch != "32" && cpuarch != "arm64" && cpuarch != "64" && cpuarch != "all" {
-			return version, cpuarch, errors.New("\"" + cpuarch + "\" is not a valid CPU architecture. Must be 32 or 64 or arm64.")
+		if cpuarch != "32" && cpuarch != "64" && cpuarch != "arm64" && cpuarch != "all" {
+			return version, cpuarch, errors.New("\"" + cpuarch + "\" is not a valid CPU architecture. Must be 32, 64, or arm64.")
 		}
 	} else {
 		cpuarch = env.arch
@@ -348,7 +347,7 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 		version = installed[0]
 	}
 
-	if version == "32" || version == "arm64" || version == "64" {
+	if version == "32" || version == "64" || version == "arm64" {
 		cpuarch = version
 		v, _ := node.GetCurrentVersion()
 		version = v
@@ -541,17 +540,19 @@ func install(version string, cpuarch string) {
 					fmt.Println("Rollback complete.")
 				}
 
-	if cpuarch == "arm64" && !web.IsNodeArm64bitAvailable(version) {
-		fmt.Println("Node.js v" + version + " is only available in 64 and 32-bit.")
-		return
-	}
+				if cpuarch == "arm64" && !web.IsNodeArm64bitAvailable(version) {
+					status <- Status{Err: fmt.Errorf("Node.js v%s is only available in 32-bit and 64-bit.", version)}
+				}
 
-	// Check to see if the version is already installed
-	if !node.IsVersionInstalled(env.root, version, cpuarch) {
-		if !node.IsVersionAvailable(version) {
-			url := web.GetFullNodeUrl("index.json")
-			fmt.Println("\nVersion " + version + " is not available.\n\nThe complete list of available versions can be found at " + url)
-			return
+				if !node.IsVersionInstalled(env.root, version, cpuarch) {
+					if !node.IsVersionAvailable(version) {
+						url := web.GetFullNodeUrl("index.json")
+						status <- Status{Err: fmt.Errorf("Version %s is not available.\n\nThe complete list of available versions can be found at %s", version, url)}
+					}
+				}
+
+				return
+			}
 		}
 	}()
 
@@ -610,32 +611,24 @@ func install(version string, cpuarch string) {
 			}
 		}
 
-		// Download node
-		if (cpuarch == "arm64") && !node.IsVersionInstalled(env.root, version, "arm64") {
-			success := web.GetNodeJS(env.root, version, "arm64", false)
-			if !success {
-				os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
-				fmt.Println("Could not download node.js v" + version + " arm64-bit executable.")
+		if err != nil {
+			if strings.Contains(err.Error(), "No Major.Minor.Patch") {
+				sv, sverr := semver.Make(version)
+				if sverr == nil {
+					sverr = sv.Validate()
+				}
+				if sverr != nil {
+					version = findLatestSubVersion(version)
+					if len(version) == 0 {
+						sverr = errors.New("Unrecognized version: \"" + requestedVersion + "\"")
+					}
+				}
+				err = sverr
+			}
+
+			if err != nil {
+				status <- Status{Err: err, Help: true}
 				return
-			}
-		} else {
-			append32 := node.IsVersionInstalled(env.root, version, "64")
-			append64 := node.IsVersionInstalled(env.root, version, "32")
-			if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "32") {
-				success := web.GetNodeJS(env.root, version, "32", append32)
-				if !success {
-					os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
-					fmt.Println("Could not download node.js v" + version + " 32-bit executable.")
-					return
-				}
-			}
-			if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "64") {
-				success := web.GetNodeJS(env.root, version, "64", append64)
-				if !success {
-					os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
-					fmt.Println("Could not download node.js v" + version + " 64-bit executable.")
-					return
-				}
 			}
 		}
 
@@ -929,7 +922,12 @@ func versionNumberFrom(version string) string {
 	if reg.MatchString(version[:1]) {
 		if version[0:1] != "v" {
 			url := web.GetFullNodeUrl("latest-" + version + "/SHASUMS256.txt")
-			content := strings.Split(web.GetRemoteTextFile(url), "\n")[0]
+			remoteContent, err := web.GetRemoteTextFile(url)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			content := strings.Split(remoteContent, "\n")[0]
 			if strings.Contains(content, "node") {
 				parts := strings.Split(content, "-")
 				if len(parts) > 1 {
@@ -1014,7 +1012,15 @@ func findLatestSubVersion(version string, localOnly ...bool) string {
 	}
 
 	url := web.GetFullNodeUrl("latest-v" + version + ".x" + "/SHASUMS256.txt")
-	content := web.GetRemoteTextFile(url)
+	content, err := web.GetRemoteTextFile(url)
+	if err != nil {
+		if strings.Contains(err.Error(), "HTTP Status 404") {
+			fmt.Printf("\"%s\" is not a valid version number (or partial version number).\n\nIf you are trying to install a version that was just announced within the last few minutes, it may not be available for download yet (try again in 15 minutes).\n", version)
+		} else {
+			fmt.Println(err)
+		}
+		os.Exit(1)
+	}
 	re := regexp.MustCompile("node-v(.+)+msi")
 	reg := regexp.MustCompile("node-v|-[xa].+")
 	latest := reg.ReplaceAllString(re.FindString(content), "")
@@ -1053,19 +1059,10 @@ func use(version string, cpuarch string, reload ...bool) {
 		notifications = true
 	}
 
-	// Check if a change is needed
-	curVersion, curCpuarch := node.GetCurrentVersion()
-	if version == curVersion && cpuarch == curCpuarch {
-		fmt.Println("node v" + version + " (" + cpuarch + "-bit) is already in use.")
-		return
-	}
-
-	// Make sure the version is installed. If not, warn.
-	if !node.IsVersionInstalled(env.root, version, cpuarch) {
-		fmt.Println("node v" + version + " (" + cpuarch + "-bit) is not installed.")
-		if cpuarch == "32" {
-			if node.IsVersionInstalled(env.root, version, "64") {
-				fmt.Println("\nDid you mean node v" + version + " (64-bit)?\nIf so, type \"nvm use " + version + " 64\" to use it.")
+	go func() {
+		defer func() {
+			if notifications {
+				time.Sleep(1 * time.Second)
 			}
 			wg.Done()
 		}()
@@ -1251,11 +1248,11 @@ func useArchitecture(a string) {
 		fmt.Println("This computer only supports 32-bit processing.")
 		return
 	}
-	if strings.Contains("arm64",strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))) {
+	if strings.Contains("arm64", strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))) {
 		fmt.Println("This computer only supports arm64-bit processing.")
 		return
 	}
-	if a == "32" || a == "64" || a == "arm64" {
+	if a == "32" || a == "64" {
 		env.arch = a
 		saveSettings()
 		fmt.Println("Set to " + a + "-bit mode")
@@ -1717,7 +1714,11 @@ func help() {
 func checkVersionExceedsLatest(version string) bool {
 	//content := web.GetRemoteTextFile("http://nodejs.org/dist/latest/SHASUMS256.txt")
 	url := web.GetFullNodeUrl("latest/SHASUMS256.txt")
-	content := web.GetRemoteTextFile(url)
+	content, err := web.GetRemoteTextFile(url)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	re := regexp.MustCompile("node-v(.+)+msi")
 	reg := regexp.MustCompile("node-v|-[xa].+")
 	latest := reg.ReplaceAllString(re.FindString(content), "")
@@ -1766,7 +1767,11 @@ func getNpmVersion(nodeversion string) string {
 
 func getLatest() string {
 	url := web.GetFullNodeUrl("latest/SHASUMS256.txt")
-	content := web.GetRemoteTextFile(url)
+	content, err := web.GetRemoteTextFile(url)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	re := regexp.MustCompile("node-v(.+)+msi")
 	reg := regexp.MustCompile("node-v|-[xa].+")
 	return reg.ReplaceAllString(re.FindString(content), "")
@@ -1945,6 +1950,9 @@ func setup() {
 		m[res[0]] = strings.TrimSpace(strings.Join(res[1:], ":"))
 	}
 
+	if val, ok := m["root"]; ok {
+		env.root = filepath.Clean(val)
+	}
 	if val, ok := m["originalpath"]; ok {
 		env.originalpath = filepath.Clean(val)
 	}

@@ -319,28 +319,24 @@ func GetNpm(root string, v string) bool {
 	}
 }
 
-func GetRemoteTextFile(url string) string {
+func GetRemoteTextFile(url string) (string, error) {
 	response, httperr := client.Get(url)
 	if httperr != nil {
-		fmt.Println("\nCould not retrieve " + url + ".\n\n")
-		fmt.Printf("%s", httperr)
-		os.Exit(1)
+		return "", fmt.Errorf("Could not retrieve %v: %v", url, httperr)
 	}
 
 	if response.StatusCode != 200 {
-		fmt.Printf("Error retrieving \"%s\": HTTP Status %v\n", url, response.StatusCode)
-		os.Exit(0)
+		return "", fmt.Errorf("Error retrieving \"%s\": HTTP Status %v\n", url, response.StatusCode)
 	}
 
 	defer response.Body.Close()
 
 	contents, readerr := ioutil.ReadAll(response.Body)
 	if readerr != nil {
-		fmt.Printf("%s", readerr)
-		os.Exit(1)
+		return "", fmt.Errorf("error reading HTTP request body: %v", readerr)
 	}
 
-	return string(contents)
+	return string(contents), nil
 }
 
 func IsNode64bitAvailable(v string) bool {
@@ -369,14 +365,14 @@ func IsNodeArm64bitAvailable(v string) bool {
 	vers := strings.Fields(strings.Replace(v, ".", " ", -1))
 	main, _ := strconv.ParseInt(vers[0], 0, 0)
 	minor, _ := strconv.ParseInt(vers[1], 0, 0)
-	fmt.Println("main "+ strconv.FormatInt(main,10) + " minor "+strconv.FormatInt(minor,10))
+	fmt.Println("main " + strconv.FormatInt(main, 10) + " minor " + strconv.FormatInt(minor, 10))
 	if main < 19 {
 		return false
 	}
-	if main == 19 && minor < 9{
+	if main == 19 && minor < 9 {
 		return false
 	}
-	
+
 	// TODO: fixme. Assume a 64 bit version exists
 	return true
 }
