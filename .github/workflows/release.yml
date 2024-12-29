@@ -1,0 +1,453 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["Autotag"]
+    types:
+      - completed
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
+
+    env:
+      GO_VERSION: 1.23
+      QUIKGO_VERSION: 1.2.6
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      AUTHOR_BRIDGE_TOKEN: ${{ secrets.AUTHOR_BRIDGE_TOKEN }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Extract Tag from Event
+      id: extract_tag
+      shell: pwsh
+      run: |
+        Write-Host "Event payload:"
+        Get-Content $env:GITHUB_EVENT_PATH
+
+        # Extract the commit SHA from the event payload
+        $COMMIT_SHA = (Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json).workflow_run.head_commit.id
+
+        if (-not $COMMIT_SHA) {
+          Write-Host "Error: No commit SHA found in the event payload."
+          exit 1
+        }
+
+        Write-Host "Commit SHA: $COMMIT_SHA"
+
+        # Fetch tags and find the tag associated with the commit
+        git fetch --tags
+        $TAG_REF = git tag --contains $COMMIT_SHA | ForEach-Object { $_.Trim() } | Select-Object -First 1
+
+        if (-not $TAG_REF) {
+          Write-Host "Error: No tag found for this commit."
+          exit 1
+        }
+
+        Write-Host "Extracted tag reference: $TAG_REF"
+        echo "TAG=$TAG_REF" | Out-File -Append -FilePath $env:GITHUB_ENV
+
+    - name: Display Tag
+      shell: pwsh
+      run: |
+        Write-Host "Identified Tag: $env:TAG"
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '${{ env.GO_VERSION }}'
+
+    - name: Cache Go Modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Cache QuikGo
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/go/bin
+        key: ${{ runner.os }}-qgo-v${{ env.QUIKGO_VERSION }}
+        restore-keys: |
+          ${{ runner.os }}-qgo-
+
+    - name: Install QuikGo
+      run: |
+        if (-not (go list -m github.com/quikdev/go/cmd/qgo@v${{ env.QUIKGO_VERSION }})) {
+          if (-not (go list -m github.com/quikdev/go/cmd/qgo@v${{ env.QUIKGO_VERSION }})) {
+            go install github.com/quikdev/go/cmd/qgo@v${{ env.QUIKGO_VERSION }}
+          } else {
+            echo "QuikGo version ${{ env.QUIKGO_VERSION }} already installed."
+          }
+        } else {
+          echo "QuikGo version ${{ env.QUIKGO_VERSION }} already installed."
+        }
+
+    - name: Confirm QuikGo Installation
+      run: qgo --version
+
+    - name: Build NVM for Windows
+      run: |
+        cd src
+        qgo build --profile=release
+        echo ${{ github.workspace }}\bin
+        dir ${{ github.workspace }}\bin
+        cd ..\
+
+    # - name: Compress Executables
+    #   uses: crazy-max/ghaction-upx@v3
+    #   with:
+    #     version: latest
+    #     files: |
+    #       ${{ github.workspace }}/bin/*.exe
+    #     args: --brute
+
+    - name: Download Resource Hacker
+      run: |
+        Invoke-WebRequest -Uri "https://www.angusj.com/resourcehacker/resource_hacker.zip" -OutFile "resource_hacker.zip"
+        Expand-Archive -Path "resource_hacker.zip" -DestinationPath "$env:USERPROFILE\resource_hacker"
+
+    - name: Apply icon to executable
+      run: |
+        $resourceHackerPath = "$env:USERPROFILE\resource_hacker\ResourceHacker.exe"
+        $exe = "${{ github.workspace }}\bin\nvm.exe"
+        $iconFile = "${{ github.workspace }}\assets\nvm.ico"
+        & $resourceHackerPath -open $exe -save $exe -action add -res $iconFile -mask ICONGROUP,MAINICON
+
+    - name: Sign Executables
+      uses: azure/trusted-signing-action@v0.5.0
+      with:
+        azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        endpoint: ${{ secrets.AZURE_ENDPOINT }}
+        trusted-signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
+        certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+        files-folder: ${{ github.workspace }}\bin
+        files-folder-filter: exe,dll
+        file-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        timestamp-digest: SHA256
+
+    - name: Identify & Download Latest Author-NVM Bridge App (Using GitHub API)
+      id: get_release
+      run: |
+        $repoOwner = "author"
+        $repoName = "author-nvm"
+        $token = $env:AUTHOR_BRIDGE_TOKEN # Ensure the token is provided as a secret
+
+        # Fetch the latest release information
+        Write-Host "GET https://api.github.com/repos/$repoOwner/$repoName/releases"
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoOwner/$repoName/releases" `
+                                      -Headers @{ Authorization = "token $token"; Accept = "application/vnd.github.v3+json"; }
+
+        if ($response -and $response[0].tag_name) {
+            $releaseTag = $response[0].tag_name
+            Write-Host "Latest release tag identified: $releaseTag"
+
+            # Fetch the release details for the identified tag
+            Write-Host "GET https://api.github.com/repos/$repoOwner/$repoName/releases/tags/$releaseTag"
+            $releaseDetails = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoOwner/$repoName/releases/tags/$releaseTag" `
+                                                -Headers @{ Authorization = "token $token"; Accept = "application/vnd.github.v3+json"; }
+
+            # Extract asset ID for author-nvm.exe
+            $asset = $releaseDetails.assets | Where-Object { $_.name -eq 'author-nvm.exe' } | Select-Object -First 1
+
+            if ($asset -and $asset.id) {
+                $assetId = $asset.id
+                Write-Host "Asset ID for author-nvm.exe: $assetId"
+                "ASSET_ID=$assetId" | Out-File -Append -FilePath $env:GITHUB_ENV
+
+                # Download asset
+                $assetDownloadUrl = "https://api.github.com/repos/$repoOwner/$repoName/releases/assets/$assetId"
+                Write-Host "GET $assetDownloadUrl"
+                Invoke-WebRequest -Uri $assetDownloadUrl `
+                                  -Headers @{ Authorization = "token $token"; Accept = "application/octet-stream"; } `
+                                  -OutFile "$env:GITHUB_WORKSPACE\bin\author-nvm.exe"
+            } else {
+                Write-Error "author-nvm.exe not found in the latest release."
+                exit 1
+            }
+        } else {
+            Write-Error "No release tags found in the repository."
+            exit 1
+        }
+
+    - name: Generate Core Assets
+      run: |
+        $bin = "${{ github.workspace }}\bin"
+        $license = "${{ github.workspace }}\LICENSE"
+        $source = "${{ github.workspace }}\assets"
+        $target = "${{ github.workspace }}\.tmp"
+        $distros = "${{ github.workspace }}\.dist"
+
+        if (!(Test-Path -Path $target)) {
+          New-Item -ItemType Directory -Path $target
+        }
+
+        # Copy binaries to distribution
+        Get-ChildItem -Path $bin -File | ForEach-Object {
+          Copy-Item -Path $_.FullName -Destination $target
+        }
+
+        # Copy assets to distribution
+        Get-ChildItem -Path $source -File | ForEach-Object {
+          Copy-Item -Path $_.FullName -Destination $target
+        }
+
+        # Copy license to distribution
+        Copy-Item -Path $license -Destination $target
+      shell: pwsh
+
+    - name: Generate Asset Distribution
+      run: |
+        $source = "${{ github.workspace }}\.tmp"
+        $manual = "${{ github.workspace }}\.dist\nvm-noinstall.zip"
+        $checksum = "${{ github.workspace }}\.dist\nvm-noinstall.zip.checksum.txt"
+
+        if (Test-Path -Path $manual) {
+          Remove-Item -Path $manual -Force
+        }
+
+        & "C:\Program Files\7-Zip\7z.exe" a -tzip $manual "$source\*" -mx=9
+
+        $hash = Get-FileHash -Path $manual -Algorithm MD5
+        $hash.Hash | Out-File -FilePath $checksum -Encoding utf8
+      shell: pwsh
+
+    # - name: Install Inno Setup
+    #   run: |
+    #     choco install innosetup -y
+
+    #     # Verify installation
+    #     if (!(Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+    #       Write-Error "Inno Setup installation failed."
+    #       exit 1
+    #     }
+
+    - name: Generate Installer
+      run: |
+        $iss = "${{ github.workspace }}\nvm.iss"
+        $distros = "${{ github.workspace }}\.dist"
+
+        if (!(Test-Path -Path $iss)) {
+          Write-Error "Inno Setup Script file not found: $iss"
+          exit 1
+        }
+
+        # Replace version placeholder in the .iss file
+        $version = $env:TAG -replace "^v", ""
+        (Get-Content -Path $iss) -replace "{{VERSION}}", $version | Set-Content -Path $iss
+
+        # Output the file to assure replacements worked
+        Get-Content $iss
+
+        # Get the files and directories in the source directory
+        $items = Get-ChildItem -Path $source -Recurse
+        $source = "${{ github.workspace }}\.tmp"
+        $destination = "${{ github.workspace }}\bin"
+
+        foreach ($item in $items) {
+            # Construct the target path
+            $target = $item.FullName -replace [regex]::Escape($source), [regex]::Escape($destination)
+
+            if ($item.PSIsContainer) {
+                # Create directories if they don't exist
+                if (-not (Test-Path -Path $target)) {
+                    New-Item -ItemType Directory -Path $target
+                }
+            } else {
+                # Copy files if they don't already exist
+                if (-not (Test-Path -Path $target)) {
+                    Copy-Item -Path $item.FullName -Destination $target
+                }
+            }
+        }
+
+        Write-Host "Available assets in bin directory:"
+        dir ${{ github.workspace }}\bin
+
+        Write-Host "Available assets in .tmp directory:"
+        dir ${{ github.workspace }}\.tmp
+
+        Write-Host "Available build tools:"
+        dir ${{ github.workspace }}\assets\buildtools
+
+        ${{ github.workspace }}\assets\buildtools\iscc.exe "$iss" "/o$distros"
+        # iscc "$iss" "/o$distros"
+      shell: pwsh
+
+    - name: Sign Installer
+      uses: azure/trusted-signing-action@v0.5.0
+      with:
+        azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        endpoint: ${{ secrets.AZURE_ENDPOINT }}
+        trusted-signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
+        certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+        files-folder: ${{ github.workspace }}\.dist
+        files-folder-filter: exe,dll
+        file-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        timestamp-digest: SHA256
+
+    - name: Generate Official Distribution
+      run: |
+        $source = "${{ github.workspace }}\.dist\nvm-setup.exe"
+        $distro = "${{ github.workspace }}\.dist\nvm-setup.zip"
+        $checksum = "${{ github.workspace }}\.dist\nvm-setup.zip.checksum.txt"
+
+        if (!(Test-Path -Path $source)) {
+          Write-Error "Source file for ZIP not found: $source"
+          exit 1
+        }
+
+        & "C:\Program Files\7-Zip\7z.exe" a -tzip $distro "$source" -mx=9
+
+        if (!(Test-Path -Path $distro)) {
+          Write-Error "ZIP file generation failed."
+          exit 1
+        }
+
+        $hash = Get-FileHash -Path $distro -Algorithm MD5
+        $hash.Hash | Out-File -FilePath $checksum -Encoding utf8
+      shell: pwsh
+
+    - name: Attestation
+      uses: actions/attest-build-provenance@v2
+      id: attest
+      with:
+        subject-path: |
+          ${{ github.workspace }}/bin/*.exe
+          ${{ github.workspace }}/.dist/*.exe
+          ${{ github.workspace }}/.dist/*.zip
+          ${{ github.workspace }}/.dist/*.checksum.txt
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: success()
+      with:
+        tag_name: ${{ env.TAG }}
+        files: |
+          ${{ github.workspace }}/.dist/*
+        fail_on_unmatched_files: true
+        generate_release_notes: true
+        prerelease: false
+        draft: false
+        make_latest: true
+
+    - name: Add Attestation Report to Release Notes
+      if: success()
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ env.TAG }}
+        body: |
+          <br/>:office: **[Attestation Report](${{ steps.attest.outputs.attestation-url }})**
+        append_body: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  rollback:
+    runs-on: ubuntu-latest
+    needs: build
+    if: failure()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Ensures that all references, including tags, are fetched
+        ref: ${{ github.event.workflow_run.head_sha }}
+
+    - name: Show current commit
+      run: |
+        git log -1 --decorate
+        git tag --contains HEAD
+
+    - name: Get the commit associated with the trigger
+      id: get_commit
+      run: |
+        if [ -f "$GITHUB_EVENT_PATH" ]; then
+          # Try to get the head SHA from workflow_run
+          COMMIT_SHA=$(jq -r '.head_commit.id' < "$GITHUB_EVENT_PATH")
+          if [ "$COMMIT_SHA" = "null" ]; then
+            COMMIT_SHA=$(jq -r '.workflow_run.head_commit.id' < "$GITHUB_EVENT_PATH")
+          fi
+          if [ -z "$COMMIT_SHA" ] || [ "$COMMIT_SHA" = "null" ]; then
+            echo "Error: Unable to retrieve commit SHA from GITHUB_EVENT_PATH"
+            cat "$GITHUB_EVENT_PATH"
+            echo "HEAD: $(git rev-parse HEAD)"
+            exit 1
+          fi
+          echo "Commit SHA: $COMMIT_SHA"
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+        else
+          echo "Error: GITHUB_EVENT_PATH not found"
+          exit 1
+        fi
+
+    - name: Fetch the tag associated with the commit using git
+      id: fetch_tag
+      run: |
+        # Debugging: print all tags in the repository
+        git tag
+
+        # Get the tag associated with the commit
+        echo "Finding tag associated with the commit..."
+        TAG=$(git tag --contains "$COMMIT_SHA" | head -n 1)
+        echo "Tag associated with the commit is: $TAG"
+
+        # Debugging: Check if the tag is found
+        if [ -z "$TAG" ]; then
+          echo "No tag found for this commit."
+        else
+          echo "Found tag: $TAG"
+        fi
+
+        echo "TAG=$TAG" >> $GITHUB_ENV
+
+    - name: Delete release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Use the TAG from the environment variable
+        if [ -z "$TAG" ]; then
+          echo "No tag to delete."
+          exit 1
+        fi
+
+        RELEASE_ID=$(gh release view "$TAG" --json id --jq '.id' || echo "")
+        if [ -n "$RELEASE_ID" ]; then
+          gh release delete "$TAG" --yes
+          echo "Release $TAG deleted successfully."
+        else
+          echo "Release $TAG not found."
+        fi
+
+    - name: Delete tag associated with release
+      run: |
+        # Use the TAG from the environment variable
+        if [ -z "$TAG" ]; then
+          echo "No tag to delete."
+          exit 1
+        fi
+
+        git tag -d "$TAG"
+        git push --delete origin "$TAG"
+
+    - name: Notify Rollback
+      run: echo "Rollback completed for release $TAG"

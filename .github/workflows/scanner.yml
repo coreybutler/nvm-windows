@@ -1,0 +1,95 @@
+name: Virus Scan
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types:
+      - completed
+
+jobs:
+  scan:
+    if: ${{ github.event.workflow_run.conclusion }} == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get latest release details
+      id: get_latest_release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: latestRelease } = await github.rest.repos.getLatestRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo
+          });
+          core.setOutput('tag', latestRelease.tag_name);
+          core.setOutput('assets', JSON.stringify(latestRelease.assets));
+
+    - name: Download release assets
+      env:
+        ASSETS_JSON: ${{ steps.get_latest_release.outputs.assets }}
+      run: |
+        echo "Assets: $ASSETS_JSON"
+        for asset in $(echo $ASSETS_JSON | jq -r '.[].browser_download_url'); do
+          echo "Downloading $asset"
+          curl -L -O "$asset"
+        done
+
+    - name: Extract Main Executables
+      run: |
+        unzip nvm-noinstall.zip -d ./
+
+    - name: List downloaded assets
+      run: ls -alh ./
+
+    - name: Scan with VirusTotal
+      uses: WoozyMasta/virustotal-action@v1.0.0
+      id: scan
+      with:
+        vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        file_globs: |
+          nvm.exe
+          author-nvm.exe
+          nvm-setup.exe
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        input_list="${{ steps.scan.outputs.results }}"
+        notes=":bulb: **Antivirus Report**<br/><ul>"
+
+        # Process each item in the list
+        IFS=',' read -ra ITEMS <<< "$input_list"
+        for item in "${ITEMS[@]}"; do
+          filename=$(echo "$item" | cut -d'/' -f1)
+          id=$(echo "$item" | cut -d'/' -f2)
+          notes="${notes}<li><a href='https://www.virustotal.com/gui/file-analysis/${id}'>${filename}</a></li>"
+        done
+
+        notes="${notes}</ul>"
+
+        # Output the result
+        echo "Generated Notes:"
+        echo "$notes"
+        echo "NOTES=$notes" >> $GITHUB_OUTPUT
+
+    - name: Update release body
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get_latest_release.outputs.tag }}
+        body: |
+          ${{ steps.release_notes.outputs.NOTES }}
+        append_body: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # - name: Scan with VirusTotal
+    #   uses: crazy-max/ghaction-virustotal@v4
+    #   with:
+    #     vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
+    #     files: |
+    #       *.exe
+    #       .exe$
+    #     update_release_body: true
+    #     github_token: ${{ secrets.GITHUB_TOKEN }}
+    #     request_rate: 4

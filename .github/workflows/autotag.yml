@@ -1,0 +1,56 @@
+name: Autotag
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  autotag:
+    runs-on: ubuntu-latest
+
+    outputs:
+      tag_name: ${{ steps.create_tag.outputs.tag_name}}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Identify version
+      id: read_version
+      run: |
+        cd ./src
+        echo identifying version...
+        VERSION=$(jq -r '.version' manifest.json)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        cd ../
+
+    - name: Check if tag exists
+      id: check_tag
+      run: |
+        VERSION=${{ steps.read_version.outputs.version }}
+        if git rev-parse "$VERSION" >/dev/null 2>&1; then
+          echo "Tag $VERSION already exists."
+          echo "tag_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "Tag $VERSION does not exist."
+          echo "tag_exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Import GPG Key
+      uses: crazy-max/ghaction-import-gpg@v6.2.0
+      with:
+        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+        passphrase: ${{ secrets.GPG_PASSPHRASE }}
+        git_tag_gpgsign: true
+        git_user_signingkey: true
+
+    - name: Create tag
+      if: success() && steps.check_tag.outputs.tag_exists == 'false'
+      id: create_tag
+      run: |
+        VERSION=${{ steps.read_version.outputs.version }}
+        git tag -s "$VERSION" -m "Release $VERSION"
+        git push origin "$VERSION"
+        echo "$VERSION tag created."

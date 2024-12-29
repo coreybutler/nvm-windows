@@ -20,7 +20,7 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
   <table cellpadding="5" cellspacing="0" border="0" align="center">
     <tr>
       <td><a href="https://linkedin.com/company/authorsoftware"><img src="https://github.com/coreybutler/staticassets/blob/master/sponsors/logo_author_software_flat.png" width="200px"/></a></td>
-      <td width="33%"><a href="https://ecorventures.com"><img src="https://avatars.githubusercontent.com/u/8259581?s=200&v=4" height="30px"/></a></td>
+      <td width="33%" align="center"><a href="https://ecorventures.com"><img src="https://avatars.githubusercontent.com/u/8259581?s=200&v=4" height="30px"/></a></td>
       <td width="33%" align="center"><a href="https://github.com/microsoft"><img src="https://user-images.githubusercontent.com/770982/195955265-5c3dca78-7140-4ec6-b05a-f308518643ee.png" height="30px"/></a></td>
     </tr>
     <tr>
