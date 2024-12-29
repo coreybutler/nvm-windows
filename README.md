@@ -1,4 +1,4 @@
-<div align="center"><h2>Notice: We are working full time on <a href="https://github.com/coreybutler/nvm-windows/wiki/Runtime">Runtime</a>, the successor to NVM for Windows.</h2>Complete <a href="https://t.co/oGqQCM9FPx">this form</a> to provide your thoughts and sign up for progress updates</div>
+<div align="center"><h2>Notice: We are working full time work on <a href="https://github.com/coreybutler/nvm-windows/wiki/Runtime">Runtime</a>, the successor to NVM for Windows.</h2>Complete <a href="https://t.co/oGqQCM9FPx">this form</a> to provide your thoughts and sign up for progress updates.<br/><br/>Updates will also be posted on the <A href="https://linkedin.com/company/authorsoftware">Author Software LinkedIn Page</a>.</div>
 <br/><br/>
 <h1 align="center">NVM for Windows</h1>
 
@@ -20,8 +20,7 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
   <table cellpadding="5" cellspacing="0" border="0" align="center">
     <tr>
       <td><a href="https://linkedin.com/company/authorsoftware"><img src="https://github.com/coreybutler/staticassets/blob/master/sponsors/logo_author_software_flat.png" width="200px"/></a></td>
-      <td><a href="https://linkedin.com/company/authorsoftware"><img src="https://avatars.githubusercontent.com/u/8259581?s=200&v=4" width="200px"/></a></td>
-      <!-- <td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>
+      <!--<td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>-->
       <td><a href="https://enabledb.com"><img src="https://github.com/coreybutler/staticassets/raw/master/images/logos/logo_enabledb_w_text.png" width="200px"/></a></td>
       <td><a href="https://butlerlogic.com"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/butlerlogic_logo.png" width="200px"/></a></td> -->
       <td width="33%" align="center"><a href="https://github.com/microsoft"><img src="https://user-images.githubusercontent.com/770982/195955265-5c3dca78-7140-4ec6-b05a-f308518643ee.png" height="30px"/></a></td>
@@ -59,7 +58,7 @@ Manage multiple installations of node.js on a Windows computer.
 
 **tl;dr** Similar (not identical) to [nvm](https://github.com/creationix/nvm), but for Windows. Has an installer. [Download Now](https://github.com/coreybutler/nvm-windows/releases)!
 
-This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. Node 4+ is supported. Remember when running `nvm install` or `nvm use`, Windows usually requires administrative rights (to create symlinks).
+This has always been a node version manager, not an io.js manager, so there is no back-support for io.js. Node 4+ is supported. Remember when running `nvm install` or `nvm use`, Windows usually requires administrative rights (to create symlinks). To install the latest version of Node.js, run `nvm install latest`. To install the latest stable version, run `nvm install lts`.
 
 ![NVM for Windows](https://github.com/coreybutler/staticassets/raw/master/images/nvm-1.1.8-screenshot.jpg)
 
@@ -121,7 +120,7 @@ npm install -g yarn
 NVM for Windows is a command line tool. Simply type `nvm` in the console for help. The basic commands are:
 
 - **`nvm arch [32|64]`**: Show if node is running in 32 or 64 bit mode. Specify 32 or 64 to override the default architecture.
-- **`nvm check`**: Check the NVM4W process for known problems.
+- **`nvm debug`**: Check the NVM4W process for known problems.
 - **`nvm current`**: Display active version.
 - **`nvm install <version> [arch]`**:  The version can be a specific version, "latest" for the latest current version, or "lts" for the most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set [arch] to "all" to install 32 AND 64 bit versions. Add `--insecure` to the end of this command to bypass SSL validation of the remote download server.
 - **`nvm list [available]`**: List the node.js installations. Type `available` at the end to show a list of versions available for download.
