@@ -2,10 +2,12 @@
 *.o
 *.a
 *.so
+*.old
 
 # Folders
 _obj
 _test
+bin
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -29,7 +31,10 @@ _testmain.go
 dist
 src/v*
 bin/*.exe
+bin/*.log
+bin/LICENSE
 !bin/buildtools/*
+!assets/buildtools/*
 bin/*.zip
 bin/nvm/*
 

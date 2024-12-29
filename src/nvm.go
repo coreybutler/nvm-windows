@@ -2,23 +2,26 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
 
 	"nvm/arch"
+	"nvm/author"
 	"nvm/encoding"
 	"nvm/file"
 	"nvm/node"
@@ -26,17 +29,18 @@ import (
 	"nvm/web"
 
 	"github.com/blang/semver"
+
 	// "github.com/fatih/color"
 
 	"github.com/coreybutler/go-where"
+	"github.com/ncruces/zenity"
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
 
-const (
-	NvmVersion = "1.2.0"
-)
+// Replaced at build time
+var NvmVersion = ""
 
 type Environment struct {
 	settings        string
@@ -67,15 +71,113 @@ var env = &Environment{
 	verifyssl:       true,
 }
 
+func writeToErrorLog(i interface{}, abort ...bool) {
+	exe, _ := os.Executable()
+	file, err := os.OpenFile(filepath.Join(filepath.Dir(exe), "error.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	msg := fmt.Sprintf("%v\n", i)
+	if _, ferr := file.WriteString(msg); ferr != nil {
+		panic(ferr)
+	}
+
+	if len(abort) > 0 && abort[0] {
+		fmt.Println(msg)
+		os.Exit(1)
+	}
+}
+
+type Notification struct {
+	AppID    string   `json:"app_id"`
+	Title    string   `json:"title"`
+	Message  string   `json:"message"`
+	Icon     string   `json:"icon"`
+	Actions  []Action `json:"actions"`
+	Duration string   `json:"duration"`
+	Link     string   `json:"link"`
+}
+
+type Action struct {
+	Type  string `json:"type"`
+	Label string `json:"label"`
+	URI   string `json:"uri"`
+}
+
+func notify(data Notification) {
+	data.AppID = "NVM for Windows"
+	content, _ := json.Marshal(data)
+	go author.Bridge("notify", string(content))
+}
+
+func init() {
+	if len(os.Args) > 1 {
+		if strings.HasPrefix(os.Args[1], "nvm://") {
+			// Decode the URL
+			uri, _ := url.Parse(strings.ReplaceAll(os.Args[1], "%26", "&"))
+			action := strings.TrimSpace(uri.Query().Get("action"))
+
+			switch strings.ToLower(action) {
+			case "install":
+				version := strings.Replace(uri.Query().Get("version"), "v", "", 1)
+
+				os.Args[1] = "install"
+				if len(os.Args) < 3 {
+					os.Args = append(os.Args, "")
+				}
+				os.Args[2] = version
+				if len(os.Args) < 4 {
+					os.Args = append(os.Args, "")
+				}
+				os.Args[3] = "--show-progress-ui"
+				os.Args = append(os.Args, "--insecure")
+
+			case "use":
+				version := strings.Replace(uri.Query().Get("version"), "v", "", 1)
+
+				os.Args[1] = "use"
+				if len(os.Args) < 3 {
+					os.Args = append(os.Args, "")
+				}
+				os.Args[2] = version
+				if len(os.Args) < 4 {
+					os.Args = append(os.Args, "")
+				}
+				os.Args[3] = "--notify"
+
+			case "upgrade":
+				os.Args[1] = "upgrade"
+				if len(os.Args) < 3 {
+					os.Args = append(os.Args, "")
+				}
+				os.Args[2] = "--show-progress-ui"
+
+			case "upgrade_notify":
+				notify(Notification{
+					Title:   "Upgrade Complete",
+					Message: fmt.Sprintf("Now running v%v.", NvmVersion),
+					Icon:    "success",
+					Actions: []Action{
+						{Type: "protocol", Label: "Release Notes", URI: fmt.Sprintf("https://github.com/coreybutler/nvm-windows/releases/tag/%v", NvmVersion)},
+					},
+				})
+
+				time.Sleep(300 * time.Millisecond)
+
+				os.Exit(0)
+			default:
+				writeToErrorLog(fmt.Sprintf("%s command not recognized", action), true)
+			}
+		}
+	}
+}
+
 func main() {
 	args := os.Args
 	detail := ""
 	procarch := arch.Validate(env.arch)
-
-	// if !isTerminal() {
-	// 	alert("NVM for Windows should be run from a terminal such as CMD or PowerShell.", "Terminal Only")
-	// 	os.Exit(0)
-	// }
 
 	// Capture any additional arguments
 	if len(args) > 2 {
@@ -97,17 +199,23 @@ func main() {
 
 	// Run the appropriate method
 	switch args[1] {
+	case "i":
+		fallthrough
 	case "install":
 		install(detail, procarch)
+	case "rm":
+		fallthrough
 	case "uninstall":
 		uninstall(detail)
 	case "reinstall":
 		reinstall(detail, procarch)
+	case "u":
+		fallthrough
 	case "use":
 		use(detail, procarch)
-	case "list":
-		list(detail)
 	case "ls":
+		fallthrough
+	case "list":
 		list(detail)
 	case "on":
 		enable()
@@ -119,13 +227,15 @@ func main() {
 		} else {
 			fmt.Println("\nCurrent Root: " + env.root)
 		}
-	case "v":
-		fmt.Println(NvmVersion)
+	case "-version":
+		fallthrough
 	case "--version":
 		fallthrough
 	case "--v":
 		fallthrough
 	case "-v":
+		fallthrough
+	case "v":
 		fallthrough
 	case "version":
 		fmt.Println(NvmVersion)
@@ -171,13 +281,16 @@ func main() {
 		setNpmMirror(detail)
 	case "debug":
 		checkLocalEnvironment()
+	case "subscribe":
+		fallthrough
+	case "unsubscribe":
+		author.Bridge(args[1:]...)
+	case "author":
+		author.Bridge(args[2:]...)
 	case "upgrade":
 		upgrade.Run(NvmVersion)
-	case "register":
-		upgrade.Register()
-	case "unregister":
-		upgrade.Unregister()
 	default:
+		fmt.Printf(`"%s" is not a valid command.`+"\n", args[1])
 		help()
 	}
 }
@@ -194,117 +307,6 @@ func setNpmMirror(uri string) {
 	env.npm_mirror = uri
 	saveSettings()
 }
-
-// func isTerminal() bool {
-// 	fileInfo, err := os.Stdout.Stat()
-// 	if err != nil {
-// 		return false
-// 	}
-// 	return (fileInfo.Mode() & os.ModeCharDevice) != 0
-// }
-
-// const (
-// 	MB_YESNOCANCEL     = 0x00000003
-// 	MB_ICONINFORMATION = 0x00000040
-// 	IDYES              = 6
-// 	IDNO               = 7
-// 	IDCANCEL           = 2
-// )
-
-// func openTerminal(msg string, caption ...string) {
-// 	title := "Alert"
-// 	if len(caption) > 0 {
-// 		title = caption[0]
-// 	}
-
-// 	labels := []string{"Open CMD", "Open PowerShell", "Close"}
-// 	var buttons []*uint16
-// 	for _, label := range labels {
-// 		buttons = append(buttons, syscall.StringToUTF16Ptr(label))
-// 	}
-// 	buttons = append(buttons, nil)
-
-// 	user32 := windows.NewLazySystemDLL("user32.dll")
-// 	mbox := user32.NewProc("MessageBoxW")
-
-// 	ret, _, _ := mbox.Call(
-// 		uintptr(0),
-// 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(msg))),
-// 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(title))),
-// 		MB_YESNOCANCEL|MB_ICONINFORMATION,
-// 		uintptr(0),
-// 		uintptr(unsafe.Pointer(&buttons[0])),
-// 	)
-
-// 	getActiveWindow := user32.NewProc("GetActiveWindow")
-// 	activeWindow, _, _ := getActiveWindow.Call()
-// 	hwnd := windows.Handle(activeWindow)
-
-// 	// Command to open the program or file
-
-// 	switch ret {
-// 	case IDYES:
-// 		cmd := exec.Command("cmd", "/C", "start", "cmd", "/K", "echo Run \"nvm\" for help...")
-// 		err := cmd.Start()
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 	case IDNO:
-// 		cmd := exec.Command("cmd", "/C", "start", "powershell", "/K", "echo Run \"nvm\" for help...")
-// 		err := cmd.Start()
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 	case IDCANCEL:
-// 		fmt.Println("User clicked 'Custom Cancel'")
-// 		// Handle 'Custom Cancel' button click here
-// 	default:
-// 		fmt.Println("User closed the message box")
-// 		// Handle message box close event here
-// 	}
-
-// 	postMessage := user32.NewProc("PostMessageW")
-// 	wmClose := 0x0010
-// 	_, _, _ = postMessage.Call(
-// 		uintptr(hwnd),
-// 		uintptr(wmClose),
-// 		0,
-// 		0,
-// 	)
-// }
-
-// func alert(msg string, caption ...string) {
-// 	user32 := windows.NewLazySystemDLL("user32.dll")
-// 	mbox := user32.NewProc("MessageBoxW")
-// 	getForegroundWindow := user32.NewProc("GetForegroundWindow")
-// 	var hwnd uintptr
-// 	ret, _, _ := getForegroundWindow.Call()
-// 	if ret != 0 {
-// 		hwnd = ret
-// 	}
-
-// 	title := "Alert"
-// 	if len(caption) > 0 {
-// 		title = caption[0]
-// 	}
-
-// 	mbox.Call(hwnd, uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(msg))), uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(title))), uintptr(windows.MB_OK))
-// }
-
-/*
-func update() {
-  cmd := exec.Command("cmd", "/d", "echo", "testing")
-  var output bytes.Buffer
-  var _stderr bytes.Buffer
-  cmd.Stdout = &output
-  cmd.Stderr = &_stderr
-  perr := cmd.Run()
-  if perr != nil {
-      fmt.Println(fmt.Sprint(perr) + ": " + _stderr.String())
-      return
-  }
-}
-*/
 
 func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (string, string, error) {
 	requestedVersion := version
@@ -382,6 +384,27 @@ func getVersion(version string, cpuarch string, localInstallsOnly ...bool) (stri
 	return version, cpuarch, err
 }
 
+type Status struct {
+	Text string
+	Err  error
+	Done bool
+	Help bool
+}
+
+func rollback(version string) error {
+	p := filepath.Join(env.root, "v"+version)
+
+	_, err := os.Lstat(p)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			writeToErrorLog(err)
+			return fmt.Errorf("Error rolling back node v%s installation: %v.", version, err)
+		}
+	}
+
+	return nil
+}
+
 func install(version string, cpuarch string) {
 	requestedVersion := version
 	args := os.Args
@@ -398,176 +421,386 @@ func install(version string, cpuarch string) {
 		time.Sleep(2 * time.Second)
 	}
 
-	v, a, err := getVersion(version, cpuarch)
-	version = v
-	cpuarch = a
+	var exitCode = 0
+	var status = make(chan Status)
+	var cancel = make(chan bool)
+	var show_progress bool = false
+	var dlg zenity.ProgressDialog
 
-	if err != nil {
-		if strings.Contains(err.Error(), "No Major.Minor.Patch") {
-			sv, sverr := semver.Make(version)
-			if sverr == nil {
-				sverr = sv.Validate()
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		defer func() {
+			// Reset the SSL verification
+			env.verifyssl = true
+
+			// sleep for 1 second to give users a chance to see the completion notice before exiting
+			if show_progress {
+				time.Sleep(1 * time.Second)
+				fmt.Println("exiting installer dialog")
 			}
-			if sverr != nil {
-				version = findLatestSubVersion(version)
-				if len(version) == 0 {
-					sverr = errors.New("Unrecognized version: \"" + requestedVersion + "\"")
+
+			wg.Done()
+		}()
+
+		for {
+			select {
+			case s := <-status:
+				if s.Err != nil {
+					exitCode = 1
+					if show_progress && dlg != nil {
+						// Close progress dialog and send error notificaion
+						notify(Notification{
+							Title:   "Node.js Installation Error",
+							Message: s.Err.Error(),
+							Icon:    "error",
+						})
+
+						dlg.Text(fmt.Sprintf("error: %v", s.Err))
+						dlg.Close()
+
+						// Cleanup
+						err := rollback(version)
+						if err != nil {
+							notify(Notification{
+								Title:   "Rollback Error",
+								Message: err.Error(),
+								Icon:    "error",
+								Actions: []Action{
+									{Type: "protocol", Label: "Open Explorer", URI: fmt.Sprintf("file://%s", filepath.ToSlash(filepath.Join(env.root)))},
+								},
+							})
+						}
+					} else {
+						fmt.Printf("error installing %s: %v\n", version, s.Err)
+						if s.Help {
+							fmt.Println(" ")
+							help()
+						}
+					}
+					return
 				}
+
+				if s.Done {
+					if show_progress && dlg != nil {
+						notify(Notification{
+							Title:   fmt.Sprintf("Node.js v%s", version),
+							Message: "Installation complete.",
+							Icon:    "node",
+							Actions: []Action{
+								{Type: "protocol", Label: "Use", URI: fmt.Sprintf("nvm://launch?action=use%%26version=%s", version)},
+								{Type: "protocol", Label: "Changelog", URI: fmt.Sprintf("https://github.com/nodejs/node/releases/tag/v%s", version)},
+							},
+						})
+
+						dlg.Text("Installation complete.")
+						time.Sleep(1 * time.Second)
+					} else {
+						fmt.Printf("Installation complete.\nIf you want to use this version, type:\n\nnvm use %s\n", version)
+					}
+
+					return
+				}
+
+				if show_progress && dlg != nil {
+					dlg.Text(s.Text)
+				} else {
+					fmt.Println(s.Text)
+				}
+			case <-cancel:
+				fmt.Printf("Node.js %s installation canceled by user\n", version)
+
+				if show_progress {
+					notify(Notification{
+						Title:   fmt.Sprintf("Node.js v%s", version),
+						Message: "Installation canceled by user",
+						Icon:    "error",
+						Actions: []Action{
+							{Type: "protocol", Label: "Restart Installation", URI: fmt.Sprintf("nvm://launch?action=install%%26version=%s%%26use=false%%26=show=true", version)},
+						},
+					})
+				}
+
+				err := rollback(version)
+				if err != nil {
+					if show_progress {
+						notify(Notification{
+							Title:   "Rollback Error",
+							Message: err.Error(),
+							Icon:    "error",
+							Actions: []Action{
+								{Type: "protocol", Label: "Open Explorer", URI: fmt.Sprintf("file://%s", filepath.ToSlash(filepath.Join(env.root)))},
+							},
+						})
+					} else {
+						fmt.Printf("rollback error: %v\n", err)
+					}
+				} else {
+					fmt.Println("Rollback complete.")
+				}
+
+				return
 			}
-			err = sverr
+		}
+	}()
+
+	// Wait for the prior subroutine to initialize before starting the next dependent thread
+	time.Sleep(300 * time.Millisecond)
+
+	go func() {
+		v, a, err := getVersion(version, cpuarch)
+		version = v
+		cpuarch = a
+
+		// Setup signal handling first
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+		defer signal.Stop(signalChan)
+
+		// Add signal handler
+		go func() {
+			<-signalChan
+			cancel <- true
+		}()
+
+		// Determine whether to show the progress dialog
+		for _, arg := range os.Args {
+			if arg == "--show-progress-ui" {
+				show_progress = true
+
+				exe, _ := os.Executable()
+				winIco := filepath.Join(filepath.Dir(exe), "nvm.ico")
+				ico := filepath.Join(filepath.Dir(exe), "nodejs.ico")
+
+				var perr error
+				dlg, perr = zenity.Progress(
+					zenity.Title(fmt.Sprintf("Installing Node.js v%s", version)),
+					zenity.Icon(ico),
+					zenity.WindowIcon(winIco),
+					zenity.AutoClose(),
+					zenity.NoCancel(),
+					zenity.Pulsate())
+				if perr != nil {
+					fmt.Println("Failed to create progress dialog")
+				}
+				go func() {
+					for {
+						select {
+						case <-dlg.Done():
+							if err := dlg.Complete(); err == zenity.ErrCanceled {
+								cancel <- true
+							}
+							return
+						}
+					}
+				}()
+				status <- Status{Text: "Validating version..."}
+				break
+			}
 		}
 
 		if err != nil {
-			fmt.Println(err.Error())
-			if version == "" {
-				fmt.Println(" ")
-				help()
-			}
-			return
-		}
-	}
-
-	if err != nil {
-		fmt.Println("\"" + requestedVersion + "\" is not a valid version.")
-		fmt.Println("Please use a valid semantic version number, \"lts\", or \"latest\".")
-		return
-	}
-
-	if checkVersionExceedsLatest(version) {
-		fmt.Println("Node.js v" + version + " is not yet released or is not available.")
-		return
-	}
-
-	if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
-		fmt.Println("Node.js v" + version + " is only available in 32-bit.")
-		return
-	}
-
-	// Check to see if the version is already installed
-	if !node.IsVersionInstalled(env.root, version, cpuarch) {
-		if !node.IsVersionAvailable(version) {
-			url := web.GetFullNodeUrl("index.json")
-			fmt.Println("\nVersion " + version + " is not available.\n\nThe complete list of available versions can be found at " + url)
-			return
-		}
-
-		// Make the output directories
-		os.Mkdir(filepath.Join(env.root, "v"+version), os.ModeDir)
-		os.Mkdir(filepath.Join(env.root, "v"+version, "node_modules"), os.ModeDir)
-
-		// Warn the user if they're attempting to install without verifying the remote SSL cert
-		if !env.verifyssl {
-			fmt.Println("\nWARNING: The remote SSL certificate will not be validated during the download process.\n")
-		}
-
-		// Download node
-		append32 := node.IsVersionInstalled(env.root, version, "64")
-		append64 := node.IsVersionInstalled(env.root, version, "32")
-		if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "32") {
-			success := web.GetNodeJS(env.root, version, "32", append32)
-			if !success {
-				os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
-				fmt.Println("Could not download node.js v" + version + " 32-bit executable.")
-				return
-			}
-		}
-		if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(env.root, version, "64") {
-			success := web.GetNodeJS(env.root, version, "64", append64)
-			if !success {
-				os.RemoveAll(filepath.Join(env.root, "v"+version, "node_modules"))
-				fmt.Println("Could not download node.js v" + version + " 64-bit executable.")
-				return
-			}
-		}
-
-		if file.Exists(filepath.Join(env.root, "v"+version, "node_modules", "npm")) {
-			npmv := getNpmVersion(version)
-			fmt.Println("npm v" + npmv + " installed successfully.")
-			fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
-			// fmt.Printf("Installed to %v\n", filepath.Join(env.root, "v"+version))
-			return
-		}
-
-		// If successful, add npm
-		npmv := getNpmVersion(version)
-		success := web.GetNpm(env.root, getNpmVersion(version))
-		if success {
-			fmt.Printf("Installing npm v" + npmv + "...")
-
-			// new temp directory under the nvm root
-			tempDir := filepath.Join(env.root, "temp")
-
-			// Extract npm to the temp directory
-			err := file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
-
-			// Copy the npm and npm.cmd files to the installation directory
-			tempNpmBin := filepath.Join(tempDir, "nvm-npm", "cli-"+npmv, "bin")
-
-			// Support npm < 6.2.0
-			if file.Exists(tempNpmBin) == false {
-				tempNpmBin = filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin")
-			}
-
-			if file.Exists(tempNpmBin) == false {
-				log.Fatal("Failed to extract npm. Could not find " + tempNpmBin)
-			}
-
-			// Standard npm support
-			os.Rename(filepath.Join(tempNpmBin, "npm"), filepath.Join(env.root, "v"+version, "npm"))
-			os.Rename(filepath.Join(tempNpmBin, "npm.cmd"), filepath.Join(env.root, "v"+version, "npm.cmd"))
-
-			// npx support
-			if _, err := os.Stat(filepath.Join(tempNpmBin, "npx")); err == nil {
-				os.Rename(filepath.Join(tempNpmBin, "npx"), filepath.Join(env.root, "v"+version, "npx"))
-				os.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(env.root, "v"+version, "npx.cmd"))
-			}
-
-			npmSourcePath := filepath.Join(tempDir, "nvm-npm", "npm-"+npmv)
-
-			if file.Exists(npmSourcePath) == false {
-				npmSourcePath = filepath.Join(tempDir, "nvm-npm", "cli-"+npmv)
-			}
-
-			moveNpmErr := os.Rename(npmSourcePath, filepath.Join(env.root, "v"+version, "node_modules", "npm"))
-			if moveNpmErr != nil {
-				// sometimes Windows can take some time to enable access to large amounts of files after unzip, use exponential backoff to wait until it is ready
-				for _, i := range [5]int{1, 2, 4, 8, 16} {
-					time.Sleep(time.Duration(i) * time.Second)
-					moveNpmErr = os.Rename(npmSourcePath, filepath.Join(env.root, "v"+version, "node_modules", "npm"))
-					if moveNpmErr == nil {
-						break
+			if strings.Contains(err.Error(), "No Major.Minor.Patch") {
+				sv, sverr := semver.Make(version)
+				if sverr == nil {
+					sverr = sv.Validate()
+				}
+				if sverr != nil {
+					version = findLatestSubVersion(version)
+					if len(version) == 0 {
+						sverr = errors.New("Unrecognized version: \"" + requestedVersion + "\"")
 					}
 				}
-
+				err = sverr
 			}
 
-			if err == nil && moveNpmErr == nil {
-				// Remove the temp directory
-				// may consider keep the temp files here
-				os.RemoveAll(tempDir)
-
-				fmt.Println("\n\nInstallation complete. If you want to use this version, type\n\nnvm use " + version)
-			} else if moveNpmErr != nil {
-				fmt.Println("Error: Unable to move directory " + npmSourcePath + " to node_modules: " + moveNpmErr.Error())
-			} else {
-				fmt.Println("Error: Unable to install NPM: " + err.Error())
+			if err != nil {
+				status <- Status{Err: err, Help: true}
+				return
 			}
-		} else {
-			fmt.Println("Could not download npm for node v" + version + ".")
-			fmt.Println("Please visit https://github.com/npm/cli/releases/tag/v" + npmv + " to download npm.")
-			fmt.Println("It should be extracted to " + env.root + "\\v" + version)
 		}
 
-		// Reset the SSL verification
-		env.verifyssl = true
+		if err != nil {
+			status <- Status{Err: fmt.Errorf(`"%s" is not a valid version.`+"\n"+`Please use a valid semantic version number, "lts", or "latest".`, requestedVersion)}
+			return
+		}
 
-		// If this is ever shipped for Mac, it should use homebrew.
-		// If this ever ships on Linux, it should be on bintray so it can use yum, apt-get, etc.
-		return
-	} else {
-		fmt.Println("Version " + version + " is already installed.")
-		return
-	}
+		if checkVersionExceedsLatest(version) {
+			status <- Status{Err: fmt.Errorf("Node.js v%s is not yet released or is not available for download yet.", version)}
+			return
+		}
+
+		if cpuarch == "64" && !web.IsNode64bitAvailable(version) {
+			status <- Status{Err: fmt.Errorf("Node.js v%s is only available in 32-bit.", version)}
+			return
+		}
+
+		// Check to see if the version is already installed
+		if !node.IsVersionInstalled(env.root, version, cpuarch) {
+			if !node.IsVersionAvailable(version) {
+				url := web.GetFullNodeUrl("index.json")
+				status <- Status{Err: fmt.Errorf("Version %s is not available.\n\nThe complete list of available versions can be found at %s", version, url)}
+				return
+			}
+
+			// Make the output directories
+			root, err := os.MkdirTemp("", "nvm-install-*")
+			if err != nil {
+				status <- Status{Err: err}
+			}
+			defer os.RemoveAll(root)
+			os.MkdirAll(filepath.Join(root, "v"+version, "node_modules"), os.ModeDir)
+			// os.MkdirAll(filepath.Join(env.root, "v"+version, "node_modules"), os.ModeDir)
+
+			// Warn the user if they're attempting to install without verifying the remote SSL cert
+			if !env.verifyssl {
+				fmt.Println("\nWARNING: The remote SSL certificate will not be validated during the download process.\n")
+			}
+
+			// Download node
+			if show_progress {
+				status <- Status{Text: "Downloading & extracting..."}
+			}
+			append32 := node.IsVersionInstalled(env.root, version, "64")
+			append64 := node.IsVersionInstalled(env.root, version, "32")
+			if (cpuarch == "32" || cpuarch == "all") && !node.IsVersionInstalled(root, version, "32") {
+				success := web.GetNodeJS(root, version, "32", append32)
+				if !success {
+					status <- Status{Err: fmt.Errorf("failed to download v%v 32-bit executable", version)}
+					return
+				}
+			}
+			if (cpuarch == "64" || cpuarch == "all") && !node.IsVersionInstalled(root, version, "64") {
+				success := web.GetNodeJS(root, version, "64", append64)
+				if !success {
+					status <- Status{Err: fmt.Errorf("failed to download v%v 64-bit executable", version)}
+					return
+				}
+			}
+
+			if file.Exists(filepath.Join(root, "v"+version, "node_modules", "npm")) {
+				if rnerr := os.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version)); rnerr != nil {
+					status <- Status{Err: err}
+				}
+
+				if show_progress {
+					status <- Status{Text: "Configuring npm..."}
+					time.Sleep(1 * time.Second)
+					status <- Status{Done: true}
+				} else {
+					npmv := getNpmVersion(version)
+					status <- Status{Text: fmt.Sprintf("npm v%s installed successfully.\n\nIf you want to use this version, type\n\nnvm use %s", npmv, version), Done: true}
+				}
+			}
+
+			// If successful, add npm
+			status <- Status{Text: "Downloading npm..."}
+			npmv := getNpmVersion(version)
+			success := web.GetNpm(root, getNpmVersion(version))
+			if success {
+				status <- Status{Text: fmt.Sprintf("Installing npm v%s...", npmv)}
+
+				// new temp directory under the nvm root
+				tempDir, err := os.MkdirTemp("", "nvm-npm-*")
+				if err != nil {
+					status <- Status{Err: err}
+				}
+				defer os.RemoveAll(tempDir)
+
+				// Extract npm to the temp directory
+				err = file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
+				if err != nil {
+					status <- Status{Err: err}
+				}
+
+				// Copy the npm and npm.cmd files to the installation directory
+				tempNpmBin := filepath.Join(tempDir, "nvm-npm", "cli-"+npmv, "bin")
+
+				// Support npm < 6.2.0
+				if file.Exists(tempNpmBin) == false {
+					tempNpmBin = filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin")
+				}
+
+				if file.Exists(tempNpmBin) == false {
+					status <- Status{Err: fmt.Errorf("Failed to extract npm. Could not find %s", tempNpmBin), Done: true}
+					return
+				}
+
+				// Standard npm support
+				os.Rename(filepath.Join(tempNpmBin, "npm"), filepath.Join(root, "v"+version, "npm"))
+				os.Rename(filepath.Join(tempNpmBin, "npm.cmd"), filepath.Join(root, "v"+version, "npm.cmd"))
+
+				// npx support
+				if _, err := os.Stat(filepath.Join(tempNpmBin, "npx")); err == nil {
+					os.Rename(filepath.Join(tempNpmBin, "npx"), filepath.Join(root, "v"+version, "npx"))
+					os.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(root, "v"+version, "npx.cmd"))
+				}
+
+				npmSourcePath := filepath.Join(tempDir, "nvm-npm", "npm-"+npmv)
+
+				if file.Exists(npmSourcePath) == false {
+					npmSourcePath = filepath.Join(tempDir, "nvm-npm", "cli-"+npmv)
+				}
+
+				moveNpmErr := os.Rename(npmSourcePath, filepath.Join(root, "v"+version, "node_modules", "npm"))
+				if moveNpmErr != nil {
+					// sometimes Windows can take some time to enable access to large amounts of files after unzip, use exponential backoff to wait until it is ready
+					for _, i := range [5]int{1, 2, 4, 8, 16} {
+						time.Sleep(time.Duration(i) * time.Second)
+						moveNpmErr = os.Rename(npmSourcePath, filepath.Join(root, "v"+version, "node_modules", "npm"))
+						if moveNpmErr == nil {
+							break
+						}
+					}
+
+				}
+
+				if err == nil && moveNpmErr == nil {
+					err = os.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version))
+					if err != nil {
+						status <- Status{Err: err}
+					}
+					if show_progress {
+						status <- Status{Done: true}
+					} else {
+						status <- Status{Text: fmt.Sprintf("Installation complete. If you want to use this version, type\n\nnvm use %s", version), Done: true}
+					}
+				} else if moveNpmErr != nil {
+					status <- Status{Err: fmt.Errorf("Unable to move directory %s to node_modules: %v", npmSourcePath, moveNpmErr), Done: true}
+				} else {
+					status <- Status{Err: fmt.Errorf("Failed to extract npm: %v", err), Done: true}
+				}
+			} else {
+				err = os.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version))
+				if err != nil {
+					status <- Status{Err: err}
+				}
+
+				npmurl := web.GetFullNpmUrl(version)
+				if show_progress {
+					// Send special error notification with link to npm release when it cannot be downloaded
+					notify(Notification{
+						Title:   "Download Failure (npm)",
+						Message: fmt.Sprintf("Please download npm v%s manually and extract to %s\\v%s", version, env.root, version),
+						Icon:    "error",
+						Actions: []Action{
+							{Type: "protocol", Label: "Manually Download", URI: npmurl},
+						},
+					})
+					status <- Status{Done: true}
+				} else {
+					status <- Status{Err: fmt.Errorf("Could not download npm for node v%s.\nPlease visit %s to download npm.\nIt should be extracted to %s\\v%s", version, npmurl, env.root, version), Done: true}
+				}
+			}
+		} else {
+			status <- Status{Text: "Version " + version + " is already installed.", Done: true}
+		}
+	}()
+
+	// Wait for the process to complete before exiting
+	wg.Wait()
+	os.Exit(exitCode)
 }
 
 func reinstall(version, cpuarch string) {
@@ -792,124 +1025,198 @@ func isSymlink(path string) (bool, error) {
 func use(version string, cpuarch string, reload ...bool) {
 	version, cpuarch, err := getVersion(version, cpuarch, true)
 
-	if err != nil {
-		if !strings.Contains(err.Error(), "No Major.Minor.Patch") {
-			fmt.Println(err.Error())
-			return
-		}
+	exitCode := 0
+	status := make(chan Status)
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	notifications := false
+
+	if os.Args[len(os.Args)-1] == "--notify" {
+		notifications = true
 	}
 
-	// Make sure the version is installed. If not, warn.
-	if !node.IsVersionInstalled(env.root, version, cpuarch) {
-		fmt.Println("node v" + version + " (" + cpuarch + "-bit) is not installed.")
-		if cpuarch == "32" {
-			if node.IsVersionInstalled(env.root, version, "64") {
-				fmt.Println("\nDid you mean node v" + version + " (64-bit)?\nIf so, type \"nvm use " + version + " 64\" to use it.")
+	go func() {
+		defer func() {
+			if notifications {
+				time.Sleep(1 * time.Second)
 			}
-		}
-		if cpuarch == "64" {
-			if node.IsVersionInstalled(env.root, version, "32") {
-				fmt.Println("\nDid you mean node v" + version + " (32-bit)?\nIf so, type \"nvm use " + version + " 32\" to use it.")
-			}
-		}
-		return
-	}
+			wg.Done()
+		}()
 
-	// Remove symlink if it already exists
-	sym, _ := os.Lstat(env.symlink)
-	if sym != nil {
-		abortOnBadSymlink(env.symlink)
-		// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
-		_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
+		for {
+			select {
+			case s := <-status:
+				if s.Err != nil {
+					exitCode = 1
+					if notifications {
+						// Close progress dialog and send error notificaion
+						notify(Notification{
+							Title:   "Node.js Activation Error",
+							Message: fmt.Sprintf("nvm use %s failed because %v", version, s.Err),
+							Icon:    "error",
+						})
+					}
+
+					fmt.Printf("activation error: %v\n", s.Err)
+					if s.Help {
+						fmt.Println(" ")
+						help()
+					}
+
+					return
+				}
+
+				if s.Done {
+					if s.Err == nil {
+						if notifications {
+							notify(Notification{
+								Title:   "Node.js Activated",
+								Message: fmt.Sprintf("Your system is now configured to use v%s (%v-bit).", version, cpuarch),
+								Icon:    "success",
+								Actions: []Action{
+									{Type: "protocol", Label: "View Changelog", URI: fmt.Sprintf("https://github.com/nodejs/node/releases/tag/v%s", version)},
+								},
+							})
+						}
+
+						fmt.Printf("Now using node v%s (%v-bit)\n", version, cpuarch)
+					}
+
+					return
+				}
+
+				if len(strings.TrimSpace(s.Text)) > 0 {
+					fmt.Println(s.Text)
+				}
+			}
+		}
+	}()
+
+	time.Sleep(300 * time.Millisecond)
+
+	go func() {
 		if err != nil {
-			if accessDenied(err) {
-				return
+			if !strings.Contains(err.Error(), "No Major.Minor.Patch") {
+				status <- Status{Err: err, Done: true}
 			}
 		}
 
-		// // Return if the symlink already exists
-		// if ok {
-		// 	fmt.Print(err)
-		// 	return
-		// }
-	}
+		// Make sure the version is installed. If not, warn.
+		if !node.IsVersionInstalled(env.root, version, cpuarch) {
+			err = fmt.Errorf("node v%s (%v-bit) is not installed.", version, cpuarch)
+			if notifications {
+				status <- Status{Err: err, Done: true}
+			}
+			if (cpuarch == "32" && node.IsVersionInstalled(env.root, version, "64")) || (cpuarch == "64" && node.IsVersionInstalled(env.root, version, "32")) {
+				status <- Status{Err: fmt.Errorf("Did you mean node v%s (%v-bit)?\nIf so, type \"nvm use %s %v\" to use it.", version, cpuarch, version, cpuarch), Done: true}
+			}
+			status <- Status{Err: fmt.Errorf("Version not installed. Run \"nvm ls\" to see available versions."), Done: true}
+		}
 
-	// Create new symlink
-	var ok bool
-	// ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
-	ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
-	if err != nil {
-		if strings.Contains(err.Error(), "not have sufficient privilege") || strings.Contains(strings.ToLower(err.Error()), "access is denied") {
-			// cmd := exec.Command(filepath.Join(env.root, "elevate.cmd"), "cmd", "/C", "mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
-			// var output bytes.Buffer
-			// var _stderr bytes.Buffer
-			// cmd.Stdout = &output
-			// cmd.Stderr = &_stderr
-			// perr := cmd.Run()
-			ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
-
+		// Remove symlink if it already exists
+		sym, _ := os.Lstat(env.symlink)
+		if sym != nil {
+			err = validSymlink(env.symlink)
 			if err != nil {
-				ok = false
-				fmt.Println(fmt.Sprint(err)) // + ": " + _stderr.String())
+				status <- Status{Err: err, Done: true}
+			}
+
+			// _, err := runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+			_, err := elevatedRun("rmdir", filepath.Clean(env.symlink))
+			if err != nil {
+				if accessDenied(err) {
+					status <- Status{Err: err, Done: true}
+				}
+			}
+		}
+
+		// Create new symlink
+		var ok bool
+		// ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C mklink /D "%s" "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version)))
+		ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+		if err != nil {
+			if strings.Contains(err.Error(), "not have sufficient privilege") || strings.Contains(strings.ToLower(err.Error()), "access is denied") {
+				ok, err = elevatedRun("mklink", "/D", filepath.Clean(env.symlink), filepath.Join(env.root, "v"+version))
+				if err != nil {
+					ok = false
+					status <- Status{Err: err, Done: true}
+					// fmt.Println(fmt.Sprint(err)) // + ": " + _stderr.String())
+				} else {
+					ok = true
+				}
+			} else if strings.Contains(err.Error(), "file already exists") {
+				err = validSymlink(env.symlink)
+				if err != nil {
+					status <- Status{Err: err, Done: true}
+				}
+
+				ok, err = elevatedRun("rmdir", filepath.Clean(env.symlink))
+				// ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
+				reloadable := true
+				if len(reload) > 0 {
+					reloadable = reload[0]
+				}
+				if err != nil {
+					status <- Status{Err: err, Done: true}
+				} else if reloadable {
+					use(version, cpuarch, false)
+					return
+				}
 			} else {
-				ok = true
+				status <- Status{Err: err, Done: true}
 			}
-		} else if strings.Contains(err.Error(), "file already exists") {
-			abortOnBadSymlink(env.symlink)
-			ok, err = elevatedRun("rmdir", filepath.Clean(env.symlink))
-			// ok, err = runElevated(fmt.Sprintf(`"%s" cmd /C rmdir "%s"`, filepath.Join(env.root, "elevate.cmd"), filepath.Clean(env.symlink)))
-			reloadable := true
-			if len(reload) > 0 {
-				reloadable = reload[0]
-			}
-			if err != nil {
-				fmt.Println(fmt.Sprint(err))
-			} else if reloadable {
-				use(version, cpuarch, false)
-				return
-			}
-		} else {
-			fmt.Print(fmt.Sprint(err))
 		}
-	}
-	if !ok {
-		return
-	}
+		if !ok {
+			status <- Status{Err: fmt.Errorf("failed to elevate permissions to create symlink"), Done: true}
+		}
 
-	// Use the assigned CPU architecture
-	cpuarch = arch.Validate(cpuarch)
-	nodepath := filepath.Join(env.root, "v"+version, "node.exe")
-	node32path := filepath.Join(env.root, "v"+version, "node32.exe")
-	node64path := filepath.Join(env.root, "v"+version, "node64.exe")
-	node32exists := file.Exists(node32path)
-	node64exists := file.Exists(node64path)
-	nodeexists := file.Exists(nodepath)
-	if node32exists && cpuarch == "32" { // user wants 32, but node.exe is 64
-		if nodeexists {
-			os.Rename(nodepath, node64path) // node.exe -> node64.exe
+		// Use the assigned CPU architecture
+		cpuarch = arch.Validate(cpuarch)
+		nodepath := filepath.Join(env.root, "v"+version, "node.exe")
+		node32path := filepath.Join(env.root, "v"+version, "node32.exe")
+		node64path := filepath.Join(env.root, "v"+version, "node64.exe")
+		node32exists := file.Exists(node32path)
+		node64exists := file.Exists(node64path)
+		nodeexists := file.Exists(nodepath)
+		if node32exists && cpuarch == "32" { // user wants 32, but node.exe is 64
+			if nodeexists {
+				os.Rename(nodepath, node64path) // node.exe -> node64.exe
+			}
+			os.Rename(node32path, nodepath) // node32.exe -> node.exe
 		}
-		os.Rename(node32path, nodepath) // node32.exe -> node.exe
-	}
-	if node64exists && cpuarch == "64" { // user wants 64, but node.exe is 32
-		if nodeexists {
-			os.Rename(nodepath, node32path) // node.exe -> node32.exe
+		if node64exists && cpuarch == "64" { // user wants 64, but node.exe is 32
+			if nodeexists {
+				os.Rename(nodepath, node32path) // node.exe -> node32.exe
+			}
+			os.Rename(node64path, nodepath) // node64.exe -> node.exe
 		}
-		os.Rename(node64path, nodepath) // node64.exe -> node.exe
-	}
-	fmt.Println("Now using node v" + version + " (" + cpuarch + "-bit)")
+
+		status <- Status{Done: true}
+	}()
+
+	// Wait for the process to complete before exiting
+	wg.Wait()
+	os.Exit(exitCode)
 }
 
 func abortOnBadSymlink(symlinkpath string) {
+	if err := validSymlink(symlinkpath); err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+}
+
+func validSymlink(symlinkpath string) error {
 	symlinkpath = filepath.Clean(symlinkpath)
 	// Prevent deletion if the symlink has been set to a physical directpry/file.
 	// This isn't supposed to ever happen, but users have manually changed the settings.txt,
 	// removing the physical file/directory unintentionally.
 	// This is an anti-footgun.
 	if symlink, err := isSymlink(symlinkpath); !symlink && err == nil {
-		fmt.Printf("NVM_SYMLINK cannot overwrite the physical file/directory at %s\n", env.symlink)
-		fmt.Println("Please remove the location and try again, or select a different location for NVM_SYMLINK.")
-		os.Exit(1)
+		return fmt.Errorf("NVM_SYMLINK is set to a physical file/directory at %s\nPlease remove the location and try again, or select a different location for NVM_SYMLINK.\n", env.symlink)
 	}
+
+	return nil
 }
 
 func useArchitecture(a string) {
@@ -1149,7 +1456,7 @@ func checkLocalEnvironment() {
 			} else {
 				consoleTitle := syscall.UTF16ToString(title[:])
 
-				if !strings.Contains(strings.ToLower(consoleTitle), "command prompt") && !strings.Contains(strings.ToLower(consoleTitle), "powershell") && !strings.Contains(strings.ToLower(consoleTitle), "cmd.exe") && !strings.Contains(strings.ToLower(consoleTitle), "pwsh.exe") {
+				if !strings.Contains(strings.ToLower(consoleTitle), "command prompt") && !strings.Contains(strings.ToLower(consoleTitle), "powershell") && !strings.Contains(strings.ToLower(consoleTitle), "cmd.exe") && !strings.Contains(strings.ToLower(consoleTitle), "pwsh.exe") && !strings.Contains(strings.ToLower(consoleTitle), "powershell.exe") {
 					problems = append(problems, fmt.Sprintf("\"%v\" not recognized: the Command Prompt and Powershell are the only officially supported consoles. Some features may not work as expected.\n", consoleTitle))
 				}
 			}
@@ -1296,20 +1603,6 @@ func checkLocalEnvironment() {
 	if len(problems) == 0 {
 		fmt.Println("\n" + "No problems detected.")
 	} else {
-		// fmt.Println("")
-		// table := tablewriter.NewWriter(os.Stdout)
-		// table.SetHeader([]string{"#", "Problems Detected"})
-		// table.SetColMinWidth(1, 40)
-		// table.SetAutoWrapText(false)
-		// // table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		// // table.SetAlignment(tablewriter.ALIGN_LEFT)
-		// // table.SetCenterSeparator("|")
-		// data := make([][]string, 0)
-		// for i := 0; i < len(problems); i++ {
-		// 	data = append(data, []string{fmt.Sprintf(" %v ", i+1), problems[i]})
-		// }
-		// table.AppendBulk(data) // Add Bulk Data
-		// table.Render()
 		fmt.Println("\nPROBLEMS DETECTED\n-----------------")
 		for _, p := range problems {
 			fmt.Println(p + "\n")
@@ -1368,13 +1661,17 @@ func help() {
 	fmt.Println("  nvm node_mirror [url]        : Set the node mirror. Defaults to https://nodejs.org/dist/. Leave [url] blank to use default url.")
 	fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
 	fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
-	fmt.Println("  nvm upgrade [restore]        : Update nvm to the latest version. Use \"restore\" to revert to the previously installed version.")
+	fmt.Println("  nvm upgrade                  : Update nvm to the latest version. Manual rollback available for 7 days after upgrade.")
 	fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally use \"latest\", \"lts\", or \"newest\".")
 	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
 	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
 	fmt.Println("  nvm reinstall <version>      : A shortcut method to clean and reinstall a specific version.")
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
+	fmt.Println("  nvm subscribe [--]<topic>    : Subscribe to desktop notifications.")
+	fmt.Println("                                 Valid topics: lts, current, nvm4w, author")
+	fmt.Println("  nvm unsubscribe [--]<topic>  : Unsubscribe from desktop notifications.")
+	fmt.Println("                                 Valid topics: lts, current, nvm4w, author")
 	fmt.Println("  nvm [--]version              : Displays the current running version of nvm for Windows. Aliased as v.")
 	fmt.Println(" ")
 }
@@ -1487,7 +1784,9 @@ func updateRootDir(path string) {
 func elevatedRun(name string, arg ...string) (bool, error) {
 	ok, err := run("cmd", nil, append([]string{"/C", name}, arg...)...)
 	if err != nil {
-		ok, err = run("elevate.cmd", &env.root, append([]string{"cmd", "/C", name}, arg...)...)
+		exe, _ := os.Executable()
+		cmd := filepath.Join(filepath.Dir(exe), "elevate.cmd")
+		ok, err = run(cmd, &env.root, append([]string{"cmd", "/C", name}, arg...)...)
 	}
 
 	return ok, err

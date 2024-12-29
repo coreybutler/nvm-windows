@@ -23,6 +23,7 @@ import (
 	fs "github.com/coreybutler/go-fsutil"
 )
 
+var nvmversion = ""
 var client = &http.Client{}
 var nodeBaseAddress = "https://nodejs.org/dist/"
 var npmBaseAddress = "https://github.com/npm/cli/archive/"
@@ -130,8 +131,7 @@ func Download(url string, target string, version string) bool {
 		return false
 	}
 
-	// TODO: Add version to user agent
-	req.Header.Set("User-Agent", fmt.Sprintf("NVM for Windows %s", version))
+	req.Header.Set("User-Agent", fmt.Sprintf("NVM for Windows %s", nvmversion))
 
 	response, err := client.Do(req)
 	if err != nil {
@@ -166,7 +166,7 @@ func Download(url string, target string, version string) bool {
 	} else {
 		_, err = io.Copy(output, response.Body)
 		if err != nil {
-			fmt.Println("Error while downloading", url, "-", err)
+			fmt.Printf("Error while downloading %s: %v\n", url, err)
 		}
 	}
 

@@ -7,16 +7,20 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"nvm/author"
 	"nvm/semver"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
 
 	"github.com/coreybutler/go-fsutil"
+	"github.com/ncruces/zenity"
 	"golang.org/x/sys/windows"
 )
 
@@ -36,12 +40,470 @@ const (
 	// exclamationIcon = "❗"
 )
 
+type Notification struct {
+	AppID    string   `json:"app_id"`
+	Title    string   `json:"title"`
+	Message  string   `json:"message"`
+	Icon     string   `json:"icon"`
+	Actions  []Action `json:"actions"`
+	Duration string   `json:"duration"`
+	Link     string   `json:"link"`
+}
+
+type Action struct {
+	Type  string `json:"type"`
+	Label string `json:"label"`
+	URI   string `json:"uri"`
+}
+
+func display(data Notification) {
+	data.AppID = "NVM for Windows"
+	content, _ := json.Marshal(data)
+	go author.Bridge("notify", string(content))
+}
+
 type Update struct {
 	Version         string   `json:"version"`
 	Assets          []string `json:"assets"`
 	Warnings        []string `json:"notices"`
 	VersionWarnings []string `json:"versionNotices"`
 	SourceURL       string   `json:"sourceTpl"`
+}
+
+func Run(version string) error {
+	show_progress := false
+	for _, arg := range os.Args[2:] {
+		if strings.ToLower(arg) == "--show-progress-ui" {
+			show_progress = true
+			break
+		}
+	}
+
+	status := make(chan Status)
+
+	if !show_progress {
+		// Setup signal handling first
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+		defer signal.Stop(signalChan)
+
+		// Add signal handler
+		go func() {
+			<-signalChan
+			fmt.Println("Installation canceled by user")
+			os.Exit(0)
+		}()
+
+		return run(version, status)
+	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	var dlg zenity.ProgressDialog
+	var exitCode = 0
+	var u *Update
+
+	// Display visual progress UI
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case s := <-status:
+				if s.Cancel {
+					display(Notification{
+						Title:   "Installation Canceled",
+						Message: fmt.Sprintf("Installation of NVM for Windows v%s was canceled by the user.", u.Version),
+						Icon:    "error",
+						Actions: []Action{
+							{Type: "protocol", Label: "Install Again", URI: fmt.Sprintf("nvm://launch?action=upgrade&version=%s", u.Version)},
+						},
+					})
+
+					return
+				}
+
+				if s.Err != nil {
+					exitCode = 1
+					display(Notification{
+						Title:   "Installation Error",
+						Message: s.Err.Error(),
+						Icon:    "error",
+					})
+
+					dlg.Text(fmt.Sprintf("error: %v", s.Err))
+					dlg.Close()
+
+					// err := restore(status, verbose)
+					// if err != nil {
+					// 	if show_progress {
+					// 		display(notify.Notification{
+					// 			Title:   "Rollback Error",
+					// 			Message: err.Error(),
+					// 			Icon:    "error",
+					// 		})
+					// 	} else {
+					// 		fmt.Printf("rollback error: %v\n", err)
+					// 	}
+					// }
+
+					return
+				}
+
+				if s.Done {
+					display(Notification{
+						Title:   "Upgrade Complete",
+						Message: fmt.Sprintf("Now running version %s.", u.Version),
+						Icon:    "success",
+					})
+
+					dlg.Text("Upgrade complete")
+					time.Sleep(1 * time.Second)
+
+					return
+				}
+
+				if s.Warn != "" {
+					display(Notification{
+						Message: s.Warn,
+						Icon:    "nvm",
+					})
+				}
+
+				var empty string
+				if s.Text != empty && len(strings.TrimSpace(s.Text)) > 0 {
+					dlg.Text(s.Text)
+				}
+			}
+		}
+	}()
+
+	// Wait for the prior subroutine to initialize before starting the next dependent thread
+	time.Sleep(300 * time.Millisecond)
+
+	// Run the update
+	go func() {
+		exe, _ := os.Executable()
+		winIco := filepath.Join(filepath.Dir(exe), "nvm.ico")
+		ico := filepath.Join(filepath.Dir(exe), "download.ico")
+
+		var err error
+		u, err = checkForUpdate(UPDATE_URL)
+		if err != nil {
+			display(Notification{
+				Title:   "Update Error",
+				Message: err.Error(),
+				Icon:    "error",
+			})
+
+			status <- Status{Err: fmt.Errorf("error: failed to obtain update data: %v\n", err)}
+		}
+
+		var perr error
+		dlg, perr = zenity.Progress(
+			zenity.Title(fmt.Sprintf("Installing NVM for Windows v%s", u.Version)),
+			zenity.Icon(ico),
+			zenity.WindowIcon(winIco),
+			zenity.AutoClose(),
+			zenity.NoCancel(),
+			zenity.Pulsate())
+
+		if perr != nil {
+			fmt.Println("Failed to create progress dialog")
+		}
+
+		go func() {
+			for {
+				select {
+				case <-dlg.Done():
+					if err := dlg.Complete(); err == zenity.ErrCanceled {
+						status <- Status{Cancel: true}
+					}
+				}
+			}
+		}()
+		status <- Status{Text: "Validating version..."}
+
+		run(version, status, u)
+	}()
+
+	wg.Wait()
+	os.Exit(exitCode)
+
+	return nil
+}
+
+func run(version string, status chan Status, updateMetadata ...*Update) error {
+	args := os.Args[2:]
+
+	colorize := true
+	if err := EnableVirtualTerminalProcessing(); err != nil {
+		colorize = false
+	}
+
+	// Retrieve remote metadata
+	var update *Update
+	if len(updateMetadata) > 0 {
+		update = updateMetadata[0]
+	} else {
+		var err error
+		update, err = checkForUpdate(UPDATE_URL)
+		if err != nil {
+			return fmt.Errorf("error: failed to obtain update data: %v\n", err)
+		}
+	}
+
+	for _, warning := range update.Warnings {
+		status <- Status{Warn: warning}
+		Warn(warning, colorize)
+	}
+
+	verbose := false
+	// rollback := false
+	for _, arg := range args {
+		switch strings.ToLower(arg) {
+		case "--verbose":
+			verbose = true
+			// case "rollback":
+			// 	rollback = true
+		}
+	}
+
+	// // Check for a backup
+	// if rollback {
+	// 	if fsutil.Exists(filepath.Join(".", ".update", "nvm4w-backup.zip")) {
+	// 		fmt.Println("restoring NVM4W backup...")
+	// 		rbtmp, err := os.MkdirTemp("", "nvm-rollback-*")
+	// 		if err != nil {
+	// 			fmt.Printf("error: failed to create rollback directory: %v\n", err)
+	// 			os.Exit(1)
+	// 		}
+	// 		defer os.RemoveAll(rbtmp)
+
+	// 		err = unzip(filepath.Join(".", ".update", "nvm4w-backup.zip"), rbtmp)
+	// 		if err != nil {
+	// 			fmt.Printf("error: failed to extract backup: %v\n", err)
+	// 			os.Exit(1)
+	// 		}
+
+	// 		// Copy the backup files to the current directory
+	// 		err = copyDirContents(rbtmp, ".")
+	// 		if err != nil {
+	// 			fmt.Printf("error: failed to restore backup files: %v\n", err)
+	// 			os.Exit(1)
+	// 		}
+
+	// 		// Remove the restoration directory
+	// 		os.RemoveAll(filepath.Join(".", ".update"))
+
+	// 		fmt.Println("rollback complete")
+	// 		rbcmd := exec.Command("nvm.exe", "version")
+	// 		o, err := rbcmd.Output()
+	// 		if err != nil {
+	// 			fmt.Println("error running nvm.exe:", err)
+	// 			os.Exit(1)
+	// 		}
+
+	// 		exec.Command("schtasks", "/delete", "/tn", "\"RemoveNVM4WBackup\"", "/f").Run()
+	// 		fmt.Printf("rollback to v%s complete\n", string(o))
+	// 		os.Exit(0)
+	// 	} else {
+	// 		fmt.Println("no backup available: backups are only available for 7 days after upgrading")
+	// 		os.Exit(0)
+	// 	}
+	// }
+
+	currentVersion, err := semver.New(version)
+	if err != nil {
+		return err
+	}
+
+	updateVersion, err := semver.New(update.Version)
+	if err != nil {
+		return err
+	}
+
+	if currentVersion.LT(updateVersion) {
+		if len(update.VersionWarnings) > 0 {
+			if len(update.Warnings) > 0 || len(update.VersionWarnings) > 0 {
+				fmt.Println("")
+			}
+			for _, warning := range update.VersionWarnings {
+				status <- Status{Warn: warning}
+				Warn(warning, colorize)
+			}
+			fmt.Println("")
+		}
+		status <- Status{Text: "downloading..."}
+		fmt.Printf("upgrading from v%s-->%s\n\ndownloading...\n", version, highlight(update.Version))
+	} else {
+		status <- Status{Text: "nvm is up to date", Done: true}
+		fmt.Println("nvm is up to date")
+		return nil
+	}
+
+	// Make temp directory
+	tmp, err := os.MkdirTemp("", "nvm-upgrade-*")
+	if err != nil {
+		status <- Status{Err: err}
+		return fmt.Errorf("error: failed to create temporary directory: %v\n", err)
+	}
+	defer os.RemoveAll(tmp)
+
+	// Download the new app
+	source := fmt.Sprintf(update.SourceURL, update.Version)
+	// source := fmt.Sprintf(update.SourceURL, "1.1.11") // testing
+	body, err := get(source)
+	if err != nil {
+		status <- Status{Err: err}
+		return fmt.Errorf("error: failed to download new version: %v\n", err)
+	}
+
+	os.WriteFile(filepath.Join(tmp, "assets.zip"), body, os.ModePerm)
+	os.Mkdir(filepath.Join(tmp, "assets"), os.ModePerm)
+
+	source = source + ".checksum.txt"
+	body, err = get(source)
+	if err != nil {
+		return fmt.Errorf("error: failed to download checksum: %v\n", err)
+	}
+
+	os.WriteFile(filepath.Join(tmp, "assets.zip.checksum.txt"), body, os.ModePerm)
+
+	filePath := filepath.Join(tmp, "assets.zip")                  // path to the file you want to validate
+	checksumFile := filepath.Join(tmp, "assets.zip.checksum.txt") // path to the checksum file
+
+	// Step 1: Compute the MD5 checksum of the file
+	fmt.Println("verifying checksum...")
+	status <- Status{Text: "verifying checksum..."}
+	computedChecksum, err := computeMD5Checksum(filePath)
+	if err != nil {
+		status <- Status{Err: err}
+		return fmt.Errorf("Error computing checksum: %v", err)
+	}
+
+	// Step 2: Read the checksum from the .checksum.txt file
+	storedChecksum, err := readChecksumFromFile(checksumFile)
+	if err != nil {
+		status <- Status{Err: err}
+		return fmt.Errorf("Error readirng checksum from file: %v", err)
+	}
+
+	// Step 3: Compare the computed checksum with the stored checksum
+	if strings.ToLower(computedChecksum) != strings.ToLower(storedChecksum) {
+		status <- Status{Err: fmt.Errorf("cannot validate update file (checksum mismatch)")}
+		return fmt.Errorf("cannot validate update file (checksum mismatch)")
+	}
+
+	fmt.Println("extracting update...")
+	status <- Status{Text: "extracting update..."}
+	if err := unzip(filepath.Join(tmp, "assets.zip"), filepath.Join(tmp, "assets")); err != nil {
+		status <- Status{Err: err}
+		return err
+	}
+
+	// Get any additional assets
+	if len(update.Assets) > 0 {
+		status <- Status{Text: fmt.Sprintf("downloading %d additional assets...", len(update.Assets))}
+		fmt.Printf("downloading %d additional assets...\n", len(update.Assets))
+		for _, asset := range update.Assets {
+			var assetURL string
+			if !strings.HasPrefix(asset, "http") {
+				assetURL = fmt.Sprintf(update.SourceURL, asset)
+			} else {
+				assetURL = asset
+			}
+			assetBody, err := get(assetURL)
+			if err != nil {
+				status <- Status{Err: err}
+				return fmt.Errorf("error: failed to download asset: %v\n", err)
+			}
+
+			assetPath := filepath.Join(tmp, "assets", asset)
+			os.WriteFile(assetPath, assetBody, os.ModePerm)
+		}
+	}
+
+	// Debugging
+	if verbose {
+		tree(tmp, "downloaded files (extracted):")
+		nvmtestcmd := exec.Command(filepath.Join(tmp, "assets", "nvm.exe"), "version")
+		nvmtestcmd.Stdout = os.Stdout
+		nvmtestcmd.Stderr = os.Stderr
+		err = nvmtestcmd.Run()
+		if err != nil {
+			fmt.Println("error running nvm.exe:", err)
+		}
+	}
+
+	// Backup current version to zip
+	fmt.Println("applying update...")
+	status <- Status{Text: "applying update..."}
+	currentExe, _ := os.Executable()
+	currentPath := filepath.Dir(currentExe)
+	bkp, err := os.MkdirTemp("", "nvm-backup-*")
+	if err != nil {
+		status <- Status{Err: fmt.Errorf("error: failed to create backup directory: %v\n", err)}
+		return fmt.Errorf("error: failed to create backup directory: %v\n", err)
+	}
+	defer os.RemoveAll(bkp)
+
+	err = zipDirectory(currentPath, filepath.Join(bkp, "backup.zip"))
+	if err != nil {
+		status <- Status{Err: fmt.Errorf("error: failed to create backup: %v\n", err)}
+		return fmt.Errorf("error: failed to create backup: %v\n", err)
+	}
+
+	os.MkdirAll(filepath.Join(currentPath, ".update"), os.ModePerm)
+	copyFile(filepath.Join(bkp, "backup.zip"), filepath.Join(currentPath, ".update", "nvm4w-backup.zip"))
+
+	// Copy the new files to the current directory
+	// copyFile(currentExe, fmt.Sprintf("%s.%s.bak", currentExe, version))
+	copyDirContents(filepath.Join(tmp, "assets"), currentPath)
+	copyFile(filepath.Join(tmp, "assets", "nvm.exe"), filepath.Join(currentPath, ".update/nvm.exe"))
+
+	if verbose {
+		nvmtestcmd := exec.Command(filepath.Join(currentPath, ".update/nvm.exe"), "version")
+		nvmtestcmd.Stdout = os.Stdout
+		nvmtestcmd.Stderr = os.Stderr
+		err = nvmtestcmd.Run()
+		if err != nil {
+			status <- Status{Err: err}
+			fmt.Println("error running nvm.exe:", err)
+		}
+	}
+
+	// Debugging
+	if verbose {
+		tree(currentPath, "final directory contents:")
+	}
+
+	// Hide the update directory
+	setHidden(filepath.Join(currentPath, ".update"))
+
+	// If an "update.exe" exists, run it
+	if fsutil.IsExecutable(filepath.Join(tmp, "assets", "update.exe")) {
+		err = copyFile(filepath.Join(tmp, "assets", "update.exe"), filepath.Join(currentPath, ".update", "update.exe"))
+		if err != nil {
+			status <- Status{Err: err}
+			fmt.Println(fmt.Errorf("error: failed to copy update.exe: %v\n", err))
+			os.Exit(1)
+		}
+	}
+
+	autoupdate(status)
+
+	return nil
+}
+
+type Status struct {
+	Text   string
+	Err    error
+	Done   bool
+	Help   bool
+	Cancel bool
+	Warn   string
 }
 
 func (u *Update) Available(sinceVersion string) (string, bool, error) {
@@ -70,259 +532,14 @@ func Warn(msg string, colorized ...bool) {
 	}
 }
 
-func Run(version string) error {
-	args := os.Args[2:]
-
-	colorize := true
-	if err := EnableVirtualTerminalProcessing(); err != nil {
-		colorize = false
-	}
-
-	// Retrieve remote metadata
-	update, err := checkForUpdate(UPDATE_URL)
-	if err != nil {
-		return fmt.Errorf("error: failed to obtain update data: %v\n", err)
-	}
-
-	for _, warning := range update.Warnings {
-		Warn(warning, colorize)
-	}
-
-	verbose := false
-	rollback := false
-	for _, arg := range args {
-		switch strings.ToLower(arg) {
-		case "--verbose":
-			verbose = true
-		case "rollback":
-			rollback = true
-		}
-	}
-
-	// Check for a backup
-	if rollback {
-		if fsutil.Exists(filepath.Join(".", ".update", "nvm4w-backup.zip")) {
-			fmt.Println("restoring NVM4W backup...")
-			rbtmp, err := os.MkdirTemp("", "nvm-rollback-*")
-			if err != nil {
-				fmt.Printf("error: failed to create rollback directory: %v\n", err)
-				os.Exit(1)
-			}
-			defer os.RemoveAll(rbtmp)
-
-			err = unzip(filepath.Join(".", ".update", "nvm4w-backup.zip"), rbtmp)
-			if err != nil {
-				fmt.Printf("error: failed to extract backup: %v\n", err)
-				os.Exit(1)
-			}
-
-			// Copy the backup files to the current directory
-			err = copyDirContents(rbtmp, ".")
-			if err != nil {
-				fmt.Printf("error: failed to restore backup files: %v\n", err)
-				os.Exit(1)
-			}
-
-			// Remove the restoration directory
-			os.RemoveAll(filepath.Join(".", ".update"))
-
-			fmt.Println("rollback complete")
-			rbcmd := exec.Command("nvm.exe", "version")
-			o, err := rbcmd.Output()
-			if err != nil {
-				fmt.Println("error running nvm.exe:", err)
-				os.Exit(1)
-			}
-
-			exec.Command("schtasks", "/delete", "/tn", "\"RemoveNVM4WBackup\"", "/f").Run()
-			fmt.Printf("rollback to v%s complete\n", string(o))
-			os.Exit(0)
-		} else {
-			fmt.Println("no backup available: backups are only available for 7 days after upgrading")
-			os.Exit(0)
-		}
-	}
-
-	currentVersion, err := semver.New(version)
-	if err != nil {
-		return err
-	}
-
-	updateVersion, err := semver.New(update.Version)
-	if err != nil {
-		return err
-	}
-
-	if currentVersion.LT(updateVersion) {
-		if len(update.VersionWarnings) > 0 {
-			if len(update.Warnings) > 0 || len(update.VersionWarnings) > 0 {
-				fmt.Println("")
-			}
-			for _, warning := range update.VersionWarnings {
-				Warn(warning, colorize)
-			}
-			fmt.Println("")
-		}
-		fmt.Printf("upgrading from v%s-->%s\n\ndownloading...\n", version, highlight(update.Version))
-	} else {
-		fmt.Println("nvm is up to date")
-		return nil
-	}
-
-	// Make temp directory
-	tmp, err := os.MkdirTemp("", "nvm-upgrade-*")
-	if err != nil {
-		return fmt.Errorf("error: failed to create temporary directory: %v\n", err)
-	}
-	defer os.RemoveAll(tmp)
-
-	// Download the new app
-	// TODO: Replace version with update.Version
-	// source := fmt.Sprintf(update.SourceURL, update.Version)
-	source := fmt.Sprintf(update.SourceURL, "1.1.11")
-	body, err := get(source)
-	if err != nil {
-		return fmt.Errorf("error: failed to download new version: %v\n", err)
-	}
-
-	os.WriteFile(filepath.Join(tmp, "assets.zip"), body, os.ModePerm)
-	os.Mkdir(filepath.Join(tmp, "assets"), os.ModePerm)
-
-	source = source + ".checksum.txt"
-	body, err = get(source)
-	if err != nil {
-		return fmt.Errorf("error: failed to download checksum: %v\n", err)
-	}
-
-	os.WriteFile(filepath.Join(tmp, "assets.zip.checksum.txt"), body, os.ModePerm)
-
-	filePath := filepath.Join(tmp, "assets.zip")                  // path to the file you want to validate
-	checksumFile := filepath.Join(tmp, "assets.zip.checksum.txt") // path to the checksum file
-
-	// Step 1: Compute the MD5 checksum of the file
-	fmt.Println("verifying checksum...")
-	computedChecksum, err := computeMD5Checksum(filePath)
-	if err != nil {
-		return fmt.Errorf("Error computing checksum: %v", err)
-	}
-
-	// Step 2: Read the checksum from the .checksum.txt file
-	storedChecksum, err := readChecksumFromFile(checksumFile)
-	if err != nil {
-		return fmt.Errorf("Error readirng checksum from file: %v", err)
-	}
-
-	// Step 3: Compare the computed checksum with the stored checksum
-	if strings.ToLower(computedChecksum) != strings.ToLower(storedChecksum) {
-		return fmt.Errorf("cannot validate update file (checksum mismatch)")
-	}
-
-	fmt.Println("extracting update...")
-	if err := unzip(filepath.Join(tmp, "assets.zip"), filepath.Join(tmp, "assets")); err != nil {
-		return err
-	}
-
-	// Get any additional assets
-	if len(update.Assets) > 0 {
-		fmt.Printf("downloading %d additional assets...\n", len(update.Assets))
-		for _, asset := range update.Assets {
-			var assetURL string
-			if !strings.HasPrefix(asset, "http") {
-				assetURL = fmt.Sprintf(update.SourceURL, asset)
-			} else {
-				assetURL = asset
-			}
-			assetBody, err := get(assetURL)
-			if err != nil {
-				return fmt.Errorf("error: failed to download asset: %v\n", err)
-			}
-
-			assetPath := filepath.Join(tmp, "assets", asset)
-			os.WriteFile(assetPath, assetBody, os.ModePerm)
-		}
-	}
-
-	// Debugging
-	if verbose {
-		tree(tmp, "downloaded files (extracted):")
-		nvmtestcmd := exec.Command(filepath.Join(tmp, "assets", "nvm.exe"), "version")
-		nvmtestcmd.Stdout = os.Stdout
-		nvmtestcmd.Stderr = os.Stderr
-		err = nvmtestcmd.Run()
-		if err != nil {
-			fmt.Println("error running nvm.exe:", err)
-		}
-	}
-
-	// Backup current version to zip
-	fmt.Println("applying update...")
-	currentExe, _ := os.Executable()
-	currentPath := filepath.Dir(currentExe)
-	bkp, err := os.MkdirTemp("", "nvm-backup-*")
-	if err != nil {
-		return fmt.Errorf("error: failed to create backup directory: %v\n", err)
-	}
-	defer os.RemoveAll(bkp)
-
-	err = zipDirectory(currentPath, filepath.Join(bkp, "backup.zip"))
-	if err != nil {
-		return fmt.Errorf("error: failed to create backup: %v\n", err)
-	}
-
-	os.MkdirAll(filepath.Join(currentPath, ".update"), os.ModePerm)
-	copyFile(filepath.Join(bkp, "backup.zip"), filepath.Join(currentPath, ".update", "nvm4w-backup.zip"))
-
-	// Copy the new files to the current directory
-	// copyFile(currentExe, fmt.Sprintf("%s.%s.bak", currentExe, version))
-	copyDirContents(filepath.Join(tmp, "assets"), currentPath)
-	copyFile(filepath.Join(tmp, "assets", "nvm.exe"), filepath.Join(currentPath, ".update/nvm.exe"))
-
-	if verbose {
-		nvmtestcmd := exec.Command(filepath.Join(currentPath, ".update/nvm.exe"), "version")
-		nvmtestcmd.Stdout = os.Stdout
-		nvmtestcmd.Stderr = os.Stderr
-		err = nvmtestcmd.Run()
-		if err != nil {
-			fmt.Println("error running nvm.exe:", err)
-		}
-	}
-
-	// TODO: schedule removal of .backup folder for 30 days from now
-	// TODO: warn user that the restore function is available for 30 days
-
-	// Debugging
-	if verbose {
-		tree(currentPath, "final directory contents:")
-	}
-
-	// Hide the update directory
-	setHidden(filepath.Join(currentPath, ".update"))
-
-	// The upgrade process should be able to roll back if there is a failure.
-	// TODO: Upgrade the registry data to reflect the new version
-	// Potentially provide a desktop notification when the upgrade is complete.
-
-	// If an "update.exe" exists, run it
-	if fsutil.IsExecutable(filepath.Join(tmp, "assets", "update.exe")) {
-		err = copyFile(filepath.Join(tmp, "assets", "update.exe"), filepath.Join(currentPath, ".update", "update.exe"))
-		if err != nil {
-			fmt.Println(fmt.Errorf("error: failed to copy update.exe: %v\n", err))
-			os.Exit(1)
-		}
-	}
-
-	autoupdate()
-
-	return nil
-}
-
 func Get() (*Update, error) {
 	return checkForUpdate(UPDATE_URL)
 }
 
-func autoupdate() {
+func autoupdate(status chan Status) {
 	currentPath, err := os.Executable()
 	if err != nil {
+		status <- Status{Err: err}
 		fmt.Println("error getting updater path:", err)
 		os.Exit(1)
 	}
@@ -334,9 +551,12 @@ func autoupdate() {
 	// Temporary batch file that deletes the directory and the scheduled task
 	tmp, err := os.MkdirTemp("", "nvm4w-remove-*")
 	if err != nil {
+		status <- Status{Err: err}
 		fmt.Printf("error creating temporary directory: %v", err)
 		os.Exit(1)
 	}
+
+	// schedule removal of restoration folder for 30 days from now
 	tempBatchFile := filepath.Join(tmp, "remove_backup.bat")
 	now := time.Now()
 	futureDate := now.AddDate(0, 0, 7)
@@ -350,6 +570,7 @@ rmdir /s /q "%s"
 	// Write the batch file to a temporary location
 	err = os.WriteFile(tempBatchFile, []byte(batchContent), os.ModePerm)
 	if err != nil {
+		status <- Status{Err: err}
 		fmt.Printf("error creating temporary batch file: %v", err)
 		os.Exit(1)
 	}
@@ -422,11 +643,13 @@ echo Update complete >> error.log
 del error.log
 
 del "%%~f0"
+start "nvm://launch?action=upgrade_notify"
 exit /b 0
 `, escapeBackslashes(tempBatchFile), formattedDate, escapeBackslashes(tempBatchFile), formattedDate)
 
 	err = os.WriteFile(scriptPath, []byte(updaterScript), os.ModePerm) // Use standard Windows file permissions
 	if err != nil {
+		status <- Status{Err: err}
 		fmt.Printf("error creating updater script: %v", err)
 		os.Exit(1)
 	}
@@ -435,12 +658,15 @@ exit /b 0
 	cmd := exec.Command(scriptPath, fmt.Sprintf("%d", os.Getpid()), filepath.Join(tempDir, ".update", "nvm.exe"), currentPath)
 	err = cmd.Start()
 	if err != nil {
+		status <- Status{Err: err}
 		fmt.Printf("error starting updater script: %v", err)
 		os.Exit(1)
 	}
 
 	// Exit the current process (delay for cleanup)
 	time.Sleep(300 * time.Millisecond)
+	status <- Status{Text: "Restarting app...", Done: true}
+	time.Sleep(2 * time.Second)
 	os.Exit(0)
 }
 

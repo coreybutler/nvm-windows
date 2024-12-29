@@ -1,4 +1,4 @@
-<div align="center"><h2>Notice: We have started full time work on <a href="https://github.com/coreybutler/nvm-windows/wiki/Runtime">Runtime</a>, the successor to NVM for Windows.</h2>Complete <a href="https://t.co/oGqQCM9FPx">this form</a> to provide your thoughts and sign up for progress updates</div>
+<div align="center"><h2>Notice: We are working full time on <a href="https://github.com/coreybutler/nvm-windows/wiki/Runtime">Runtime</a>, the successor to NVM for Windows.</h2>Complete <a href="https://t.co/oGqQCM9FPx">this form</a> to provide your thoughts and sign up for progress updates</div>
 <br/><br/>
 <h1 align="center">NVM for Windows</h1>
 
@@ -19,10 +19,12 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
 <div align="center">
   <table cellpadding="5" cellspacing="0" border="0" align="center">
     <tr>
-      <td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>
+      <td><a href="https://linkedin.com/company/authorsoftware"><img src="https://github.com/coreybutler/staticassets/blob/master/sponsors/logo_author_software_flat.png" width="200px"/></a></td>
+      <td><a href="https://linkedin.com/company/authorsoftware"><img src="https://avatars.githubusercontent.com/u/8259581?s=200&v=4" width="200px"/></a></td>
+      <!-- <td><a href="https://metadoc.io"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/metadoclogobig.png" width="200px"/></a></td>
       <td><a href="https://enabledb.com"><img src="https://github.com/coreybutler/staticassets/raw/master/images/logos/logo_enabledb_w_text.png" width="200px"/></a></td>
-      <td><a href="https://butlerlogic.com"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/butlerlogic_logo.png" width="200px"/></a></td>
-      <td width="25%" align="center"><a href="https://github.com/microsoft"><img src="https://user-images.githubusercontent.com/770982/195955265-5c3dca78-7140-4ec6-b05a-f308518643ee.png" height="30px"/></a></td>
+      <td><a href="https://butlerlogic.com"><img src="https://github.com/coreybutler/staticassets/raw/master/sponsors/butlerlogic_logo.png" width="200px"/></a></td> -->
+      <td width="33%" align="center"><a href="https://github.com/microsoft"><img src="https://user-images.githubusercontent.com/770982/195955265-5c3dca78-7140-4ec6-b05a-f308518643ee.png" height="30px"/></a></td>
     </tr>
     <tr>
       <td colspan="4" align="center">
@@ -80,7 +82,7 @@ If you attempt to configure the `NVM_SYMLINK` to use an existing directory (like
 _PATH Conflicts_
 If you do not uninstall the original version, running `nvm use` may appear to do nothing at all. Running `node -v` will always show the original installation version. This is due to a [`PATH` conflict](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#why-do-i-need-to-uninstall-nodejs-before-installing-nvm-for-windows) that presents when the same application is installed multiple times. In NVM4W 1.1.11+, run `nvm debug` to determine if you have a `PATH` conflict.
 
-For simpliciy, we recommend uninstalling any existing versions of Node.js before using NVM for Windows. Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory. 
+For simpliciy, we recommend uninstalling any existing versions of Node.js before using NVM for Windows. Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
 :eyes: **Backup any global `npmrc` config** :eyes:
 (e.g. `%AppData%\npm\etc\npmrc`)

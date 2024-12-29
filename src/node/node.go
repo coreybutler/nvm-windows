@@ -34,6 +34,8 @@ func GetCurrentVersion() (string, string) {
 			if err == nil {
 				if string(str) == "x64" {
 					bit = "64"
+				} else if string(str) == "arm64" {
+					bit = "arm64"
 				} else {
 					bit = "32"
 				}

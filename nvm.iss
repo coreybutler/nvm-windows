@@ -1,25 +1,24 @@
 #define MyAppName "NVM for Windows"
 #define MyAppShortName "nvm"
 #define MyAppLCShortName "nvm"
-#define MyAppVersion "1.2.0"
+#define MyAppVersion "{{VERSION}}"
 #define MyAppPublisher "Author Software Inc."
 #define MyAppURL "https://github.com/coreybutler/nvm-windows"
 #define MyAppExeName "nvm.exe"
-#define MyIcon "bin\nodejs.ico"
+#define MyIcon "bin\nvm.ico"
 #define MyAppId "40078385-F676-4C61-9A9C-F9028599D6D3"
 #define ProjectRoot "."
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
-; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 PrivilegesRequired=admin
 ; SignTool=MsSign $f
 ; SignedUninstaller=yes
 AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-AppCopyright=Copyright (C) 2018-2024 Author Software Inc., Ecor Ventures LLC, Corey Butler, and contributors.
+AppCopyright=Copyright (C) 2018-{code:GetCurrentYear} Author Software Inc., Ecor Ventures LLC, Corey Butler, and contributors.
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
@@ -37,12 +36,14 @@ Compression=lzma
 SolidCompression=yes
 ChangesEnvironment=yes
 DisableProgramGroupPage=yes
-ArchitecturesInstallIn64BitMode=x64 ia64
-UninstallDisplayIcon={app}\{#MyIcon}
-VersionInfoVersion={#MyAppVersion}
-VersionInfoCopyright=Copyright (C) 2018-20234 Author Software Inc., Ecor Ventures LLC, Corey Butler, and contributors.
+ArchitecturesInstallIn64BitMode=x64
+UninstallDisplayIcon={#ProjectRoot}\{#MyIcon}
+
+; Version information
+VersionInfoVersion={{VERSION}}.0
+VersionInfoCopyright=Copyright © {code:GetCurrentYear} Author Software Inc., Ecor Ventures LLC, Corey Butler, and contributors.
 VersionInfoCompany=Author Software Inc.
-VersionInfoDescription=Node version manager for Windows
+VersionInfoDescription=Node.js version manager for Windows
 VersionInfoProductName={#MyAppShortName}
 VersionInfoProductTextVersion={#MyAppVersion}
 
@@ -61,10 +62,10 @@ Name: "{group}\Uninstall {#MyAppShortName}"; Filename: "{uninstallexe}"
 
 [Registry]
 ; Register the URL protocol 'nvm'
-Root: HKCR; Subkey: "{#MyAppShortName}"; ValueType: string; ValueName: ""; ValueData: "URL:NVM Protocol"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "{#MyAppShortName}"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
-Root: HKCR; Subkey: "{#MyAppShortName}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
-Root: HKCR; Subkey: "{#MyAppShortName}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+Root: HKCR; Subkey: "{#MyAppShortName}"; ValueType: string; ValueName: ""; ValueData: "URL:nvm"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "{#MyAppShortName}"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCR; Subkey: "{#MyAppShortName}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "{#MyAppShortName}\shell\launch\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey
 
 [Code]
 var
@@ -74,6 +75,11 @@ var
   EmailEdit: TEdit;
   EmailLabel: TLabel;
   PreText: TLabel;
+
+function GetCurrentYear(Param: String): String;
+begin
+  result := GetDateTimeString('yyyy', '-', ':');
+end;
 
 function IsDirEmpty(dir: string): Boolean;
 var
@@ -94,7 +100,7 @@ begin
   end;
 end;
 
-//function getInstalledVErsions(dir: string):
+//function getInstalledVersions(dir: string):
 var
   nodeInUse: string;
 
@@ -299,6 +305,30 @@ begin
   EmailEdit.Text := ''; // Default value
 end;
 
+function LastPos(const SubStr, S: string): Integer;
+var
+  I: Integer;
+begin
+  Result := 0;
+  for I := Length(S) downto 1 do
+  begin
+    if Copy(S, I, Length(SubStr)) = SubStr then
+    begin
+      Result := I;
+      Exit;
+    end;
+  end;
+end;
+
+function IsValidEmail(const Email: string): Boolean;
+var
+  AtPos, DotPos: Integer;
+begin
+  AtPos := Pos('@', Email);
+  DotPos := LastPos('.', Email);
+  Result := (AtPos > 1) and (DotPos > AtPos + 1) and (DotPos < Length(Email));
+end;
+
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   Email: string;
@@ -327,10 +357,14 @@ begin
   if CurPageID = EmailPage.ID then
   begin
     Email := Trim(EmailEdit.Text); // Remove leading/trailing spaces
-    if (Email <> '') and not ((Pos('@', Email) > 1) and (Pos('.', Email) > Pos('@', Email) + 1)) then
+    if (Email <> '') and not IsValidEmail(Email) then
     begin
       MsgBox('Please enter a valid email address or leave the field blank.', mbError, MB_OK);
       Result := False; // Prevent navigation to the next page
+    end
+    else
+    begin
+      WizardForm.NextButton.Enabled := True; // Allow navigation to the next page
     end;
   end;
 
@@ -444,20 +478,28 @@ begin
       RegWriteExpandStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', path);
     end;
   end;
+
 end;
 
-function GetNotificationParameters: string;
+function GetNotificationString(Param: String): String;
 begin
-  Result := '';
+  Result := ' subscribe';
   if NotificationOptionPage.Values[0] then
-    Result := Result + '--lts ';
+  begin
+    Result := Result + ' --lts';
+  end;
   if NotificationOptionPage.Values[1] then
-    Result := Result + '--current ';
+  begin
+    Result := Result + ' --current';
+  end;
   if NotificationOptionPage.Values[2] then
-    Result := Result + '--nvm4w ';
+  begin
+    Result := Result + ' --nvm4w';
+  end;
   if NotificationOptionPage.Values[3] then
-    Result := Result + '--author ';
-  // Trim the trailing space
+  begin
+    Result := Result + ' --author';
+  end;
   Result := Trim(Result);
 end;
 
@@ -476,12 +518,24 @@ begin
   Result := Length(nodeInUse) > 0;
 end;
 
+function isEmailSupplied(): boolean;
+begin
+  Result := Trim(EmailEdit.Text) <> '';
+end;
+
+function GetEmailRegistrationString(Param: String): string;
+begin
+  Result := ' author newsletter --notify ' + Trim(EmailEdit.Text);
+end;
+
 [Run]
-Filename: "{app}\nvm.exe"; Parameters: "register {code:GetNotificationParameters}"; Flags: runhidden;
-Filename: "{cmd}"; Parameters: "/C ""mklink /D ""{code:getSymLink}"" ""{code:getCurrentVersion}"""" "; Check: isNodeAlreadyInUse; Flags: runhidden;
+Filename: "{app}\nvm.exe"; Parameters: "{code:GetNotificationString}"; Flags: waituntilidle runhidden;
+Filename: "{app}\nvm.exe"; Parameters: "{code:GetEmailRegistrationString}"; Check: isEmailSupplied; Flags: waituntilidle runhidden;
+Filename: "{cmd}"; Parameters: "/C ""mklink /D ""{code:getSymLink}"" ""{code:getCurrentVersion}"""" "; Check: isNodeAlreadyInUse; Flags: waituntilidle runhidden;
+Filename: "powershell.exe"; Parameters: "-NoExit -Command Write-Host 'Welcome to NVM for Windows v{{VERSION}}'"; Description: "Open with Powershell"; Flags: postinstall skipifsilent;
 
 [UninstallRun]
-Filename: "{app}\nvm.exe"; Parameters: "unregister --lts --current --nvm4w --author"; Flags: runhidden;
+Filename: "{app}\nvm.exe"; Parameters: "unsubscribe --lts --current --nvm4w --author"; Flags: runhidden; RunOnceId: "UnregisterNVMForWindows";
 
 [UninstallDelete]
 Type: files; Name: "{app}\nvm.exe";
@@ -489,5 +543,5 @@ Type: files; Name: "{app}\elevate.cmd";
 Type: files; Name: "{app}\elevate.vbs";
 Type: files; Name: "{app}\nodejs.ico";
 Type: files; Name: "{app}\settings.txt";
-Type: dir; Name: "{app}";
-Type: regkey; Name: "HKCR\Software\{#MyAppShortName}";
+Type: filesandordirs; Name: "{userappdata}\.nvm";
+Type: filesandordirs; Name: "{app}";
