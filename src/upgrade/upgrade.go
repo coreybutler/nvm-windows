@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"nvm/author"
 	"nvm/semver"
+	"nvm/utility"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -25,7 +26,8 @@ import (
 )
 
 const (
-	UPDATE_URL = "https://gist.githubusercontent.com/coreybutler/a12af0f17956a0f25b60369b5f8a661a/raw/nvm4w.json"
+	UPDATE_URL = "https://api.github.com/repos/coreybutler/nvm-windows/releases/latest"
+	ALERTS_URL = "https://author.io/nvm4w/feed/alerts"
 	// Color codes
 	yellow = "\033[33m"
 	reset  = "\033[0m"
@@ -70,6 +72,12 @@ type Update struct {
 	SourceURL       string   `json:"sourceTpl"`
 }
 
+type Release struct {
+	Version string                   `json:"name"`
+	Assets  []map[string]interface{} `json:"assets"`
+	Publish time.Time                `json:"published_at"`
+}
+
 func Run(version string) error {
 	show_progress := false
 	for _, arg := range os.Args[2:] {
@@ -94,6 +102,32 @@ func Run(version string) error {
 			os.Exit(0)
 		}()
 
+		go func() {
+			for {
+				select {
+				case s := <-status:
+					if s.Warn != "" {
+						Warn(s.Warn)
+					}
+					if s.Err != nil {
+						fmt.Println(s.Err)
+						os.Exit(1)
+					}
+
+					if s.Text != "" {
+						fmt.Println(s.Text)
+					}
+
+					if s.Done {
+						fmt.Println("Upgrade complete")
+						return
+					}
+				}
+			}
+		}()
+
+		time.Sleep(300 * time.Millisecond)
+
 		return run(version, status)
 	}
 
@@ -111,6 +145,13 @@ func Run(version string) error {
 		for {
 			select {
 			case s := <-status:
+				if s.Warn != "" {
+					display(Notification{
+						Message: s.Warn,
+						Icon:    "nvm",
+					})
+				}
+
 				if s.Cancel {
 					display(Notification{
 						Title:   "Installation Canceled",
@@ -162,13 +203,6 @@ func Run(version string) error {
 					time.Sleep(1 * time.Second)
 
 					return
-				}
-
-				if s.Warn != "" {
-					display(Notification{
-						Message: s.Warn,
-						Icon:    "nvm",
-					})
 				}
 
 				var empty string
@@ -236,7 +270,6 @@ func Run(version string) error {
 
 func run(version string, status chan Status, updateMetadata ...*Update) error {
 	args := os.Args[2:]
-
 	colorize := true
 	if err := EnableVirtualTerminalProcessing(); err != nil {
 		colorize = false
@@ -256,7 +289,6 @@ func run(version string, status chan Status, updateMetadata ...*Update) error {
 
 	for _, warning := range update.Warnings {
 		status <- Status{Warn: warning}
-		Warn(warning, colorize)
 	}
 
 	verbose := false
@@ -335,29 +367,27 @@ func run(version string, status chan Status, updateMetadata ...*Update) error {
 			}
 			fmt.Println("")
 		}
+		fmt.Printf("upgrading from v%s-->%s\n", version, highlight(update.Version))
 		status <- Status{Text: "downloading..."}
-		fmt.Printf("upgrading from v%s-->%s\n\ndownloading...\n", version, highlight(update.Version))
 	} else {
 		status <- Status{Text: "nvm is up to date", Done: true}
-		fmt.Println("nvm is up to date")
 		return nil
 	}
 
 	// Make temp directory
 	tmp, err := os.MkdirTemp("", "nvm-upgrade-*")
 	if err != nil {
-		status <- Status{Err: err}
-		return fmt.Errorf("error: failed to create temporary directory: %v\n", err)
+		status <- Status{Err: fmt.Errorf("error: failed to create temporary directory: %v\n", err)}
 	}
 	defer os.RemoveAll(tmp)
 
 	// Download the new app
-	source := fmt.Sprintf(update.SourceURL, update.Version)
+	source := update.SourceURL
+	// source := fmt.Sprintf(update.SourceURL, update.Version)
 	// source := fmt.Sprintf(update.SourceURL, "1.1.11") // testing
 	body, err := get(source)
 	if err != nil {
-		status <- Status{Err: err}
-		return fmt.Errorf("error: failed to download new version: %v\n", err)
+		status <- Status{Err: fmt.Errorf("error: failed to download new version: %v\n", err)}
 	}
 
 	os.WriteFile(filepath.Join(tmp, "assets.zip"), body, os.ModePerm)
@@ -375,49 +405,42 @@ func run(version string, status chan Status, updateMetadata ...*Update) error {
 	checksumFile := filepath.Join(tmp, "assets.zip.checksum.txt") // path to the checksum file
 
 	// Step 1: Compute the MD5 checksum of the file
-	fmt.Println("verifying checksum...")
 	status <- Status{Text: "verifying checksum..."}
 	computedChecksum, err := computeMD5Checksum(filePath)
 	if err != nil {
-		status <- Status{Err: err}
-		return fmt.Errorf("Error computing checksum: %v", err)
+		status <- Status{Err: fmt.Errorf("Error computing checksum: %v", err)}
 	}
 
 	// Step 2: Read the checksum from the .checksum.txt file
 	storedChecksum, err := readChecksumFromFile(checksumFile)
 	if err != nil {
 		status <- Status{Err: err}
-		return fmt.Errorf("Error readirng checksum from file: %v", err)
 	}
 
 	// Step 3: Compare the computed checksum with the stored checksum
 	if strings.ToLower(computedChecksum) != strings.ToLower(storedChecksum) {
 		status <- Status{Err: fmt.Errorf("cannot validate update file (checksum mismatch)")}
-		return fmt.Errorf("cannot validate update file (checksum mismatch)")
 	}
 
-	fmt.Println("extracting update...")
 	status <- Status{Text: "extracting update..."}
 	if err := unzip(filepath.Join(tmp, "assets.zip"), filepath.Join(tmp, "assets")); err != nil {
 		status <- Status{Err: err}
-		return err
 	}
 
 	// Get any additional assets
 	if len(update.Assets) > 0 {
 		status <- Status{Text: fmt.Sprintf("downloading %d additional assets...", len(update.Assets))}
-		fmt.Printf("downloading %d additional assets...\n", len(update.Assets))
 		for _, asset := range update.Assets {
 			var assetURL string
 			if !strings.HasPrefix(asset, "http") {
-				assetURL = fmt.Sprintf(update.SourceURL, asset)
+				assetURL = update.SourceURL
+				// assetURL = fmt.Sprintf(update.SourceURL, asset)
 			} else {
 				assetURL = asset
 			}
 			assetBody, err := get(assetURL)
 			if err != nil {
-				status <- Status{Err: err}
-				return fmt.Errorf("error: failed to download asset: %v\n", err)
+				status <- Status{Err: fmt.Errorf("error: failed to download asset: %v\n", err)}
 			}
 
 			assetPath := filepath.Join(tmp, "assets", asset)
@@ -438,21 +461,18 @@ func run(version string, status chan Status, updateMetadata ...*Update) error {
 	}
 
 	// Backup current version to zip
-	fmt.Println("applying update...")
 	status <- Status{Text: "applying update..."}
 	currentExe, _ := os.Executable()
 	currentPath := filepath.Dir(currentExe)
 	bkp, err := os.MkdirTemp("", "nvm-backup-*")
 	if err != nil {
 		status <- Status{Err: fmt.Errorf("error: failed to create backup directory: %v\n", err)}
-		return fmt.Errorf("error: failed to create backup directory: %v\n", err)
 	}
 	defer os.RemoveAll(bkp)
 
 	err = zipDirectory(currentPath, filepath.Join(bkp, "backup.zip"))
 	if err != nil {
 		status <- Status{Err: fmt.Errorf("error: failed to create backup: %v\n", err)}
-		return fmt.Errorf("error: failed to create backup: %v\n", err)
 	}
 
 	os.MkdirAll(filepath.Join(currentPath, ".update"), os.ModePerm)
@@ -470,7 +490,6 @@ func run(version string, status chan Status, updateMetadata ...*Update) error {
 		err = nvmtestcmd.Run()
 		if err != nil {
 			status <- Status{Err: err}
-			fmt.Println("error running nvm.exe:", err)
 		}
 	}
 
@@ -486,8 +505,7 @@ func run(version string, status chan Status, updateMetadata ...*Update) error {
 	if fsutil.IsExecutable(filepath.Join(tmp, "assets", "update.exe")) {
 		err = copyFile(filepath.Join(tmp, "assets", "update.exe"), filepath.Join(currentPath, ".update", "update.exe"))
 		if err != nil {
-			status <- Status{Err: err}
-			fmt.Println(fmt.Errorf("error: failed to copy update.exe: %v\n", err))
+			status <- Status{Err: fmt.Errorf("error: failed to copy update.exe: %v\n", err)}
 			os.Exit(1)
 		}
 	}
@@ -665,7 +683,7 @@ exit /b 0
 
 	// Exit the current process (delay for cleanup)
 	time.Sleep(300 * time.Millisecond)
-	status <- Status{Text: "Restarting app...", Done: true}
+	status <- Status{Text: "restarting app...", Done: true}
 	time.Sleep(2 * time.Second)
 	os.Exit(0)
 }
@@ -690,33 +708,102 @@ func get(url string, verbose ...bool) ([]byte, error) {
 	if len(verbose) == 0 || verbose[0] {
 		fmt.Printf("  GET %s\n", url)
 	}
-	resp, err := http.Get(url)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return []byte{}, err
+	}
+	req.Header.Set("User-Agent", "nvm-windows")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Pragma", "no-cache")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return []byte{}, fmt.Errorf("error: received status code %d\n", resp.StatusCode)
+		return []byte{}, fmt.Errorf("error: received status code %d", resp.StatusCode)
 	}
 
 	return io.ReadAll(resp.Body)
 }
 
 func checkForUpdate(url string) (*Update, error) {
-	u := Update{}
+	u := Update{Assets: []string{}, Warnings: []string{}, VersionWarnings: []string{}}
+	r := Release{}
 
 	// Make the HTTP GET request
+	utility.DebugLogf("checking for updates at %s", url)
 	body, err := get(url, false)
 	if err != nil {
 		return &u, fmt.Errorf("error: reading response body: %v", err)
 	}
 
 	// Parse JSON into the struct
-	err = json.Unmarshal(body, &u)
+	utility.DebugLogf("Received:\n%s", string(body))
+	err = json.Unmarshal(body, &r)
 	if err != nil {
-		return &u, fmt.Errorf("error: parsing update: %v", err)
+		return &u, fmt.Errorf("error: parsing release: %v", err)
 	}
+
+	u.Version = r.Version
+	utility.DebugLogf("latest version: %s", u.Version)
+
+	// Comment the next line when development is complete
+	// u.Version = "2.0.0"
+	for _, asset := range r.Assets {
+		if value, exists := asset["name"]; exists && value.(string) == "update.exe" {
+			u.Assets = append(u.Assets, value.(string))
+		}
+		if value, exists := asset["name"]; exists && value.(string) == "nvm-noinstall.zip" {
+			u.SourceURL = asset["browser_download_url"].(string)
+		}
+	}
+
+	utility.DebugLogf("source URL: %s", u.SourceURL)
+	utility.DebugLogf("assets: %v", u.Assets)
+
+	// Get alerts
+	utility.DebugLogf("downloading alerts from %s", ALERTS_URL)
+	body, err = get(ALERTS_URL, false)
+	if err != nil {
+		utility.DebugLogf("alert download error: %v", err)
+		return &u, err
+	}
+
+	utility.DebugLogf("Received:\n%s", string(body))
+
+	var alerts map[string][]interface{}
+	err = json.Unmarshal(body, &alerts)
+	if err != nil {
+		utility.DebugLogf("alert parsing error: %v", err)
+	}
+
+	if value, exists := alerts["all"]; exists {
+		for _, warning := range value {
+			warn := warning.(map[string]interface{})
+			if v, exists := warn["message"]; exists {
+				u.Warnings = append(u.Warnings, v.(string))
+			}
+		}
+	}
+
+	if value, exists := alerts[u.Version]; exists {
+		utility.DebugLogf("version warnings exist for %v\n%v", u.Version, value)
+		for _, warning := range value {
+			utility.DebugLogf("warning: %v", warning)
+			warn := warning.(map[string]interface{})
+			if v, exists := warn["message"]; exists {
+				u.VersionWarnings = append(u.VersionWarnings, v.(string))
+			}
+		}
+	}
+
+	utility.DebugLogf("warnings: %v", u.Warnings)
+	utility.DebugLogf("version warnings: %v", u.VersionWarnings)
 
 	return &u, nil
 }

@@ -11,11 +11,14 @@ import (
 	"nvm/arch"
 	"nvm/file"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+
+	"nvm/utility"
 
 	"archive/zip"
 
@@ -213,6 +216,7 @@ func Download(url string, target string, version string) bool {
 }
 
 func GetNodeJS(root string, v string, a string, append bool) bool {
+	utility.DebugLogf("running GetNodeJS with root: %v, v%v, arch: %v, append: %v", root, v, a, append)
 	a = arch.Validate(a)
 
 	vpre := ""
@@ -241,6 +245,8 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 
 	url := getNodeUrl(v, vpre, a, append)
 
+	utility.DebugLogf("download url: %v", url)
+
 	if url == "" {
 		//No url should mean this version/arch isn't available
 		fmt.Println("Node.js v" + v + " " + a + "bit isn't available right now.")
@@ -253,9 +259,11 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 		fmt.Println("Downloading node.js version " + v + " (" + a + "-bit)... ")
 
 		if Download(url, fileName, v) {
+			utility.DebugLog("download succeeded")
 			// Extract the zip file
 			if strings.HasSuffix(url, ".zip") {
 				fmt.Println("Extracting node and npm...")
+				utility.DebugLogf("extracting %v to %v", fileName, root+"\\v"+v)
 				err := unzip(fileName, root+"\\v"+v)
 				if err != nil {
 					fmt.Println("Error extracting from Node archive: " + err.Error())
@@ -264,6 +272,7 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 					if err != nil {
 						fmt.Printf("Failed to remove %v after failed extraction. Please remove manually.", fileName)
 					}
+					utility.DebugLogf("removed %v", fileName)
 
 					return false
 				}
@@ -272,21 +281,36 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 				if err != nil {
 					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", fileName)
 				}
+				utility.DebugLogf("removed %v", fileName)
 
 				zip := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(url), ".zip", "", 1)
+				utility.DebugLogf("moving %v to %v", zip, root+"\\v"+v)
 				err = fs.Move(zip, root+"\\v"+v, true)
 				if err != nil {
 					fmt.Println("ERROR moving file: " + err.Error())
 				}
+				utility.DebugLog("move succeeded")
 
 				err = os.RemoveAll(zip)
 				if err != nil {
 					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", zip)
 				}
+				utility.DebugLogf("removed %v", zip)
+
+				utility.DebugFn(func() {
+					cmd := exec.Command("cmd", "/C", "dir", root+"\\v"+v)
+					out, err := cmd.CombinedOutput()
+					if err != nil {
+						utility.DebugLog(err.Error())
+					} else {
+						utility.DebugLog(string(out))
+					}
+				})
 			}
 			fmt.Println("Complete")
 			return true
 		} else {
+			utility.DebugLog("download failed")
 			return false
 		}
 	}
@@ -296,8 +320,11 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 
 func GetNpm(root string, v string) bool {
 	url := GetFullNpmUrl("v" + v + ".zip")
+
 	// temp directory to download the .zip file
 	tempDir := root + "\\temp"
+
+	utility.DebugLogf("downloading npm from %v to %v", url, tempDir)
 
 	// if the temp directory doesn't exist, create it
 	if !file.Exists(tempDir) {
@@ -312,9 +339,11 @@ func GetNpm(root string, v string) bool {
 
 	fmt.Printf("Downloading npm version " + v + "... ")
 	if Download(url, fileName, v) {
+		utility.DebugLog("npm download succeeded")
 		fmt.Printf("Complete\n")
 		return true
 	} else {
+		utility.DebugLog("npm download failed")
 		return false
 	}
 }

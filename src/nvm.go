@@ -26,6 +26,7 @@ import (
 	"nvm/file"
 	"nvm/node"
 	"nvm/upgrade"
+	"nvm/utility"
 	"nvm/web"
 
 	"github.com/blang/semver"
@@ -172,9 +173,18 @@ func init() {
 			}
 		}
 	}
+
+	// Turn on debugging output
+	for _, arg := range os.Args[1:] {
+		if strings.ToLower(strings.ReplaceAll(arg, "-", "")) == "verbose" {
+			utility.EnableDebugLogs()
+			break
+		}
+	}
 }
 
 func main() {
+	utility.DebugLogf("command: %v", strings.Join(os.Args, " "))
 	args := os.Args
 	detail := ""
 	procarch := arch.Validate(env.arch)
@@ -192,6 +202,8 @@ func main() {
 		help()
 		return
 	}
+
+	utility.DebugLogf("arch: %v", procarch)
 
 	if args[1] != "version" && args[1] != "--version" && args[1] != "v" && args[1] != "-v" && args[1] != "--v" {
 		setup()
@@ -689,11 +701,28 @@ func install(version string, cpuarch string) {
 					return
 				}
 			}
+			if (cpuarch == "arm64" || cpuarch == "all") && !node.IsVersionInstalled(root, version, "arm64") {
+				success := web.GetNodeJS(root, version, "arm64", append64)
+				if !success {
+					status <- Status{Err: fmt.Errorf("failed to download v%v arm 64-bit executable", version)}
+					return
+				}
+			}
 
 			if file.Exists(filepath.Join(root, "v"+version, "node_modules", "npm")) {
+				utility.DebugLogf("move %v to %v", filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version))
 				if rnerr := os.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version)); rnerr != nil {
 					status <- Status{Err: err}
 				}
+				utility.DebugFn(func() {
+					cmd := exec.Command("cmd", "/C", "dir", filepath.Join(env.root, "v"+version))
+					out, err := cmd.CombinedOutput()
+					if err != nil {
+						utility.DebugLog(err.Error())
+					} else {
+						utility.DebugLog(string(out))
+					}
+				})
 
 				if show_progress {
 					status <- Status{Text: "Configuring npm..."}
@@ -1577,11 +1606,16 @@ func checkLocalEnvironment() {
 		}
 	} else {
 		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			targetPath, _ := os.Readlink(symlink)
-			targetFileInfo, _ := os.Lstat(targetPath)
-
-			if !targetFileInfo.Mode().IsDir() {
-				problems = append(problems, "NVM_SYMLINK is a symlink linking to a file instead of a directory.")
+			targetPath, err := os.Readlink(symlink)
+			if err != nil {
+				problems = append(problems, fmt.Sprintf("SYMLINK_READ Error: %v", err))
+			} else {
+				targetFileInfo, err := os.Lstat(targetPath)
+				if err != nil {
+					problems = append(problems, fmt.Sprintf("SYMLINK_READ Error: %v", err))
+				} else if !targetFileInfo.Mode().IsDir() {
+					problems = append(problems, "NVM_SYMLINK is a symlink linking to a file instead of a directory.")
+				}
 			}
 		} else {
 			problems = append(problems, "NVM_SYMLINK ("+symlink+") is not a valid symlink.")
@@ -1654,6 +1688,7 @@ func checkLocalEnvironment() {
 		colorize = false
 	}
 	update, checkerr := upgrade.Get()
+
 	if checkerr == nil {
 		if len(update.Warnings) > 0 {
 			fmt.Println("")
@@ -1661,7 +1696,10 @@ func checkLocalEnvironment() {
 		for _, warning := range update.Warnings {
 			upgrade.Warn(warning, colorize)
 		}
-		if len(update.Warnings) > 0 {
+		for _, warning := range update.VersionWarnings {
+			upgrade.Warn(warning, colorize)
+		}
+		if len(update.Warnings) > 0 || len(update.VersionWarnings) > 0 {
 			fmt.Println("")
 		}
 	}
