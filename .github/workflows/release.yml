@@ -293,8 +293,8 @@ jobs:
       uses: azure/trusted-signing-action@v0.5.0
       with:
         azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        azure-client-id: ${{ secrets.INSTALLER_AZURE_CLIENT_ID }}
+        azure-client-secret: ${{ secrets.INSTALLER_AZURE_CLIENT_SECRET }}
         endpoint: ${{ secrets.AZURE_ENDPOINT }}
         trusted-signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
         certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
