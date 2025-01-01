@@ -62,12 +62,12 @@ jobs:
         Write-Host "Identified Tag: $env:TAG"
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: '${{ env.GO_VERSION }}'
 
     - name: Cache Go Modules
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cache/go-build
@@ -77,7 +77,7 @@ jobs:
           ${{ runner.os }}-go-
 
     - name: Cache QuikGo
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/go/bin

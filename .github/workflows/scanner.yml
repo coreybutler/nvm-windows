@@ -15,7 +15,7 @@ jobs:
     steps:
     - name: Get latest release details
       id: get_latest_release
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const { data: latestRelease } = await github.rest.repos.getLatestRelease({
@@ -75,7 +75,7 @@ jobs:
         echo "NOTES=$notes" >> $GITHUB_OUTPUT
 
     - name: Update release body
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.get_latest_release.outputs.tag }}
         body: |
