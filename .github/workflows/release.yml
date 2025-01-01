@@ -10,6 +10,8 @@ jobs:
   build:
     runs-on: windows-latest
 
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     permissions:
       id-token: write
       contents: write
