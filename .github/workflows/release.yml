@@ -60,7 +60,7 @@ jobs:
         Write-Host "Identified Tag: $env:TAG"
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: '${{ env.GO_VERSION }}'
 
