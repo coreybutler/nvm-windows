@@ -711,10 +711,11 @@ func install(version string, cpuarch string) {
 
 			if file.Exists(filepath.Join(root, "v"+version, "node_modules", "npm")) {
 				utility.DebugLogf("move %v to %v", filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version))
-				if rnerr := os.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version)); rnerr != nil {
+				if rnerr := utility.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version)); rnerr != nil {
 					status <- Status{Err: err}
 				}
 				utility.DebugFn(func() {
+					utility.DebugLogf("env root: %v", env.root)
 					cmd := exec.Command("cmd", "/C", "dir", filepath.Join(env.root, "v"+version))
 					out, err := cmd.CombinedOutput()
 					if err != nil {
@@ -768,13 +769,13 @@ func install(version string, cpuarch string) {
 				}
 
 				// Standard npm support
-				os.Rename(filepath.Join(tempNpmBin, "npm"), filepath.Join(root, "v"+version, "npm"))
-				os.Rename(filepath.Join(tempNpmBin, "npm.cmd"), filepath.Join(root, "v"+version, "npm.cmd"))
+				utility.Rename(filepath.Join(tempNpmBin, "npm"), filepath.Join(root, "v"+version, "npm"))
+				utility.Rename(filepath.Join(tempNpmBin, "npm.cmd"), filepath.Join(root, "v"+version, "npm.cmd"))
 
 				// npx support
 				if _, err := os.Stat(filepath.Join(tempNpmBin, "npx")); err == nil {
-					os.Rename(filepath.Join(tempNpmBin, "npx"), filepath.Join(root, "v"+version, "npx"))
-					os.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(root, "v"+version, "npx.cmd"))
+					utility.Rename(filepath.Join(tempNpmBin, "npx"), filepath.Join(root, "v"+version, "npx"))
+					utility.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(root, "v"+version, "npx.cmd"))
 				}
 
 				npmSourcePath := filepath.Join(tempDir, "nvm-npm", "npm-"+npmv)
@@ -783,21 +784,20 @@ func install(version string, cpuarch string) {
 					npmSourcePath = filepath.Join(tempDir, "nvm-npm", "cli-"+npmv)
 				}
 
-				moveNpmErr := os.Rename(npmSourcePath, filepath.Join(root, "v"+version, "node_modules", "npm"))
+				moveNpmErr := utility.Rename(npmSourcePath, filepath.Join(root, "v"+version, "node_modules", "npm"))
 				if moveNpmErr != nil {
 					// sometimes Windows can take some time to enable access to large amounts of files after unzip, use exponential backoff to wait until it is ready
 					for _, i := range [5]int{1, 2, 4, 8, 16} {
 						time.Sleep(time.Duration(i) * time.Second)
-						moveNpmErr = os.Rename(npmSourcePath, filepath.Join(root, "v"+version, "node_modules", "npm"))
+						moveNpmErr = utility.Rename(npmSourcePath, filepath.Join(root, "v"+version, "node_modules", "npm"))
 						if moveNpmErr == nil {
 							break
 						}
 					}
-
 				}
 
 				if err == nil && moveNpmErr == nil {
-					err = os.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version))
+					err = utility.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version))
 					if err != nil {
 						status <- Status{Err: err}
 					}
@@ -812,7 +812,7 @@ func install(version string, cpuarch string) {
 					status <- Status{Err: fmt.Errorf("Failed to extract npm: %v", err), Done: true}
 				}
 			} else {
-				err = os.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version))
+				err = utility.Rename(filepath.Join(root, "v"+version), filepath.Join(env.root, "v"+version))
 				if err != nil {
 					status <- Status{Err: err}
 				}
@@ -1233,15 +1233,15 @@ func use(version string, cpuarch string, reload ...bool) {
 		nodeexists := file.Exists(nodepath)
 		if node32exists && cpuarch == "32" { // user wants 32, but node.exe is 64
 			if nodeexists {
-				os.Rename(nodepath, node64path) // node.exe -> node64.exe
+				utility.Rename(nodepath, node64path) // node.exe -> node64.exe
 			}
-			os.Rename(node32path, nodepath) // node32.exe -> node.exe
+			utility.Rename(node32path, nodepath) // node32.exe -> node.exe
 		}
 		if node64exists && cpuarch == "64" { // user wants 64, but node.exe is 32
 			if nodeexists {
-				os.Rename(nodepath, node32path) // node.exe -> node32.exe
+				utility.Rename(nodepath, node32path) // node.exe -> node32.exe
 			}
-			os.Rename(node64path, nodepath) // node64.exe -> node.exe
+			utility.Rename(node64path, nodepath) // node64.exe -> node.exe
 		}
 
 		status <- Status{Done: true}
