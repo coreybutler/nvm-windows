@@ -845,6 +845,11 @@ func unzip(src string, dest string) error {
 		// Build the path for each file in the destination directory
 		fpath := filepath.Join(dest, f.Name)
 
+		// Validate the file path to prevent directory traversal
+		if strings.Contains(f.Name, "..") {
+			return fmt.Errorf("invalid file path: %s", f.Name)
+		}
+
 		// Check if the file is a directory
 		if f.FileInfo().IsDir() {
 			// Create directory if it doesn't exist
