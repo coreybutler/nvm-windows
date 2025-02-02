@@ -61,10 +61,11 @@ func Bit(path string) string {
 }
 
 func Validate(str string) (string){
+  procstr := strings.ToLower(os.Getenv("PROCESSOR_IDENTIFIER"))
   if str == "" {
     str = strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))
   }
-  if strings.Contains(str, "arm64") {
+  if strings.Contains(str, "arm64") || strings.Contains(procstr, "arm") {
 	  return "arm64"
   }
   if strings.Contains(str, "64") {
