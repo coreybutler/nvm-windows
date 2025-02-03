@@ -2,11 +2,11 @@ package arch
 
 import (
 	//"regexp"
-	"os"
-	//"os/exec"
-	"strings"
-	//"fmt"
 	"encoding/hex"
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 func SearchBytesInFile( path string, match string, limit int) bool {
@@ -61,15 +61,35 @@ func Bit(path string) string {
 }
 
 func Validate(str string) (string){
-  procstr := strings.ToLower(os.Getenv("PROCESSOR_IDENTIFIER"))
+  osArch, err := GetOSArchitecture()
+  if err != nil {
+  	fmt.Println("Failed to get OS architecture:", err)
+  }  
   if str == "" {
     str = strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))
   }
-  if strings.Contains(str, "arm64") || strings.Contains(procstr, "arm") {
+  if strings.Contains(str, "arm64") || strings.Contains(strings.ToLower(osArch), "arm") {
 	  return "arm64"
   }
   if strings.Contains(str, "64") {
     return "64"
   } 
   return "32"
+}
+
+func GetOSArchitecture() (string, error) {
+	cmd := exec.Command("wmic", "os", "get", "osarchitecture")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.Contains(line, "OSArchitecture") {
+			continue
+		}
+		return line, nil
+	}
+	return "", fmt.Errorf("failed to find OS architecture")
 }
