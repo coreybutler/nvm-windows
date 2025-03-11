@@ -950,6 +950,9 @@ func versionNumberFrom(version string) string {
 
 	if reg.MatchString(version[:1]) {
 		if version[0:1] != "v" {
+			if version == "latest" {
+				return getLatest()
+			}
 			url := web.GetFullNodeUrl("latest-" + version + "/SHASUMS256.txt")
 			remoteContent, err := web.GetRemoteTextFile(url)
 			if err != nil {
