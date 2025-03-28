@@ -1,0 +1,38 @@
+body {
+    font-family: 'Arial', sans-serif;
+    direction: rtl;
+    text-align: center;
+}
+
+.hero img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #d32f2f;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.payment .bank-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.payment img {
+    width: 150px;
+    border-radius: 10px;
+}
+
+.bank-login img {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
