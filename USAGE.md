@@ -124,9 +124,6 @@ Global packages are not shared between versions. Reinstall for each:
 - `nvm use 20`
 - `npm install -g yarn`
 
-### Using .nvmrc for Project-Specific Versions
-Create a `.nvmrc` file in your project root with the version (e.g., `18`). Then run `nvm use` in that directory.
-
 ## Troubleshooting
 - **Permission Issues:** Run as Administrator.
 - **PATH Conflicts:** Run `nvm debug` and uninstall conflicting Node.js installations.
@@ -140,4 +137,4 @@ Create a `.nvmrc` file in your project root with the version (e.g., `18`). Then 
 - [Contributing](CONTRIBUTING.md)
 - [Support](SUPPORT.md)
 
-This document is based on NVM for Windows version 1.1.11+. Check for updates in the README.md. 
+This document is based on NVM for Windows version 1.1.11+. Check for updates in the README.md.
