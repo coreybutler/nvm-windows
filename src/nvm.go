@@ -750,7 +750,7 @@ func install(version string, cpuarch string) {
 				defer os.RemoveAll(tempDir)
 
 				// Extract npm to the temp directory
-				err = file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
+				err = file.Unzip(filepath.Join(root+"\\temp", "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
 				if err != nil {
 					status <- Status{Err: err}
 				}
