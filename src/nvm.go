@@ -668,7 +668,8 @@ func install(version string, cpuarch string) {
 			}
 
 			// Make the output directories
-			root, err := os.MkdirTemp("", "nvm-install-*")
+			const installSubdirectory="nvm-install"
+			root, err := os.MkdirTemp("", installSubdirectory+"-*")
 			if err != nil {
 				status <- Status{Err: err}
 			}
@@ -738,29 +739,30 @@ func install(version string, cpuarch string) {
 			// If successful, add npm
 			status <- Status{Text: "Downloading npm..."}
 			npmv := getNpmVersion(version)
-			success := web.GetNpm(root, getNpmVersion(version))
+
+			// new temp directory under the nvm root
+			tempDir, err := os.MkdirTemp("","nvm-npm-*")
+			if err != nil {
+				status <- Status{Err: err}
+			}
+			defer os.RemoveAll(tempDir)
+
+			success := web.GetNpm(tempDir, getNpmVersion(version))
 			if success {
 				status <- Status{Text: fmt.Sprintf("Installing npm v%s...", npmv)}
 
-				// new temp directory under the nvm root
-				tempDir, err := os.MkdirTemp("", "nvm-npm-*")
-				if err != nil {
-					status <- Status{Err: err}
-				}
-				defer os.RemoveAll(tempDir)
 
-				// Extract npm to the temp directory
-				err = file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
+				err = file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, installSubdirectory))
 				if err != nil {
 					status <- Status{Err: err}
 				}
 
 				// Copy the npm and npm.cmd files to the installation directory
-				tempNpmBin := filepath.Join(tempDir, "nvm-npm", "cli-"+npmv, "bin")
+				tempNpmBin := filepath.Join(tempDir, installSubdirectory, "cli-"+npmv, "bin")
 
 				// Support npm < 6.2.0
 				if file.Exists(tempNpmBin) == false {
-					tempNpmBin = filepath.Join(tempDir, "nvm-npm", "npm-"+npmv, "bin")
+					tempNpmBin = filepath.Join(tempDir, installSubdirectory, "npm-"+npmv, "bin")
 				}
 
 				if file.Exists(tempNpmBin) == false {
@@ -778,10 +780,10 @@ func install(version string, cpuarch string) {
 					utility.Rename(filepath.Join(tempNpmBin, "npx.cmd"), filepath.Join(root, "v"+version, "npx.cmd"))
 				}
 
-				npmSourcePath := filepath.Join(tempDir, "nvm-npm", "npm-"+npmv)
+				npmSourcePath := filepath.Join(tempDir, installSubdirectory, "npm-"+npmv)
 
 				if file.Exists(npmSourcePath) == false {
-					npmSourcePath = filepath.Join(tempDir, "nvm-npm", "cli-"+npmv)
+					npmSourcePath = filepath.Join(tempDir, installSubdirectory, "cli-"+npmv)
 				}
 
 				moveNpmErr := utility.Rename(npmSourcePath, filepath.Join(root, "v"+version, "node_modules", "npm"))
