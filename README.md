@@ -83,7 +83,7 @@ If you attempt to configure the `NVM_SYMLINK` to use an existing directory (like
 _PATH Conflicts_
 If you do not uninstall the original version, running `nvm use` may appear to do nothing at all. Running `node -v` will always show the original installation version. This is due to a [`PATH` conflict](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#why-do-i-need-to-uninstall-nodejs-before-installing-nvm-for-windows) that presents when the same application is installed multiple times. In NVM4W 1.1.11+, run `nvm debug` to determine if you have a `PATH` conflict.
 
-For simpliciy, we recommend uninstalling any existing versions of Node.js before using NVM for Windows. Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
+For simplicity, we recommend uninstalling any existing versions of Node.js before using NVM for Windows. Delete any existing Node.js installation directories (e.g., `%ProgramFiles%\nodejs`) that might remain. NVM's generated symlink will not overwrite an existing (even empty) installation directory.
 
 :eyes: **Backup any global `npmrc` config** :eyes:
 (e.g. `%AppData%\npm\etc\npmrc`)
@@ -156,9 +156,9 @@ See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how
 
 ### Build from source
 
-- Install go from http://golang.org
+- Install go from https://golang.org
 - Download source / Git Clone the repo
-- Change GOARCH to amd64 in build.bat if you feel like building a 64-bit executable
+- Change `GOARCH` to `amd64` in `build.bat` if you feel like building a 64-bit executable
 - Fire up a Windows command prompt and change directory to project dir
 - Execute `go get github.com/blang/semver`
 - Execute `go get github.com/olekukonko/tablewriter`
@@ -170,7 +170,7 @@ See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how
 ## :bulb: Why another version manager?
 
 There are several version managers for node.js. Tools like [nvm](https://github.com/creationix/nvm) and [n](https://github.com/tj/n)
-only run on Mac OSX and Linux. Windows users are left in the cold? No. [nvmw](https://github.com/hakobera/nvmw) and [nodist](https://github.com/marcelklehr/nodist)
+only run on macOS and Linux. Windows users are left in the cold? No. [nvmw](https://github.com/hakobera/nvmw) and [nodist](https://github.com/marcelklehr/nodist)
 are both designed for Windows. So, why another version manager for Windows?
 
 The architecture of most node version managers for Windows rely on `.bat` files, which do some clever tricks to set or mimic environment variables. Some of them use node itself (once it's downloaded), which is admirable, but prone to problems. Right around node 0.10.30, the installation structure changed a little, causing some of these to just stop working with anything new.
