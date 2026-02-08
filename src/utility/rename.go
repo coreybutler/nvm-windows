@@ -8,12 +8,12 @@ import (
 )
 
 func Rename(old, new string) error {
-	old_drive := filepath.VolumeName(old)
-	new_drive := filepath.VolumeName(new)
-
-	if old_drive == new_drive {
-		return os.Rename(old, new)
+	err := os.Rename(old, new)
+	if err == nil {
+		return nil
 	}
+
+	DebugLogf("rename failed: %w; fallback to copy", err)
 
 	// Get file or directory info
 	info, err := os.Stat(old)
