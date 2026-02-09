@@ -321,21 +321,18 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 func GetNpm(root string, v string) bool {
 	url := GetFullNpmUrl("v" + v + ".zip")
 
-	// temp directory to download the .zip file
-	tempDir := root + "\\temp"
-
-	utility.DebugLogf("downloading npm from %v to %v", url, tempDir)
+	utility.DebugLogf("downloading npm from %v to %v", url, root)
 
 	// if the temp directory doesn't exist, create it
-	if !file.Exists(tempDir) {
-		fmt.Println("Creating " + tempDir + "\n")
-		err := os.Mkdir(tempDir, os.ModePerm)
+	if !file.Exists(root) {
+		fmt.Println("Creating " + root + "\n")
+		err := os.Mkdir(root, os.ModePerm)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 	}
-	fileName := tempDir + "\\" + "npm-v" + v + ".zip"
+	fileName := root + "\\" + "npm-v" + v + ".zip"
 
 	fmt.Printf("Downloading npm version " + v + "... ")
 	if Download(url, fileName, v) {
