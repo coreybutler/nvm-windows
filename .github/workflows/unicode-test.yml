@@ -1,0 +1,157 @@
+name: Unicode Path Tests
+
+on:
+  push:
+    branches: [ main, master, fix/unicode-special-characters ]
+    paths:
+      - 'src/encoding/**'
+      - 'src/nvm.go'
+      - '.github/workflows/unicode-test.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/encoding/**'
+      - 'src/nvm.go'
+      - '.github/workflows/unicode-test.yml'
+
+jobs:
+  test-unicode-encoding:
+    name: Test Unicode Encoding
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+          cache-dependency-path: src/go.sum
+      
+      - name: Get dependencies
+        run: |
+          cd src
+          go get -v -t -d ./...
+      
+      - name: Run encoding tests
+        run: |
+          cd src/encoding
+          go test -v -race -coverprofile=coverage.txt -covermode=atomic
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./src/encoding/coverage.txt
+          flags: encoding
+          name: encoding-coverage
+      
+      - name: Test with special character paths
+        shell: powershell
+        run: |
+          Write-Host "Testing special character path handling..."
+          
+          # Create test directory with special characters
+          $testChars = @("Müller", "José", "René", "Åsa", "Silvère")
+          
+          foreach ($name in $testChars) {
+            $testPath = Join-Path $env:TEMP "nvm_test_$name"
+            
+            Write-Host "Testing with: $name"
+            
+            # Create directory
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            
+            # Test if path is accessible
+            if (Test-Path $testPath) {
+              Write-Host "✓ Created and accessed: $testPath"
+              Remove-Item -Path $testPath -Force
+            } else {
+              Write-Error "✗ Failed to access: $testPath"
+              exit 1
+            }
+          }
+          
+          Write-Host "All special character path tests passed!"
+
+  build-test:
+    name: Build and Quick Test
+    runs-on: windows-latest
+    needs: test-unicode-encoding
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+          cache-dependency-path: src/go.sum
+      
+      - name: Build NVM
+        run: |
+          cd src
+          go build -v -o ../nvm.exe
+      
+      - name: Test basic functionality
+        shell: powershell
+        run: |
+          if (Test-Path ./nvm.exe) {
+            Write-Host "✓ Build successful"
+            
+            # Test version command
+            $version = & ./nvm.exe version
+            Write-Host "NVM Version: $version"
+            
+            if ($version) {
+              Write-Host "✓ Version command works"
+            } else {
+              Write-Error "✗ Version command failed"
+              exit 1
+            }
+          } else {
+            Write-Error "✗ Build failed - nvm.exe not found"
+            exit 1
+          }
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nvm-windows-unicode-fix
+          path: nvm.exe
+          retention-days: 7
+
+  test-matrix:
+    name: Test on Windows Versions
+    runs-on: ${{ matrix.os }}
+    needs: test-unicode-encoding
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2019, windows-2022, windows-latest]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      
+      - name: Run encoding tests on ${{ matrix.os }}
+        run: |
+          cd src/encoding
+          go test -v
+      
+      - name: Display system info
+        shell: powershell
+        run: |
+          Write-Host "OS: ${{ matrix.os }}"
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
+          Write-Host "Console Output Encoding: $([Console]::OutputEncoding.EncodingName)"
+          Write-Host "System Locale: $((Get-Culture).Name)"
