@@ -1,0 +1,681 @@
+
+Firebase
+
+
+Documentation
+
+Firebase
+Firebase
+Documentation
+Reference
+Was this helpful?
+
+Send feedback
+Firebase CLI reference
+
+bookmark
+
+
+The Firebase CLI (GitHub) provides a variety of tools for managing, viewing, and deploying to Firebase projects.
+
+Before using the Firebase CLI, set up a Firebase project.
+
+Set up or update the CLI
+Install the Firebase CLI
+You can install the Firebase CLI using a method that matches your operating system, experience level, and/or use case. Regardless of how you install the CLI, you have access to the same functionality and the firebase command.
+
+Windows macOS Linux
+
+Windows
+You can install the Firebase CLI for Windows using one of the following options:
+
+Option	Description	Recommended for...
+standalone binary	Download the standalone binary for the CLI. Then, you can access the executable to open a shell where you can run the firebase command.	New developers
+
+Developers not using or unfamiliar with Node.js
+npm	Use npm (the Node Package Manager) to install the CLI and enable the globally available firebase command.	Developers using Node.js
+standalone binary
+npm
+To use npm (the Node Package Manager) to install the Firebase CLI, follow these steps:
+
+Install Node.js using nvm-windows (the Node Version Manager). Installing Node.js automatically installs the npm command tools.
+
+Note: The Firebase CLI requires Node.js v16.13.0 or later. Some Firebase features might require specific versions of Node.js, so check each Firebase product's getting started page for any specific Node.js requirements.
+Install the Firebase CLI via npm by running the following command:
+
+
+npm install -g firebase-tools
+This command enables the globally available firebase command.
+
+Note: If the npm install -g firebase-tools command fails, you might need to change npm permissions.
+Continue to log in and test the CLI.
+
+macOS or Linux
+You can install the Firebase CLI for macOS or Linux using one of the following options:
+
+Option	Description	Recommended for...
+automatic install script	Run a single command that automatically detects your operating system, downloads the latest CLI release, then enables the globally available firebase command.	New developers
+
+Developers not using or unfamiliar with Node.js
+
+Automated deploys in a CI/CD environment
+standalone binary	Download the standalone binary for the CLI. Then, you can configure and run the binary to suit your workflow.	Fully customizable workflows using the CLI
+npm	Use npm (the Node Package Manager) to install the CLI and enable the globally available firebase command.	Developers using Node.js
+auto install script
+npm
+More
+To use npm (the Node Package Manager) to install the Firebase CLI, follow these steps:
+
+Install Node.js using nvm (the Node Version Manager).
+Installing Node.js automatically installs the npm command tools.
+
+Note: The Firebase CLI requires Node.js v16.13.0 or later. Some Firebase features might require specific versions of Node.js, so check each Firebase product's getting started page for any specific Node.js requirements.
+Install the Firebase CLI via npm by running the following command:
+
+
+npm install -g firebase-tools
+This command enables the globally available firebase command.
+
+Note: If the npm install -g firebase-tools command fails, you might need to change npm permissions.
+Continue to log in and test the CLI.
+
+Log in and test the Firebase CLI
+After installing the CLI, you must authenticate. Then you can confirm authentication by listing your Firebase projects.
+
+Log into Firebase using your Google account by running the following command:
+
+
+firebase login
+This command connects your local machine to Firebase and grants you access to your Firebase projects.
+
+Note: The firebase login command opens a web page that connects to localhost on your machine. If you're using a remote machine and don't have access to localhost, run the command with the flag --no-localhost.
+Note: You can also use the Firebase CLI with CI systems.
+Test that the CLI is properly installed and accessing your account by listing your Firebase projects. Run the following command:
+
+
+firebase projects:list
+The displayed list should be the same as the Firebase projects listed in the Firebase console.
+
+Update to the latest CLI version
+Generally, you want to use the most up-to-date Firebase CLI version.
+
+In many cases, new features and bug fixes are available only with the latest version of the Firebase CLI. It's a good practice to frequently update the CLI to its latest version.
+How you update the CLI version depends on your operating system and how you installed the CLI.
+
+Windows
+macOS
+Linux
+standalone binary: Download the new version, then replace it on your system
+npm: Run npm install -g firebase-tools
+Use the CLI with CI systems
+The Firebase CLI requires a browser to complete authentication, but the CLI is fully compatible with CI and other headless environments.
+
+On a machine with a browser, install the Firebase CLI.
+
+Start the signin process by running the following command:
+
+
+firebase login:ci
+Visit the URL provided, then log in using a Google account.
+
+Print a new refresh token. The current CLI session will not be affected.
+
+Store the output token in a secure but accessible way in your CI system.
+
+Use this token when running firebase commands. You can use either of the following two options:
+
+Option 1: Store the token as the environment variable FIREBASE_TOKEN. Your system will automatically use the token.
+
+Option 2: Run all firebase commands with the --token TOKEN flag in your CI system.
+This is the order of precedence for token loading: flag, environment variable, desired Firebase project.
+
+Note: On any machine with the Firebase CLI installed, you can immediately revoke access for the specified token by running the following command: firebase logout --token TOKEN
+Initialize a Firebase project
+Many common tasks performed using the CLI, such as deploying to a Firebase project, require a project directory. You establish a project directory using the firebase init command. A project directory is usually the same directory as your source control root, and after running firebase init, the directory contains a firebase.json configuration file.
+
+To initialize a new Firebase project, run the following command from within your app's directory:
+
+
+firebase init
+Note: The firebase init command does not create a new directory. If you're starting a new app, you must first make a directory, then run firebase init from within that directory.
+The firebase init command steps you through setting up your project directory and some Firebase products. During project initialization, the Firebase CLI asks you to complete the following tasks:
+
+Select desired Firebase products to set up in your Firebase project.
+
+This step prompts you to set configurations for specific files for the selected products. For more details on these configurations, refer to the specific product's documentation (for example, Hosting). Note that you can always run firebase init later to set up more Firebase products.
+
+Select a default Firebase project.
+
+This step associates the current project directory with a Firebase project so that project-specific commands (like firebase deploy) run against the appropriate Firebase project.
+
+It's also possible to associate multiple Firebase projects (such as a staging project and a production project) with the same project directory.
+
+At the end of initialization, Firebase automatically creates the following two files at the root of your local app directory:
+
+A firebase.json configuration file that lists your project configuration.
+
+A .firebaserc file that stores your project aliases.
+
+The firebase.json file
+The firebase init command creates a firebase.json configuration file in the root of your project directory.
+
+The firebase.json file is required to deploy assets with the Firebase CLI because it specifies which files and settings from your project directory are deployed to your Firebase project. Since some settings can be defined in either your project directory or the Firebase console, make sure that you resolve any potential deployment conflicts.
+
+You can configure most Firebase Hosting options directly in the firebase.json file. However, for other Firebase services that can be deployed with the Firebase CLI, the firebase init command creates specific files where you can define settings for those services, such as an index.js file for Cloud Functions. You can also set up predeploy or postdeploy hooks in the firebase.json file.
+
+Note: If you run firebase init again for any Firebase service, the command will overwrite the corresponding section of the firebase.json file back to the default configuration for that service.
+The following is an example firebase.json file with default settings if you select Firebase Hosting, Cloud Firestore, and Cloud Functions for Firebase (with TypeScript source and lint options selected) during initialization.
+
+{
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  },
+  "firestore": {
+      "rules": "firestore.rules",
+      "indexes": "firestore.indexes.json"
+  },
+  "functions": {
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run lint",
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ]
+  }
+}
+While firebase.json is used by default, you can pass the --config PATH flag to specify an alternate configuration file.
+
+Configuration for multiple Cloud Firestore databases
+When you run firebase init, your firebase.json file will contain a single firestore key corresponding to your project's default database, as shown above.
+
+If your project contains multiple Cloud Firestore databases, edit your firebase.json file to associate different Cloud Firestore Security Rules and database index source files with each database. Modify the file with a JSON array, with one entry for each database.
+
+
+      "firestore": [
+        {
+          "database": "default",
+          "rules": "firestore.default.rules",
+          "indexes": "firestore.default.indexes.json"
+        },
+        {
+          "database": "ecommerce",
+          "rules": "firestore.ecommerce.rules",
+          "indexes": "firestore.ecommerce.indexes.json"
+        }
+      ],
+Cloud Functions files to ignore on deploy
+At function deployment time, the CLI automatically specifies a list of files in the functions directory to ignore. This prevents deploying to the backend extraneous files that could increase the data size of your deployment.
+
+The list of files ignored by default, shown in JSON format, is:
+
+"ignore": [
+  ".git",
+  ".runtimeconfig.json",
+  "firebase-debug.log",
+  "firebase-debug.*.log",
+  "node_modules"
+]
+If you add your own custom values for ignore in firebase.json, make sure that you keep (or add, if it is missing) the list of files shown above.
+
+Manage project aliases
+You can associate multiple Firebase projects with the same project directory. For example, you might want to use one Firebase project for staging and another for production. By using different project environments, you can verify changes before deploying to production. The firebase use command allows you to switch between aliases as well as create new aliases.
+
+Add a project alias
+When you select a Firebase project during project initialization, the project is automatically assigned the alias of default. However, to allow project-specific commands to run against a different Firebase project but still use the same project directory, run the following command from within your project directory:
+
+
+firebase use --add
+This command prompts you to select another Firebase project and assign the project as alias. Alias assignments are written to a .firebaserc file inside your project directory.
+
+Use project aliases
+To use assigned Firebase project aliases, run any of the following commands from within your project directory.
+
+Command	Description
+firebase use	View a list of currently defined aliases for your project directory
+firebase use \
+PROJECT_ID|ALIAS	Directs all commands to run against the specified Firebase project.
+The CLI uses this project as the currently "active project".
+firebase use --clear	Clears the active project.
+Run firebase use PROJECT_ID|ALIAS to set a new active project before running other CLI commands.
+
+firebase use \
+--unalias PROJECT_ALIAS	Removes an alias from your project directory.
+You can override what's being used as the currently active project by passing the --project flag with any CLI command. As an example: You can set your CLI to run against a Firebase project that you've assigned the staging alias. If you want to run a single command against the Firebase project that you've assigned the prod alias, then you can run, for example, firebase deploy --project=prod.
+
+Source control and project aliases
+In general, you should check your .firebaserc file into source control to allow your team to share project aliases. However, for open source projects or starter templates, you should generally not check in your .firebaserc file.
+
+If you have a development project that's for your use only, you can either pass the --project flag with each command or run firebase use PROJECT_ID without assigning an alias to the Firebase project.
+
+Serve and test your Firebase project locally
+You can view and test your Firebase project on locally hosted URLs before deploying to production. If you only want to test select features, you can use a comma-separated list in a flag on the firebase serve command.
+
+Run the following command from the root of your local project directory if you want to do either of the following tasks:
+
+View the static content for your Firebase-hosted app.
+Use Cloud Functions to generate dynamic content for Firebase Hosting and you want to use your production (deployed) HTTP functions to emulate Hosting on a local URL.
+firebase serve --only hosting
+Emulate your project using local HTTP functions
+Run any of the following commands from your project directory to emulate your project using local HTTP functions.
+
+To emulate HTTP functions and hosting for testing on local URLs, use either of the following commands:
+
+firebase serve
+firebase serve --only functions,hosting // uses a flag
+To emulate HTTP functions only, use the following command:
+
+firebase serve --only functions
+Test from other local devices
+By default, firebase serve only responds to requests from localhost. This means that you'll be able to access your hosted content from your computer's web browser but not from other devices on your network. If you'd like to test from other local devices, use the --host flag, like so:
+
+firebase serve --host 0.0.0.0  // accepts requests to any host
+Deploy to a Firebase project
+The Firebase CLI manages deployment of code and assets to your Firebase project, including:
+
+New releases of your Firebase Hosting sites
+New, updated, or existing Cloud Functions for Firebase
+Rules for Firebase Realtime Database
+Rules for Cloud Storage for Firebase
+Rules for Cloud Firestore
+Indexes for Cloud Firestore
+To deploy to a Firebase project, run the following command from your project directory:
+
+firebase deploy
+You can optionally add a comment to each of your deployments. This comment will display with the other deployment information on your project's Firebase Hosting page. For example:
+
+firebase deploy -m "Deploying the best new feature ever."
+When you use the firebase deploy command, be aware of the following:
+
+To deploy resources from a project directory, the project directory must have a firebase.json file. This file is automatically created for you by the firebase init command.
+
+By default, firebase deploy creates a release for all deployable resources in your project directory. To deploy specific Firebase services or features, use partial deployment.
+
+Deployment conflicts for security rules
+For Firebase Realtime Database, Cloud Storage for Firebase, and Cloud Firestore, you can define security rules either in your local project directory or in the Firebase console.
+
+Note: When you deploy security rules using the Firebase CLI, the rules defined in your project directory overwrite any existing rules in the Firebase console. So, if you choose to define or edit your security rules using the Firebase console, make sure that you also update the rules defined in your project directory.
+Another option to avoid deployment conflicts is to use partial deployment and only define rules in the Firebase console.
+
+Deployment quotas
+It's possible (though unlikely) that you might exceed a quota that limits the rate or volume of your Firebase deployment operations. For example, when deploying very large numbers of functions, you might receive an HTTP 429 Quota error message. To solve such issues, try using partial deployment.
+
+Roll back a deployment
+You can roll back a Firebase Hosting deployment from your project's Firebase Hosting page by selecting the Rollback action for the desired release.
+
+It's not currently possible to roll back releases of security rules for Firebase Realtime Database, Cloud Storage for Firebase, or Cloud Firestore.
+
+Deploy specific Firebase services
+If you only want to deploy specific Firebase services or features, you can use a comma-separated list in a flag on the firebase deploy command. For example, the following command deploys Firebase Hosting content and Cloud Storage security rules.
+
+firebase deploy --only hosting,storage
+The following table lists the services and features available for partial deployment. The names in the flags correspond to the keys in your firebase.json configuration file.
+
+Flag syntax	Service or feature deployed
+--only hosting	Firebase Hosting content
+--only database	Firebase Realtime Database rules
+--only storage	Cloud Storage for Firebase rules
+--only firestore	Cloud Firestore rules and indexes for all configured databases
+--only functions	Cloud Functions for Firebase (more specific versions of this flag are possible)
+Note: The --only rules syntax used by older versions of the CLI is deprecated.
+Deploy specific functions
+When deploying functions, you can target specific functions. For example:
+
+firebase deploy --only functions:function1
+firebase deploy --only functions:function1,functions:function2
+Another option is to group functions into export groups in your /functions/index.js file. Grouping functions allows you to deploy multiple functions using a single command.
+
+For example, you can write the following functions to define a groupA and a groupB:
+
+var functions = require('firebase-functions');
+
+exports.groupA = {
+  function1: functions.https.onRequest(...),
+  function2: functions.database.ref('\path').onWrite(...)
+}
+exports.groupB = require('./groupB');
+In this example, a separate functions/groupB.js file contains additional functions that specifically define the functions in groupB. For example:
+
+var functions = require('firebase-functions');
+
+exports.function3 = functions.storage.object().onChange(...);
+exports.function4 = functions.analytics.event('in_app_purchase').onLog(...);
+In this example, you can deploy all the groupA functions by running the following command from your project directory:
+
+firebase deploy --only functions:groupA
+Or you can target a specific function within a group by running the following command:
+
+firebase deploy --only functions:groupA.function1,groupB.function4
+Important: To avoid running to quota errors and other server errors, limit function group size to 10 or fewer for each deployment operation.
+Delete functions
+The Firebase CLI supports the following commands and options for deleting previously deployed functions:
+
+Deletes all functions that match the specified name in all regions:
+
+firebase functions:delete FUNCTION-1_NAME
+Deletes a specified function running in a non-default region:
+
+firebase functions:delete FUNCTION-1_NAME --region REGION_NAME
+Deletes more than one function:
+
+firebase functions:delete FUNCTION-1_NAME FUNCTION-2_NAME
+Deletes a specified functions group:
+
+firebase functions:delete GROUP_NAME
+Bypasses the confirmation prompt:
+
+firebase functions:delete FUNCTION-1_NAME --force
+Set up predeploy and postdeploy scripted tasks
+You can connect shell scripts to the firebase deploy command to perform predeploy or postdeploy tasks. For example, a predeploy script could transpile TypeScript code into JavaScript, and a postdeploy hook could notify administrators of new site content deploys to Firebase Hosting.
+
+To set up predeploy or postdeploy hooks, add bash scripts to your firebase.json configuration file. You can define brief scripts directly in the firebase.json file, or you can reference other files that are in your project directory.
+
+For example, the following script is the firebase.json expression for a postdeploy task that sends a Slack message upon successful deployment to Firebase Hosting.
+
+"hosting": {
+  // ...
+
+  "postdeploy": "./messageSlack.sh 'Just deployed to Firebase Hosting'",
+  "public": "public"
+}
+The messageSlack.sh script file resides in the project directory and looks like this:
+
+curl -X POST -H 'Content-type: application/json' --data '{"text":"$1"}'
+     \https://SLACK_WEBHOOK_URL
+You can set up predeploy and postdeploy hooks for any of the assets that you can deploy. Note that running firebase deploy triggers all the predeploy and postdeploy tasks defined in your firebase.json file. To run only those tasks associated with a specific Firebase service, use partial deployment commands.
+
+Both predeploy and postdeploy hooks print the standard output and error streams of the scripts to the terminal. For failure cases, note the following:
+
+If a predeploy hook fails to complete as expected, deployment is canceled.
+If deployment fails for any reason, postdeploy hooks are not triggered.
+Environment variables
+Within scripts running in the predeploy and postdeploy hooks, the following environment variables are available:
+
+$GCLOUD_PROJECT: The active project's project ID
+$PROJECT_DIR: The root directory containing the firebase.json file
+$RESOURCE_DIR: (For hosting and functions scripts only) The location of the directory that contains the Hosting or Cloud Functions resources to be deployed
+Manage multiple Realtime Database instances
+A Firebase project can have multiple Firebase Realtime Database instances. By default, CLI commands interact with your default database instance.
+
+However, you can interact with a non-default database instance by using the --instance DATABASE_NAME flag. The following commands support the --instance flag:
+
+firebase database:get
+firebase database:profile
+firebase database:push
+firebase database:remove
+firebase database:set
+firebase database:update
+Command reference
+CLI administrative commands
+Command	Description
+help	Displays help information about the CLI or specific commands.
+init	Associates and sets up a new Firebase project in the current directory. This command creates a firebase.json configuration file in the current directory.
+login	Authenticates the CLI to your Firebase account. Requires access to a web browser.
+To log into the CLI in remote environments that don't allow access to localhost, use the --no-localhost flag.
+login:ci	Generates an authentication token for use in non-interactive environments.
+logout	Signs out the CLI from your Firebase account.
+open	Opens a browser to relevant project resources.
+projects:list	Lists all the Firebase projects to which you have access.
+use	Sets the active Firebase project for the CLI.
+Manages project aliases.
+Project management commands
+Command	Description
+Management of Firebase projects
+projects:addfirebase	Adds Firebase resources to an existing Google Cloud project.
+projects:create	Creates a new Google Cloud project, then adds Firebase resources to the new project.
+projects:list	Lists all the Firebase projects to which you have access.
+Management of Firebase Apps (iOS, Android, Web)
+apps:create	Creates a new Firebase App in the active project.
+apps:list	Lists the registered Firebase Apps in the active project.
+apps:sdkconfig	Prints the Google services configuration of a Firebase App.
+setup:web	Deprecated. Instead, use apps:sdkconfig and specify web as the platform argument.
+Prints the Google services configuration of a Firebase Web App.
+Management of SHA certificate hashes (Android only)
+apps:android:sha:create \
+FIREBASE_APP_ID SHA_HASH	Adds the specified SHA certificate hash to the specified Firebase Android App.
+apps:android:sha:delete \
+FIREBASE_APP_ID SHA_HASH	Deletes the specified SHA certificate hash from the specified Firebase Android App.
+apps:android:sha:list \
+FIREBASE_APP_ID	Lists the SHA certificate hashes for the specified Firebase Android App.
+Deployment and local development
+These commands let you deploy and interact with your Firebase Hosting site.
+
+Command	Description
+deploy	Deploys code and assets from your project directory to the active project. For Firebase Hosting, a firebase.json configuration file is required.
+serve	Starts a local web server with your Firebase Hosting configuration. For Firebase Hosting, a firebase.json configuration file is required.
+App Distribution commands
+Command	Description
+appdistribution:distribute \
+--app FIREBASE_APP_ID	Makes the build available to testers.
+appdistribution:testers:add	Adds testers to the project.
+appdistribution:testers:remove	Removes testers from the project.
+Authentication (user management) commands
+Command	Description
+auth:export	Exports the active project's user accounts to a JSON or CSV file. For more details, refer to the auth:import and auth:export page.
+auth:import	Imports the user accounts from a JSON or CSV file into the active project. For more details, refer to the auth:import and auth:export page.
+Cloud Firestore commands
+Command	Description
+firestore:locations	
+List available locations for your Cloud Firestore database.
+
+firestore:databases:create DATABASE_ID	
+Create a database instance in native mode in your Firebase project.
+
+The command takes the following flags:
+
+--location <region name> to specify the deployment location for the database. Note you can run firebase firestore:locations to list available locations. Required.
+--delete-protection <deleteProtectionState> to allow or prevent deletion of the specified database. Valid values are ENABLED or DISABLED. Defaults to DISABLED.
+--point-in-time-recovery <PITRState> to set whether point-in-time recovery is enabled. Valid values are ENABLED or DISABLED. Defaults to DISABLED. Optional.
+firestore:databases:list	
+List databases in your Firebase project.
+
+firestore:databases:get DATABASE_ID	
+Get database configuration for a specified database in your Firebase project.
+
+firestore:databases:update DATABASE_ID	
+Update database configuration of a specified database in your Firebase project.
+
+At least one flag is required. The command takes the following flags:
+
+--delete-protection <deleteProtectionState> to allow or prevent deletion of the specified database. Valid values are ENABLED or DISABLED. Defaults to DISABLED.
+--point-in-time-recovery <PITRState> to set whether point-in-time recovery is enabled. Valid values are ENABLED or DISABLED. Defaults to DISABLED. Optional.
+firestore:databases:delete DATABASE_ID	
+Delete a database in your Firebase project.
+
+firestore:indexes	
+List indexes for a database in your Firebase project.
+
+The command takes the following flag:
+
+--database DATABASE_ID to specify the name of the database for which to list indexes. If not provided, indexes are listed for the default database.
+firestore:delete	
+Deletes documents in the active project's database. Using the CLI, you can recursively delete all the documents in a collection.
+
+Note that deleting Cloud Firestore data with the CLI incurs read and delete costs. For more information, see Understand Cloud Firestore billing.
+
+The command takes the following flag:
+
+--database DATABASE_ID to specify the name of the database from which documents are deleted. If not specified, documents are deleted from the default database. Optional.
+Cloud Functions for Firebase commands
+Command	Description
+functions:config:clone	Clones another project's environment into the active Firebase project.
+functions:config:get	Retrieves existing configuration values of the active project's Cloud Functions.
+functions:config:set	Stores runtime configuration values of the active project's Cloud Functions.
+functions:config:unset	Removes values from the active project's runtime configuration.
+functions:log	Reads logs from deployed Cloud Functions.
+For more information, refer to the environment configuration documentation.
+
+Crashlytics commands
+Command	Description
+crashlytics:mappingfile:generateid \
+--resource-file=PATH/TO/ANDROID_RESOURCE.XML	Generates a unique mapping file ID in the specified Android resource (XML) file.
+crashlytics:mappingfile:upload \
+--app=FIREBASE_APP_ID \
+--resource-file=PATH/TO/ANDROID_RESOURCE.XML \
+PATH/TO/MAPPING_FILE.TXT	Uploads a Proguard-compatible mapping (TXT) file for this app, and associates it with the mapping file ID declared in the specified Android resource (XML) file.
+crashlytics:symbols:upload \
+--app=FIREBASE_APP_ID \
+PATH/TO/SYMBOLS	Generates a Crashlytics-compatible symbol file for native library crashes on Android and uploads it to Firebase servers.
+Extensions commands
+Command	Description
+ext	Displays information on how to use Firebase Extensions commands.
+Lists the extension instances installed in the active project.
+ext:configure \
+EXTENSION_INSTANCE_ID	Reconfigures the parameter values of an extension instance in your extension manifest.
+ext:info \
+PUBLISHER_ID/EXTENSION_ID	Prints detailed information about an extension.
+ext:install \
+PUBLISHER_ID/EXTENSION_ID	Adds a new instance of an extension into your extension manifest.
+ext:list	Lists all the extension instances installed in a Firebase project.
+Prints the instance ID for each extension.
+ext:uninstall \
+EXTENSION_INSTANCE_ID	Removes an extension instance from your extension manifest.
+ext:update \
+EXTENSION_INSTANCE_ID	Updates an extension instance to the latest version in your extension manifest.
+ext:export	Exports all installed extension instances from your project to your extension manifest.
+Extensions publisher commands
+Command	Description
+ext:dev:init	Initializes a skeleton codebase for a new extension in the current directory.
+ext:dev:list \
+PUBLISHER_ID	Prints a list of all extensions uploaded by a publisher.
+ext:dev:register	Registers a Firebase project as an extensions publisher project.
+ext:dev:deprecate \
+PUBLISHER_ID/EXTENSION_ID \
+VERSION_PREDICATE	Deprecates extension versions that match the version predicate.
+A version predicate can be a single version (such as 1.0.0), or a range of versions (such as >1.0.0).
+If no version predicate is provided, deprecates all versions of that extension.
+ext:dev:undeprecate \
+PUBLISHER_ID/EXTENSION_ID \
+VERSION_PREDICATE	Undeprecates extension versions that match the version predicate.
+A version predicate can be a single version (such as 1.0.0), or a range of versions (such as >1.0.0).
+If no version predicate is provided, undeprecates all versions of that extension.
+ext:dev:upload \
+PUBLISHER_ID/EXTENSION_ID	Uploads a new version of an extension.
+ext:dev:usage \
+PUBLISHER_ID	Displays install counts and usage metrics for extensions uploaded by a publisher.
+Hosting commands
+Command	Description
+hosting:disable	
+Stops serving Firebase Hosting traffic for the active Firebase project.
+
+Your project's Hosting URL will display a "Site Not Found" message after running this command.
+
+Management of Hosting sites
+firebase hosting:sites:create \
+SITE_ID	
+Creates a new Hosting site in the active Firebase project using the specified SITE_ID
+
+(Optional) Specify an existing Firebase Web App to associate with the new site by passing the following flag: --app FIREBASE_APP_ID
+
+firebase hosting:sites:delete \
+SITE_ID	
+Deletes the specified Hosting site
+
+The CLI displays a confirmation prompt before deleting the site.
+
+(Optional) Skip the confirmation prompt by passing the following flags: -f or --force
+
+firebase hosting:sites:get \
+SITE_ID	
+Retrieves information about the specified Hosting site
+
+firebase hosting:sites:list	
+Lists all Hosting sites for the active Firebase project
+
+Management of preview channels
+firebase hosting:channel:create \
+CHANNEL_ID	
+Creates a new preview channel in the default Hosting site using the specified CHANNEL_ID
+
+This command does not deploy to the channel.
+
+firebase hosting:channel:delete \
+CHANNEL_ID	
+Deletes the specified preview channel
+
+You cannot delete a site's live channel.
+
+firebase hosting:channel:deploy \
+CHANNEL_ID	
+Deploys your Hosting content and config to the specified preview channel
+
+If the preview channel does not yet exist, this command creates the channel in the default Hosting site before deploying to the channel.
+
+firebase hosting:channel:list	Lists all channels (including the "live" channel) in the default Hosting site
+firebase hosting:channel:open \
+CHANNEL_ID	Opens a browser to the specified channel's URL or returns the URL if opening in a browser isn't possible
+Version cloning
+firebase hosting:clone \
+SOURCE_SITE_ID:SOURCE_CHANNEL_ID \
+TARGET_SITE_ID:TARGET_CHANNEL_ID	
+Clones the most recently deployed version on the specified "source" channel to the specified "target" channel
+
+This command also deploys to the specified "target" channel. If the "target" channel does not yet exist, this command creates a new preview channel in the "target" Hosting site before deploying to the channel.
+
+firebase hosting:clone \
+SOURCE_SITE_ID:@VERSION_ID \
+TARGET_SITE_ID:TARGET_CHANNEL_ID	
+Clones the specified version to the specified "target" channel
+
+This command also deploys to the specified "target" channel. If the "target" channel does not yet exist, this command creates a new preview channel in the "target" Hosting site before deploying to the channel.
+
+You can find the VERSION_ID in the Hosting dashboard of the Firebase console.
+
+Realtime Database commands
+Note that you can create your initial, default Realtime Database instance in the Firebase console or by using the general firebase init workflow or the specific firebase init database flow.
+
+Once instances are created, you can manage them as discussed in Manage multiple Realtime Database instances.
+
+Command	Description
+database:get	Fetches data from the active project's database and displays it as JSON. Supports querying on indexed data.
+database:instances:create	Creates a database instance with a specified instance name. Accepts the --location option for creating a database in a specified region. For region names to use with this option, see select locations for your project. If no database instance exists for the current project, you are prompted to run the firebase init flow to create an instance.
+database:instances:list	List all database instances for this project. Accepts the --location option for listing databases in a specified region. For region names to use with this option see select locations for your project.
+database:profile	Builds a profile of operations on the active project's database. For more details, refer to Realtime Database operation types.
+database:push	Pushes new data to a list at a specified location in the active project's database. Takes input from a file, STDIN, or a command-line argument.
+database:remove	Deletes all data at a specified location in the active project's database.
+database:set	Replaces all data at a specified location in the active project's database. Takes input from a file, STDIN, or a command-line argument.
+database:update	Performs a partial update at a specified location in the active project's database. Takes input from a file, STDIN, or a command-line argument.
+Remote Config commands
+Command	Description
+remoteconfig:versions:list \
+--limit NUMBER_OF_VERSIONS	Lists the most recent ten versions of the template. Specify 0 to return all existing versions, or optionally pass the --limit option to limit the number of versions being returned.
+remoteconfig:get \
+--v, version_number VERSION_NUMBER
+--o, output FILENAME	Gets the template by version (defaults to the latest version) and outputs the parameter groups, parameters, and condition names and version into a table. Optionally, you can write the output to a specified file with -o, FILENAME.
+remoteconfig:rollback \
+--v, version_number VERSION_NUMBER
+--force	Rolls back Remote Config template to a specified previous version number or defaults to the immediate previous version (current version -1). Unless --force is passed, prompts Y/N before proceeding to rollback.
+Was this helpful?
+
+feedback
+Learn
+Guides
+Reference
+Samples
+Libraries
+GitHub
+Stay connected
+Blog
+Firebase Summit
+Twitter
+YouTube
+Support
+Contact support
+Stack Overflow
+Slack community
+Google group
+Release notes
+FAQs
+Google Developers
+Android
+Chrome
+Firebase
+Google Cloud Platform
+All products
+Terms
+Privacy
+rizqshops@googlegroups.com
+rizqshops.com
+#RizqRevolution
