@@ -287,6 +287,8 @@ func main() {
 		setNodeMirror(detail)
 	case "npm_mirror":
 		setNpmMirror(detail)
+	case "register":
+		register()
 	case "debug":
 		checkLocalEnvironment()
 	case "subscribe":
@@ -1750,6 +1752,29 @@ func useTransient(version string, cpuarch string) {
 	cmd.Run()
 }
 
+func register() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("Could not resolve user home directory.")
+		return
+	}
+	configPath := filepath.Join(homeDir, ".node-config.json")
+
+	config := `{
+  "versionManagers": [
+    {
+      "managerExecutableName": "nvm"
+    }
+  ]
+}`
+	err = ioutil.WriteFile(configPath, []byte(config), 0644)
+	if err != nil {
+		fmt.Println("Failed to register NVM to the active Node Version Manager API contract config:", err)
+		return
+	}
+	fmt.Println("Successfully registered NVM within " + configPath + " to process standard Node API verbs.")
+}
+
 func help() {
 	fmt.Println("\nRunning version " + NvmVersion + ".")
 	fmt.Println("\nUsage:")
@@ -1774,6 +1799,7 @@ func help() {
 	fmt.Println("  nvm upgrade                  : Update nvm to the latest version. Manual rollback available for 7 days after upgrade.")
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
+	fmt.Println("  nvm register                 : Register NVM into the ~/.node-config.json standardized API contract for native Node handling.")
 	fmt.Println("  nvm proxy [url]              : Set a proxy to use for downloads. Leave [url] blank to see the current proxy.")
 	fmt.Println("                                 Set [url] to \"none\" to remove the proxy.")
 	fmt.Println("  nvm node_mirror [url]        : Set the node mirror. Defaults to https://nodejs.org/dist/. Leave [url] blank to use default url.")
