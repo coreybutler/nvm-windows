@@ -211,20 +211,16 @@ func main() {
 
 	// Run the appropriate method
 	switch args[1] {
-	case "i":
-		fallthrough
-	case "install":
+	case "download":
 		install(detail, procarch)
-	case "rm":
-		fallthrough
-	case "uninstall":
+	case "i", "install", "set":
+		use(detail, procarch)
+	case "rm", "uninstall":
 		uninstall(detail)
 	case "reinstall":
 		reinstall(detail, procarch)
-	case "u":
-		fallthrough
-	case "use":
-		use(detail, procarch)
+	case "u", "use":
+		useTransient(detail, procarch)
 	case "ls":
 		fallthrough
 	case "list":
@@ -1727,6 +1723,33 @@ func checkLocalEnvironment() {
 	fmt.Println("\n" + "Find help at https://github.com/coreybutler/nvm-windows/wiki/Common-Issues")
 }
 
+func useTransient(version string, cpuarch string) {
+	v, _, err := getVersion(version, cpuarch)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	binDir := filepath.Join(env.root, "v" + v)
+	if _, err := os.Stat(filepath.Join(binDir, "node.exe")); os.IsNotExist(err) {
+		fmt.Printf("Node version %s is not downloaded. Run 'nvm download %s' first.\n", v, v)
+		return
+	}
+	fmt.Printf("Spawning new shell to use Node.js v%s transiently...\n", v)
+	
+	oldPath := os.Getenv("PATH")
+	os.Setenv("PATH", binDir + string(os.PathListSeparator) + oldPath)
+	
+	shell := os.Getenv("COMSPEC")
+	if shell == "" {
+		shell = "cmd.exe"
+	}
+	cmd := exec.Command(shell)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	cmd.Run()
+}
+
 func help() {
 	fmt.Println("\nRunning version " + NvmVersion + ".")
 	fmt.Println("\nUsage:")
@@ -1734,10 +1757,15 @@ func help() {
 	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
 	fmt.Println("  nvm current                  : Display active version.")
 	fmt.Println("  nvm debug                    : Check the NVM4W process for known problems (troubleshooter).")
-	fmt.Println("  nvm install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
+	fmt.Println("  nvm download <version> [arch]: The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
 	fmt.Println("                                 most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults")
 	fmt.Println("                                 to system arch). Set [arch] to \"all\" to install 32 AND 64 bit versions.")
 	fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
+	fmt.Println("  nvm install/set <version>    : Switch the global Windows symlink to use the specified version.")
+	fmt.Println("                                 Optionally specify 32/64bit architecture.")
+	fmt.Println("  nvm use [version] [arch]     : Start an isolated transient shell with the specific node version active locally.")
+	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
+	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
 	fmt.Println("  nvm list [available]         : List the node.js installations. Type \"available\" at the end to see what can be installed. Aliased as ls.")
 	fmt.Println("  nvm on                       : Enable node.js version management.")
 	fmt.Println("  nvm off                      : Disable node.js version management.")
@@ -1747,9 +1775,6 @@ func help() {
 	fmt.Println("  nvm npm_mirror [url]         : Set the npm mirror. Defaults to https://github.com/npm/cli/archive/. Leave [url] blank to default url.")
 	fmt.Println("  nvm uninstall <version>      : The version must be a specific version.")
 	fmt.Println("  nvm upgrade                  : Update nvm to the latest version. Manual rollback available for 7 days after upgrade.")
-	fmt.Println("  nvm use [version] [arch]     : Switch to use the specified version. Optionally use \"latest\", \"lts\", or \"newest\".")
-	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
-	fmt.Println("                                 nvm use <arch> will continue using the selected version, but switch to 32/64 bit mode.")
 	fmt.Println("  nvm reinstall <version>      : A shortcut method to clean and reinstall a specific version.")
 	fmt.Println("  nvm root [path]              : Set the directory where nvm should store different versions of node.js.")
 	fmt.Println("                                 If <path> is not set, the current root will be displayed.")
