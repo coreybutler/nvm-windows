@@ -211,9 +211,9 @@ func main() {
 
 	// Run the appropriate method
 	switch args[1] {
-	case "download":
+	case "i", "install":
 		install(detail, procarch)
-	case "i", "install", "set":
+	case "set", "switch":
 		use(detail, procarch)
 	case "rm", "uninstall":
 		uninstall(detail)
@@ -1757,11 +1757,11 @@ func help() {
 	fmt.Println("  nvm arch                     : Show if node is running in 32 or 64 bit mode.")
 	fmt.Println("  nvm current                  : Display active version.")
 	fmt.Println("  nvm debug                    : Check the NVM4W process for known problems (troubleshooter).")
-	fmt.Println("  nvm download <version> [arch]: The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
+	fmt.Println("  nvm install <version> [arch] : The version can be a specific version, \"latest\" for the latest current version, or \"lts\" for the")
 	fmt.Println("                                 most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults")
 	fmt.Println("                                 to system arch). Set [arch] to \"all\" to install 32 AND 64 bit versions.")
 	fmt.Println("                                 Add --insecure to the end of this command to bypass SSL validation of the remote download server.")
-	fmt.Println("  nvm install/set <version>    : Switch the global Windows symlink to use the specified version.")
+	fmt.Println("  nvm set/switch <version>     : Switch the global Windows symlink to use the specified version.")
 	fmt.Println("                                 Optionally specify 32/64bit architecture.")
 	fmt.Println("  nvm use [version] [arch]     : Start an isolated transient shell with the specific node version active locally.")
 	fmt.Println("                                 \"newest\" is the latest installed version. Optionally specify 32/64bit architecture.")
