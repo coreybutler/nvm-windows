@@ -13,8 +13,8 @@
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
 PrivilegesRequired=admin
-; SignTool=MsSign $f
-; SignedUninstaller=yes
+SignTool=signtool
+SignedUninstaller=yes
 AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
