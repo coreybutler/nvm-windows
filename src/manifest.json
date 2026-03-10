@@ -1,35 +1,33 @@
 {
-  "name": "nvm",
-  "version": "1.2.2",
-  "description": "Node.js version manager for Windows",
-  "license": "SEE LICENSE IN LICENSE",
-  "author": "coreybutler",
-  "build": "nvm.go",
-  "output": "../bin",
-  "update": true,
-  "upx": false,
-  "tiny": false,
-  "variables": {
-    "main.NvmVersion": "manifest.version",
-    "nvm/web.nvmversion": "manifest.version"
-  },
-  "minify": true,
-  "default_profiles": [
-    "dev"
-  ],
-  "profile": {
-    "release": {
-      "upx": false,
-      "variables": {
-        "main.debug": "false",
-        "main.mode": "prod"
-      }
-    },
-    "dev": {
-      "variables": {
-        "main.debug": "true",
-        "main.mode": "dev"
-      }
-    }
-  }
+	"name": "nvm",
+	"version": "1.2.3",
+	"description": "Node.js version manager for Windows",
+	"license": "SEE LICENSE IN LICENSE",
+	"author": "coreybutler",
+	"build": "nvm.go",
+	"output": "../bin",
+	"update": true,
+	"upx": false,
+	"tiny": false,
+	"variables": {
+		"main.NvmVersion": "manifest.version",
+		"nvm/web.nvmversion": "manifest.version"
+	},
+	"minify": true,
+	"default_profiles": ["dev"],
+	"profile": {
+		"release": {
+			"upx": false,
+			"variables": {
+				"main.debug": "false",
+				"main.mode": "prod"
+			}
+		},
+		"dev": {
+			"variables": {
+				"main.debug": "true",
+				"main.mode": "dev"
+			}
+		}
+	}
 }

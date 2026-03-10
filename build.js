@@ -2,13 +2,13 @@
 // Yeah, I know  it's not Node, but we need to compile this and Node SEAs on Win32 are a PITA.
 const content = await Deno.readTextFile('./nvm.iss')
 const data = JSON.parse(await Deno.readTextFile('./src/manifest.json'))
-const {version} = data
+const { version } = data
 const output = content.replaceAll('{{VERSION}}', version)
 await Deno.writeTextFile('./.tmp.iss', output)
 
 console.log('Viewing /.tmp.iss')
 output.split("\n").forEach((line, num) => {
-  let n = `${num+1}`
+  let n = `${num + 1}`
   while (n.length < 3) {
     n = ' ' + n
   }

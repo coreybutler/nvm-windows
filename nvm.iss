@@ -5,7 +5,7 @@
 #define MyAppPublisher "Author Software Inc."
 #define MyAppURL "https://github.com/coreybutler/nvm-windows"
 #define MyAppExeName "nvm.exe"
-#define MyIcon "bin\nvm.ico"
+#define MyIcon "assets\nvm.ico"
 #define MyAppId "40078385-F676-4C61-9A9C-F9028599D6D3"
 #define ProjectRoot "."
 

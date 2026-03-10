@@ -9,22 +9,11 @@
 <summary><b>This is not the same thing as nvm!</b> (expand for details)</summary>
 
 _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate project for Mac/Linux only._ This project uses an entirely different philosophy and is not just a clone of nvm. Details are listed in [Why another version manager?](#bulb-why-another-version-manager) and [what&#39;s the big difference?](#bulb-whats-the-big-difference).
+
 </details>
 
-[![Download Latest Now](https://img.shields.io/badge/-Download%20Now!-%2322A6F2)](https://github.com/coreybutler/nvm-windows/releases) [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/coreybutler/nvm-windows?label=Latest%20Release&style=social&x=1)]((https://github.com/coreybutler/nvm-windows/releases)) ![GitHub Release Date](https://img.shields.io/github/release-date/coreybutler/nvm-windows?label=Released&style=social) ![GitHub all releases](https://img.shields.io/github/downloads/coreybutler/nvm-windows/total?label=Downloads&style=social) [![Discuss](https://img.shields.io/badge/-Discuss-blue)](https://github.com/coreybutler/nvm-windows/discussions) [![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Fintent%2Ftweet%3Fhashtags%3Dnodejs%26original_referer%3Dhttp%253A%252F%252F127.0.0.1%253A91%252F%26text%3DCheck%2520out%2520NVM%2520for%2520Windows%21%26tw_p%3Dtweetbutton%26url%3Dhttp%253A%252F%252Fgithub.com%252Fcoreybutler%252Fnvm-windows%26via%3Dgoldglovecb)](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb)
-<br/>
-[![Download Stable](https://img.shields.io/badge/-Download%20Stable-%2322A6F2)](https://github.com/coreybutler/nvm-windows/releases/tag/1.1.12) [![GitHub tag (stable SemVer)](https://img.shields.io/badge/Stable%20Version-v1.1.12-1?style=social)]((https://github.com/coreybutler/nvm-windows/releases/tag/1.1.12/))
-<details>
-<summary><b>Latest vs Stable?</b></summary>
-  
-The latest version (v1.2.x) is a [transition version]([https://](https://opensource.author.io/nvm-for-windows-v120)) as we complete work on [Runtime](https://github.com/coreybutler/nvm-windows/wiki/Runtime), the successor to NVM for Windows. However; there is a known bug that may impact some users when installing old (EOL) versions of Node.js. The last stable version supports most EOL versions.
+[![Download Now](https://img.shields.io/badge/-Download%20Now!-%2322A6F2)](https://github.com/coreybutler/nvm-windows/releases) [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/coreybutler/nvm-windows?label=Latest%20Release&style=social&x=1)](<(https://github.com/coreybutler/nvm-windows/releases)>) ![GitHub Release Date](https://img.shields.io/github/release-date/coreybutler/nvm-windows?label=Released&style=social) ![GitHub all releases](https://img.shields.io/github/downloads/coreybutler/nvm-windows/total?label=Downloads&style=social) [![Discuss](https://img.shields.io/badge/-Discuss-blue)](https://github.com/coreybutler/nvm-windows/discussions) [![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Fintent%2Ftweet%3Fhashtags%3Dnodejs%26original_referer%3Dhttp%253A%252F%252F127.0.0.1%253A91%252F%26text%3DCheck%2520out%2520NVM%2520for%2520Windows%21%26tw_p%3Dtweetbutton%26url%3Dhttp%253A%252F%252Fgithub.com%252Fcoreybutler%252Fnvm-windows%26via%3Dgoldglovecb)](https://twitter.com/intent/tweet?hashtags=nodejs&original_referer=http%3A%2F%2F127.0.0.1%3A91%2F&text=Check%20out%20NVM%20for%20Windows!&tw_p=tweetbutton&url=http%3A%2F%2Fgithub.com%2Fcoreybutler%2Fnvm-windows&via=goldglovecb)
 
-Some companies need very specific features of both versions, which is not possible with today's public releases. While we recommend waiting for Runtime (anticipated March release), if you need a private release, contact support@author.io to arrange a paid support contract.
-</details>
-</div>
-
-<div align="center">
-<a href="https://trendshift.io/repositories/4201" target="_blank"><img src="https://trendshift.io/api/badge/repositories/4201" alt="coreybutler%2Fnvm-windows | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </div>
 
 <h5 align="center">Sponsors</h5>
@@ -101,7 +90,7 @@ Alternatively, copy the settings to the user config `%UserProfile%\.npmrc`. Dele
 
 #### Install nvm-windows
 
-Use the [latest installer](https://github.com/coreybutler/nvm/releases) (comes with an uninstaller). Alternatively, follow the  [manual installation](https://github.com/coreybutler/nvm-windows/wiki#manual-installation) guide.
+Use the [latest installer](https://github.com/coreybutler/nvm/releases) (comes with an uninstaller). Alternatively, follow the [manual installation](https://github.com/coreybutler/nvm-windows/wiki#manual-installation) guide.
 
 _If NVM4W doesn't appear to work immediately after installation, restart the terminal/powershell (not the whole computer)._
 
@@ -133,7 +122,7 @@ NVM for Windows is a command line tool. Simply type `nvm` in the console for hel
 - **`nvm arch [32|64]`**: Show if node is running in 32 or 64 bit mode. Specify 32 or 64 to override the default architecture.
 - **`nvm debug`**: Check the NVM4W process for known problems.
 - **`nvm current`**: Display active version.
-- **`nvm install <version> [arch]`**:  The version can be a specific version, "latest" for the latest current version, or "lts" for the most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set [arch] to "all" to install 32 AND 64 bit versions. Add `--insecure` to the end of this command to bypass SSL validation of the remote download server.
+- **`nvm install <version> [arch]`**: The version can be a specific version, "latest" for the latest current version, or "lts" for the most recent LTS version. Optionally specify whether to install the 32 or 64 bit version (defaults to system arch). Set [arch] to "all" to install 32 AND 64 bit versions. Add `--insecure` to the end of this command to bypass SSL validation of the remote download server.
 - **`nvm list [available]`**: List the node.js installations. Type `available` at the end to show a list of versions available for download.
 - **`nvm on`**: Enable node.js version management.
 - **`nvm off`**: Disable node.js version management (does not uninstall anything).
@@ -166,13 +155,15 @@ See the [wiki](https://github.com/coreybutler/nvm-windows/wiki/Common-Issues#how
 ### Build from source
 
 - Install go from http://golang.org
+- Install deno from https://deno.com/
 - Download source / Git Clone the repo
-- Change GOARCH to amd64 in build.bat if you feel like building a 64-bit executable
-- Fire up a Windows command prompt and change directory to project dir
-- Execute `go get github.com/blang/semver`
-- Execute `go get github.com/olekukonko/tablewriter`
-- Execute `build.bat`
-- Check the `dist`directory for generated setup program.
+- Fire up a Windows command prompt and change directory to the project directory
+- From there navigate to the `./src` folder
+- Execute `go mod download`
+- Execute `go build -o ..\bin\nvm.exe nvm.go`
+- Change back to the parent directory `cd ../`
+- Execute `deno run -A build.js`
+- Check the `dist` directory for generated setup program.
 
 ---
 
