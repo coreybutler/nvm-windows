@@ -63,7 +63,7 @@ var env = &Environment{
 	settings:        home,
 	root:            "",
 	symlink:         symlink,
-	arch:            strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE")),
+	arch:            arch.GetSystemArchitecture(),
 	node_mirror:     "",
 	npm_mirror:      "",
 	proxy:           "none",
@@ -1281,11 +1281,12 @@ func validSymlink(symlinkpath string) error {
 }
 
 func useArchitecture(a string) {
-	if strings.ContainsAny("32", os.Getenv("PROCESSOR_ARCHITECTURE")) {
+	systemArch := arch.GetSystemArchitecture()
+	if strings.ContainsAny("32", systemArch) {
 		fmt.Println("This computer only supports 32-bit processing.")
 		return
 	}
-	if strings.Contains("arm64", strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))) {
+	if strings.Contains("arm64", systemArch) {
 		fmt.Println("This computer only supports arm64-bit processing.")
 		return
 	}

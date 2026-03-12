@@ -9,6 +9,19 @@ import (
 	"encoding/hex"
 )
 
+// NB: Because nvm itself is an Intel binary, on ARM64 it is running under 
+// emulation, extremely similar to WOW64. This means that PROCESSOR_ARCHITECTURE
+// will return x64, not arm64. For now, detect this case and return arm64
+func GetSystemArchitecture() string {
+  // If PROCESSOR_IDENTIFIER contains "ARM", return arm64
+  if strings.Contains(os.Getenv("PROCESSOR_IDENTIFIER"), "ARM") {
+    return "arm64"
+  }
+
+	// Fall back to PROCESSOR_ARCHITECTURE
+	return strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))
+}
+
 func SearchBytesInFile( path string, match string, limit int) bool {
   // Transform to byte array the string
   toMatch, err := hex.DecodeString(match);
@@ -62,7 +75,7 @@ func Bit(path string) string {
 
 func Validate(str string) (string){
   if str == "" {
-    str = strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))
+    str = GetSystemArchitecture()
   }
   if strings.Contains(str, "arm64") {
 	  return "arm64"
