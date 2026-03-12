@@ -738,7 +738,7 @@ func install(version string, cpuarch string) {
 			// If successful, add npm
 			status <- Status{Text: "Downloading npm..."}
 			npmv := getNpmVersion(version)
-			success := web.GetNpm(root, getNpmVersion(version))
+			success, npmTempDir := web.GetNpm(root, getNpmVersion(version))
 			if success {
 				status <- Status{Text: fmt.Sprintf("Installing npm v%s...", npmv)}
 
@@ -750,7 +750,7 @@ func install(version string, cpuarch string) {
 				defer os.RemoveAll(tempDir)
 
 				// Extract npm to the temp directory
-				err = file.Unzip(filepath.Join(tempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
+				err = file.Unzip(filepath.Join(npmTempDir, "npm-v"+npmv+".zip"), filepath.Join(tempDir, "nvm-npm"))
 				if err != nil {
 					status <- Status{Err: err}
 				}

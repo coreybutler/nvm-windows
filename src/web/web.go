@@ -318,7 +318,7 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 
 }
 
-func GetNpm(root string, v string) bool {
+func GetNpm(root string, v string) (bool, string) {
 	url := GetFullNpmUrl("v" + v + ".zip")
 
 	// temp directory to download the .zip file
@@ -341,10 +341,10 @@ func GetNpm(root string, v string) bool {
 	if Download(url, fileName, v) {
 		utility.DebugLog("npm download succeeded")
 		fmt.Printf("Complete\n")
-		return true
+		return true, tempDir
 	} else {
 		utility.DebugLog("npm download failed")
-		return false
+		return false, tempDir
 	}
 }
 
