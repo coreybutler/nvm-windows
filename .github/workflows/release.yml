@@ -129,7 +129,7 @@ jobs:
         & $resourceHackerPath -open $exe -save $exe -action add -res $iconFile -mask ICONGROUP,MAINICON
 
     - name: Sign Executables
-      uses: azure/trusted-signing-action@v0.5.0
+      uses: azure/trusted-signing-action@v0.5.1
       with:
         azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -292,7 +292,7 @@ jobs:
       shell: pwsh
 
     - name: Sign Installer
-      uses: azure/trusted-signing-action@v0.5.0
+      uses: azure/trusted-signing-action@v0.5.1
       with:
         azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         azure-client-id: ${{ secrets.INSTALLER_AZURE_CLIENT_ID }}
