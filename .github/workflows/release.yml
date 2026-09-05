@@ -451,3 +451,28 @@ jobs:
             $pubArgs["OverrideExisting"] = $true
           }
           & .\build\steps\Publish-GitHubRelease.ps1 @pubArgs
+
+      - name: VirusTotal Scan
+        id: vt
+        uses: crazy-max/ghaction-virustotal@v5
+        with:
+          vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
+          github_token: ${{ github.token }}
+          update_release_body: false
+          request_rate: 4
+          files: |
+            release-assets/**/*.exe
+
+      - name: Update VirusTotal section in release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:TAG)) {
+            throw "prepare.outputs.tag empty"
+          }
+          # Always rebuild ## VirusTotal from current artifact SHA256s (covers
+          # first publish and override_existing_release asset replacement).
+          & .\build\steps\Update-VirusTotalReleaseNotes.ps1 `
+            -Tag $env:TAG `
+            -AssetRoot (Join-Path $PWD "release-assets")

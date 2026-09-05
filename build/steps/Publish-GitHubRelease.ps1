@@ -373,7 +373,7 @@ function Get-NvmCompareCommitLines {
 	return ConvertTo-StringArray $lines
 }
 
-function Get-NvmReleaseCommitSummarySection {
+function Get-NvmReleaseCompareRepoSections {
 	param(
 		[string]$Tag,
 		[string]$HeadRef
@@ -392,7 +392,6 @@ function Get-NvmReleaseCommitSummarySection {
 		Get-NvmGitHubCommitRefSha -Repository $mainRepo -Ref $Tag
 	}
 
-	$sections = New-Object System.Collections.Generic.List[string]
 	$repoSections = New-Object System.Collections.Generic.List[object]
 	if (-not [string]::IsNullOrWhiteSpace($previousHead) -and -not [string]::IsNullOrWhiteSpace($currentHead)) {
 		$repoSections.Add([pscustomobject]@{
@@ -417,8 +416,64 @@ function Get-NvmReleaseCommitSummarySection {
 		})
 	}
 
-	foreach ($section in $repoSections) {
-		if ([string]::IsNullOrWhiteSpace($section.Head) -or [string]::IsNullOrWhiteSpace($section.Base)) {
+	return [pscustomobject]@{
+		PreviousTag = $previousTag
+		Sections    = @($repoSections.ToArray())
+	}
+}
+
+function Get-NvmCompareCommits {
+	param(
+		[string]$Repository,
+		[string]$BaseRef,
+		[string]$HeadRef
+	)
+	if ([string]::IsNullOrWhiteSpace($Repository) -or [string]::IsNullOrWhiteSpace($BaseRef) -or [string]::IsNullOrWhiteSpace($HeadRef)) {
+		return @()
+	}
+	if ($BaseRef -eq $HeadRef) {
+		return @()
+	}
+	$range = "$BaseRef...$HeadRef"
+	$result = Invoke-GhCapture -GhArgs @("api", "repos/$Repository/compare/$range")
+	if ($result.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($result.Text)) {
+		Write-Host ("Release notes: unable to compare {0} ({1})" -f $Repository, $result.Text)
+		return @()
+	}
+	$compare = $result.Text | ConvertFrom-Json
+	return @($compare.commits)
+}
+
+function Test-NvmAuthorHasPriorCommits {
+	param(
+		[string]$Repository,
+		[string]$Login,
+		[string]$BeforeSha
+	)
+	if ([string]::IsNullOrWhiteSpace($Repository) -or [string]::IsNullOrWhiteSpace($Login) -or [string]::IsNullOrWhiteSpace($BeforeSha)) {
+		return $true
+	}
+	$encodedLogin = [uri]::EscapeDataString($Login)
+	$path = "repos/$Repository/commits?author=$encodedLogin&sha=$BeforeSha&per_page=1"
+	$result = Invoke-GhCapture -GhArgs @("api", $path)
+	if ($result.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($result.Text)) {
+		return $true
+	}
+	$commits = @($result.Text | ConvertFrom-Json)
+	return ($commits.Count -gt 0)
+}
+
+function Get-NvmReleaseCommitSummarySection {
+	param(
+		[string]$Tag,
+		[string]$HeadRef
+	)
+	$compare = Get-NvmReleaseCompareRepoSections -Tag $Tag -HeadRef $HeadRef
+	$previousTag = [string]$compare.PreviousTag
+	$sections = New-Object System.Collections.Generic.List[string]
+
+	foreach ($section in @($compare.Sections)) {
+		if ($null -eq $section -or [string]::IsNullOrWhiteSpace([string]$section.Head) -or [string]::IsNullOrWhiteSpace([string]$section.Base)) {
 			continue
 		}
 		$lines = Get-NvmCompareCommitLines -Repository $section.Repository -BaseRef $section.Base -HeadRef $section.Head
@@ -444,6 +499,111 @@ function Get-NvmReleaseCommitSummarySection {
 	return ("## Commits`n`n" + ($sections -join "`n"))
 }
 
+function Get-NvmReleaseContributorLogins {
+	param(
+		[string]$Tag,
+		[string]$HeadRef
+	)
+	$compare = Get-NvmReleaseCompareRepoSections -Tag $Tag -HeadRef $HeadRef
+	$logins = New-Object System.Collections.Generic.List[string]
+	$seen = @{}
+	foreach ($section in @($compare.Sections)) {
+		if ($null -eq $section -or [string]::IsNullOrWhiteSpace([string]$section.Head) -or [string]::IsNullOrWhiteSpace([string]$section.Base)) {
+			continue
+		}
+		$commits = Get-NvmCompareCommits -Repository $section.Repository -BaseRef $section.Base -HeadRef $section.Head
+		foreach ($commit in $commits) {
+			$login = [string]$commit.author.login
+			if ([string]::IsNullOrWhiteSpace($login)) {
+				continue
+			}
+			if ($login -match '\[bot\]$' -or $login -eq "dependabot" -or $login -eq "renovate") {
+				continue
+			}
+			$key = $login.ToLowerInvariant()
+			if ($seen.ContainsKey($key)) {
+				continue
+			}
+			$seen[$key] = $true
+			$logins.Add($login)
+		}
+	}
+	return , [string[]]@($logins.ToArray())
+}
+
+function Get-NvmReleaseNewContributorsSection {
+	param(
+		[string]$Tag,
+		[string]$HeadRef
+	)
+	$compare = Get-NvmReleaseCompareRepoSections -Tag $Tag -HeadRef $HeadRef
+	if ([string]::IsNullOrWhiteSpace([string]$compare.PreviousTag)) {
+		return ""
+	}
+
+	# login -> first contribution url in this release window
+	$newByLogin = [ordered]@{}
+	foreach ($section in @($compare.Sections)) {
+		if ($null -eq $section -or [string]::IsNullOrWhiteSpace([string]$section.Head) -or [string]::IsNullOrWhiteSpace([string]$section.Base)) {
+			continue
+		}
+		$commits = Get-NvmCompareCommits -Repository $section.Repository -BaseRef $section.Base -HeadRef $section.Head
+		foreach ($commit in $commits) {
+			$login = [string]$commit.author.login
+			if ([string]::IsNullOrWhiteSpace($login)) {
+				continue
+			}
+			if ($login -match '\[bot\]$' -or $login -eq "dependabot" -or $login -eq "renovate") {
+				continue
+			}
+			if ($newByLogin.Contains($login)) {
+				continue
+			}
+			if (Test-NvmAuthorHasPriorCommits -Repository $section.Repository -Login $login -BeforeSha $section.Base) {
+				continue
+			}
+			$url = [string]$commit.html_url
+			if ([string]::IsNullOrWhiteSpace($url)) {
+				$sha = [string]$commit.sha
+				$url = "https://github.com/$($section.Repository)/commit/$sha"
+			}
+			$newByLogin[$login] = $url
+		}
+	}
+
+	if ($newByLogin.Count -eq 0) {
+		return ""
+	}
+
+	$lines = New-Object System.Collections.Generic.List[string]
+	$lines.Add("## New Contributors")
+	$lines.Add("")
+	foreach ($login in $newByLogin.Keys) {
+		$lines.Add("* @$login made their first contribution in $($newByLogin[$login])")
+	}
+	return ($lines -join "`n")
+}
+
+function Get-NvmReleaseContributorsIconsSection {
+	param(
+		[string]$Tag,
+		[string]$HeadRef
+	)
+	$logins = @(Get-NvmReleaseContributorLogins -Tag $Tag -HeadRef $HeadRef)
+	if ($logins.Count -eq 0) {
+		return ""
+	}
+
+	# Avatar row similar to common OSS release notes (GitHub serves /{user}.png).
+	$icons = New-Object System.Collections.Generic.List[string]
+	foreach ($login in $logins) {
+		$href = "https://github.com/$login"
+		$src = "https://github.com/$login.png?size=64"
+		$icons.Add("<a href=`"$href`"><img src=`"$src`" width=`"48`" height=`"48`" alt=`"@$login`" title=`"@$login`"/></a>")
+	}
+	return ("## Contributors`n`n" + ($icons -join " "))
+}
+
 function Build-NvmReleaseNotesBody {
 	param(
 		[string]$Tag,
@@ -463,8 +623,17 @@ Assets per arch: Inno Setup installer (``*-setup.exe``) and prebuilt ``sync.exe`
 		$intro += "`n`nHotfix stamp applied at build time via the Community Release ``hotfix`` workflow input (manifest base left unchanged in git)."
 	}
 	$commits = Get-NvmReleaseCommitSummarySection -Tag $Tag -HeadRef $headRef
+	$newContributors = Get-NvmReleaseNewContributorsSection -Tag $Tag -HeadRef $headRef
+	$contributorIcons = Get-NvmReleaseContributorsIconsSection -Tag $Tag -HeadRef $headRef
 	$footer = Get-NvmReleaseNotesFooter
-	return ($intro.TrimEnd() + "`n`n" + $commits.TrimEnd() + $footer)
+	$body = $intro.TrimEnd() + "`n`n" + $commits.TrimEnd()
+	if (-not [string]::IsNullOrWhiteSpace($newContributors)) {
+		$body += "`n`n" + $newContributors.TrimEnd()
+	}
+	if (-not [string]::IsNullOrWhiteSpace($contributorIcons)) {
+		$body += "`n`n" + $contributorIcons.TrimEnd()
+	}
+	return ($body + $footer)
 }
 
 function Set-NvmReleaseNotes {
