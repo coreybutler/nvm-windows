@@ -82,6 +82,7 @@ WizardImageFile={#ProjectRoot}\assets\left-banner.png
 WizardStyle=classic
 Compression=lzma
 SolidCompression=yes
+; Hide the directory page. /DIR mismatch: silent install aborts (Application event NVM4100 / EventId 4100); interactive OK ignores /DIR, Cancel aborts (ForceProgramRootDirectory).
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 DisableReadyPage=no
@@ -260,6 +261,42 @@ procedure AppendInstallLogWarn(const Message: String);
 begin
   InstallLogHasIssues := True;
   AppendInstallLog(Message);
+end;
+
+// Writes a classic Application log Error via PowerShell. No custom source registration.
+// Temp file is only a transport for the message (deleted after); Event Viewer is the durable record.
+procedure WriteApplicationEventError(EventId: Integer; const Message: String);
+var
+  TempFile: String;
+  ResultCode: Integer;
+  Cmd: String;
+begin
+  if Trim(Message) = '' then
+    Exit;
+
+  TempFile := ExpandConstant('{tmp}\nvm-setup-appevent.txt');
+  DeleteFile(TempFile);
+  SaveStringToFile(TempFile, Message, False);
+
+  Cmd :=
+    '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' +
+    'try { Write-EventLog -LogName Application -Source Application -EntryType Error -EventId ' +
+    IntToStr(EventId) +
+    ' -Message (Get-Content -Raw -LiteralPath ''' + TempFile + ''') } catch { exit 1 }"';
+
+  if Exec(
+    ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+    Cmd,
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  ) then
+    Log('WriteApplicationEventError: EventId=' + IntToStr(EventId) + ' exit=' + IntToStr(ResultCode))
+  else
+    Log('WriteApplicationEventError: failed to start PowerShell for EventId=' + IntToStr(EventId));
+
+  DeleteFile(TempFile);
 end;
 
 procedure FlushInstallLog();
@@ -2494,6 +2531,8 @@ var
   ExistingMajorVersion: Integer;
   ExistingInstallDetected: Boolean;
   V1NodeRoot: String;
+  ForcedDir: String;
+  Message: String;
 begin
   Result := True;
   RemoveLegacyTasks := False;
@@ -2572,6 +2611,23 @@ begin
 
   if Result and (not IsPreV2Upgrade) and HasExistingV2Preferences() then
     LoadExistingV2WizardDefaults();
+
+  // Silent /DIR overrides are rejected before wizard UI (Application event NVM4100 / EventId 4100); interactive mismatch is handled in InitializeWizard.
+  if Result and WizardSilent then
+  begin
+    ForcedDir := ExpandConstant('{localappdata}\{#OrgLabel}\{#Alias}');
+    if CompareText(NormalizePath(WizardDirValue), NormalizePath(ForcedDir)) <> 0 then
+    begin
+      Message :=
+        'NVM4100: {#Name} {#Version} silent install aborted. ' +
+        'Custom program directories are not allowed (/DIR is ignored/rejected). ' +
+        'Requested "' + WizardDirValue + '"; required program root is "' + ForcedDir + '" under LocalAppData. ' +
+        'To choose where Node.js versions are stored, set InstallRoot (wizard Node.js Storage page, or nvm config after install) — do not use /DIR for the program root.';
+      WriteApplicationEventError(4100, Message);
+      Log(Message);
+      Result := False;
+    end;
+  end;
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
@@ -2644,12 +2700,52 @@ begin
   end;
 end;
 
+function ForceProgramRootDirectory: Boolean;
+var
+  ForcedDir: String;
+  RequestedDir: String;
+begin
+  Result := True;
+  ForcedDir := ExpandConstant('{localappdata}\{#OrgLabel}\{#Alias}');
+  RequestedDir := WizardDirValue;
+  if CompareText(NormalizePath(RequestedDir), NormalizePath(ForcedDir)) = 0 then
+  begin
+    WizardForm.DirEdit.Text := ForcedDir;
+    Exit;
+  end;
+
+  Log('Ignoring custom /DIR "' + RequestedDir + '"; program root is fixed at "' + ForcedDir + '". Customize Node storage / InstallRoot instead.');
+
+  // Silent mismatch already rejected in InitializeSetup; keep defensive fail path.
+  if WizardSilent then
+  begin
+    Result := False;
+    Exit;
+  end;
+
+  if MsgBox(
+    'NVM for Windows always installs under:' + #13#10 + ForcedDir + #13#10#13#10 +
+    'The /DIR value "' + RequestedDir + '" is not supported.' + #13#10#13#10 +
+    'OK = continue install and ignore /DIR.' + #13#10 +
+    'Cancel = abort install.' + #13#10#13#10 +
+    'Choose where Node.js versions are stored on the Node.js Storage page (or set InstallRoot after install).',
+    mbConfirmation,
+    MB_OKCANCEL
+  ) = IDOK then
+    WizardForm.DirEdit.Text := ForcedDir
+  else
+    Result := False;
+end;
+
 procedure InitializeWizard;
 begin
   AclStorageChoice := 0;
   SilentForcedAppDataFrom := '';
   RuntimeACLDegraded := False;
   ShimFinalizeIncomplete := False;
+
+  if not ForceProgramRootDirectory then
+    Abort;
 
   NodeStoragePage := CreateInputDirPage(
     wpLicense,
