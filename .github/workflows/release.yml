@@ -34,11 +34,14 @@ concurrency:
 
 permissions:
   contents: write
+  id-token: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   QGO_VERSION: "1.2.8"
   INNO_SETUP_VERSION: "6.7.1"
+  ARTIFACT_SIGNING_CLIENT_VERSION: "1.0.95"
+  ARTIFACT_SIGNING_TOOLS_DIR: ${{ github.workspace }}\.tools\artifact-signing
 
 jobs:
   prepare:
@@ -351,11 +354,94 @@ jobs:
           }
           Write-Host "ISCC -> $iscc"
 
-      - name: Build community payload + Inno Setup
+      - name: Build community payload (no installer yet)
         run: |
-          & .\build\main.ps1 -Architecture $env:ARCHITECTURE
+          & .\build\main.ps1 -Architecture $env:ARCHITECTURE -SkipInstaller
           if ($LASTEXITCODE -ne 0 -and $null -ne $LASTEXITCODE) {
             throw "build\main.ps1 failed with exit code $LASTEXITCODE"
+          }
+
+      - name: Check Artifact Signing secrets
+        env:
+          ARTIFACT_SIGNING_ENDPOINT: ${{ secrets.ARTIFACT_SIGNING_ENDPOINT }}
+          ARTIFACT_SIGNING_ACCOUNT: ${{ secrets.ARTIFACT_SIGNING_ACCOUNT }}
+          ARTIFACT_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          $missing = New-Object System.Collections.Generic.List[string]
+          foreach ($item in @(
+            @{ Name = "ARTIFACT_SIGNING_ENDPOINT"; Value = $env:ARTIFACT_SIGNING_ENDPOINT },
+            @{ Name = "ARTIFACT_SIGNING_ACCOUNT"; Value = $env:ARTIFACT_SIGNING_ACCOUNT },
+            @{ Name = "ARTIFACT_SIGNING_CERTIFICATE_PROFILE"; Value = $env:ARTIFACT_SIGNING_CERTIFICATE_PROFILE },
+            @{ Name = "AZURE_CLIENT_ID"; Value = $env:AZURE_CLIENT_ID },
+            @{ Name = "AZURE_TENANT_ID"; Value = $env:AZURE_TENANT_ID },
+            @{ Name = "AZURE_SUBSCRIPTION_ID"; Value = $env:AZURE_SUBSCRIPTION_ID }
+          )) {
+            if ([string]::IsNullOrWhiteSpace([string]$item.Value)) { $missing.Add($item.Name) }
+          }
+          if ($missing.Count -gt 0) {
+            throw ("Missing Actions secrets for community Authenticode: {0}" -f ($missing -join ", "))
+          }
+
+      - name: Cache Artifact Signing client
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.ARTIFACT_SIGNING_TOOLS_DIR }}
+          key: artifact-signing-client-${{ env.ARTIFACT_SIGNING_CLIENT_VERSION }}-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Azure login (Artifact Signing)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Sign payload executables
+        env:
+          ARTIFACT_SIGNING_ENABLED: "true"
+          ARTIFACT_SIGNING_ENDPOINT: ${{ secrets.ARTIFACT_SIGNING_ENDPOINT }}
+          ARTIFACT_SIGNING_ACCOUNT: ${{ secrets.ARTIFACT_SIGNING_ACCOUNT }}
+          ARTIFACT_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+          ARTIFACT_SIGNING_AUTH: azure-cli
+          ARTIFACT_SIGNING_TOOLS_DIR: ${{ env.ARTIFACT_SIGNING_TOOLS_DIR }}
+          ARTIFACT_SIGNING_CLIENT_VERSION: ${{ env.ARTIFACT_SIGNING_CLIENT_VERSION }}
+        run: |
+          & .\build\steps\Sign-CommunityArtifacts.ps1 -Architecture $env:ARCHITECTURE
+
+      - name: Build Inno Setup (embeds signed payload)
+        run: |
+          & .\build\steps\Build-Installer.ps1 -Architecture $env:ARCHITECTURE
+          if ($LASTEXITCODE -ne 0 -and $null -ne $LASTEXITCODE) {
+            throw "Build-Installer.ps1 failed with exit code $LASTEXITCODE"
+          }
+
+      - name: Sign installer + sync release assets
+        env:
+          ARTIFACT_SIGNING_ENABLED: "true"
+          ARTIFACT_SIGNING_ENDPOINT: ${{ secrets.ARTIFACT_SIGNING_ENDPOINT }}
+          ARTIFACT_SIGNING_ACCOUNT: ${{ secrets.ARTIFACT_SIGNING_ACCOUNT }}
+          ARTIFACT_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+          ARTIFACT_SIGNING_AUTH: azure-cli
+          ARTIFACT_SIGNING_TOOLS_DIR: ${{ env.ARTIFACT_SIGNING_TOOLS_DIR }}
+          ARTIFACT_SIGNING_CLIENT_VERSION: ${{ env.ARTIFACT_SIGNING_CLIENT_VERSION }}
+        run: |
+          & .\build\steps\Sign-CommunityArtifacts.ps1 -Architecture $env:ARCHITECTURE -InstallerOnly
+
+      - name: Verify Authenticode on release assets
+        run: |
+          . .\build\common.ps1
+          $binRoot = Join-Path $env:GITHUB_WORKSPACE "bin"
+          $ctx = Initialize-NvmBuildContext -BinRoot $binRoot
+          $setup = Get-NvmInstallerSetupPath -Version $ctx.CliVersion -Architecture $env:ARCHITECTURE
+          $syncAsset = Get-NvmSyncReleaseAssetPath -Version $ctx.CliVersion -Architecture $env:ARCHITECTURE
+          foreach ($path in @($setup, $syncAsset) + @(Get-NvmExpectedExePaths -BinRoot $binRoot -Component All)) {
+            $sig = Get-AuthenticodeSignature -LiteralPath $path
+            if ($sig.Status -ne "Valid") {
+              throw ("Authenticode invalid for {0}: {1} ({2})" -f $path, $sig.Status, $sig.StatusMessage)
+            }
+            Write-Host ("OK {0} -> {1}" -f $path, $sig.SignerCertificate.Subject)
           }
 
       - name: Verify outputs

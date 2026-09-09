@@ -384,7 +384,7 @@ function Write-NvmBuildJobSummaryHeader {
 	if (-not [string]::IsNullOrWhiteSpace($ZigVersion)) {
 		$lines.Add("| Zig | $ZigVersion |")
 	}
-	$lines.Add("| Signing | none |")
+	$lines.Add("| Signing | Authenticode (Artifact Signing) |")
 	$lines.Add("")
 	Add-NvmGitHubJobSummary -Markdown ($lines -join "`n")
 }

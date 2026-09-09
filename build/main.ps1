@@ -47,7 +47,7 @@ if ($DownloadSync) {
 	Write-Host "  SyncReleaseRepo  -> $SyncReleaseRepo"
 }
 Write-Host "  CLI version      -> $($ctx.CliVersion)"
-Write-Host "  Signing          -> none (Authenticode/COSE = certified only; Events.dll = message resource)"
+Write-Host "  Signing          -> Authenticode via Artifact Signing (Events.dll = message resource only)"
 
 switch ($Component) {
 	"All" {

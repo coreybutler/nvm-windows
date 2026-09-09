@@ -1,6 +1,6 @@
 # Community build
 
-Unsigned Inno Setup pipeline for NVM for Windows (core / community). No Authenticode, no COSE, no SBOM, no SLSA, no ADMX.
+Authenticode-signed Inno Setup pipeline for NVM for Windows (core / community). No COSE worker signing, no SBOM, no SLSA, no ADMX, no MSI/Intune.
 
 Produces `nvm.exe`, ETW event provider assets (`NVMWindows.Events.man` + `NVMWindows.Events.dll`), shims (`node` / `proxy` / `reshim`), `sync.exe`, and one Inno Setup `.exe`. Sync worker DLLs come from the certified release CDN (`assets.nvm-windows.com`) — this build does not compile them (CDN workers are already COSE Sign1'd by the certified pipeline).
 

@@ -614,8 +614,10 @@ function Build-NvmReleaseNotesBody {
 	$intro = @"
 # NVM for Windows $Tag
 
-Unsigned community build from ``cli/src/manifest.json`` version ``$Version``.
+Authenticode-signed community build from ``cli/src/manifest.json`` version ``$Version``.
 Architectures: $noteArches.
+Program root: per-user LocalAppData (unsupported outside that root may log NVM4101).
+Org Program Files / MSI / Intune: use NVM for Windows Certified Builds.
 
 Assets per arch: Inno Setup installer (``*-setup.exe``) and prebuilt ``sync.exe`` (``*-sync.exe``) for public ``-DownloadSync`` builds.
 "@

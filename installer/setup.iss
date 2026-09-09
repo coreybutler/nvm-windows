@@ -2909,6 +2909,12 @@ begin
   Result := Result + NewLine + NewLine +
     'Note: You may be prompted to allow NVM for Windows to register as a Windows event source.';
 
+  Result := Result + NewLine + NewLine +
+    'Community support notice:' + NewLine +
+    'This Community build installs program files under your per-user LocalAppData folder.' + NewLine +
+    'It is intended for individual workstation use (including Winget).' + NewLine +
+    'For an IT-managed Program Files install, MSI, or Intune deployment, use NVM for Windows Certified Builds.';
+
   if IsPreV2Upgrade then
     Result := Result + NewLine + NewLine +
       'Note: A prior NVM for Windows installation was detected.' + NewLine +
