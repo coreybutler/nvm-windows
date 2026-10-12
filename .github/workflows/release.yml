@@ -34,7 +34,7 @@ on:
           - rc
           - hotfix
       hotfix_base:
-        description: Hotfix Mainline - specify general release to apply hotfix to - ex: 2.0.1
+        description: "Hotfix Mainline - specify general release to apply hotfix to - ex: 2.0.1"
         required: false
         default: ""
         type: string
