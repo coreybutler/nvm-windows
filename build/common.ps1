@@ -60,6 +60,84 @@ function Get-NvmCliVersion {
 	return $version
 }
 
+function Get-NvmLatestStableReleaseVersion {
+	param(
+		[string]$Repo = "nvm-windows/nvm"
+	)
+
+	$repo = $Repo.Trim()
+	if ([string]::IsNullOrWhiteSpace($repo)) {
+		throw "Get-NvmLatestStableReleaseVersion: Repo is empty"
+	}
+
+	$raw = & gh api --paginate "repos/$repo/releases?per_page=100"
+	if ($LASTEXITCODE -ne 0) {
+		throw "Get-NvmLatestStableReleaseVersion: gh api repos/$repo/releases failed with exit code $LASTEXITCODE"
+	}
+	if ([string]::IsNullOrWhiteSpace($raw)) {
+		throw "Get-NvmLatestStableReleaseVersion: no GitHub releases for $repo. Fill in Hotfix base."
+	}
+
+	$releases = @($raw | ConvertFrom-Json)
+	foreach ($rel in $releases) {
+		if ($rel.prerelease -or $rel.draft) { continue }
+		$tag = [string]$rel.tag_name
+		if ($tag -match '^v?(?<ver>\d+\.\d+\.\d+)$') {
+			return $Matches["ver"]
+		}
+	}
+
+	throw "Get-NvmLatestStableReleaseVersion: no stable x.y.z release found for $repo. Fill in Hotfix base with a version such as 2.0.1."
+}
+
+function Resolve-NvmReleaseVersion {
+	param(
+		[Parameter(Mandatory = $true)]
+		[string]$ManifestVersion,
+		[string]$Kind = "none",
+		[string]$PrereleaseNumber = "",
+		[string]$HotfixBase = ""
+	)
+
+	$manifest = $ManifestVersion.Trim()
+	if ($manifest -notmatch '^\d+\.\d+\.\d+$') {
+		throw ("Resolve-NvmReleaseVersion: manifest version '{0}' must be major.minor.patch." -f $manifest)
+	}
+
+	$kind = if ([string]::IsNullOrWhiteSpace($Kind)) { "none" } else { $Kind.Trim().ToLowerInvariant() }
+	$allowed = @("none", "alpha", "beta", "rc", "hotfix")
+	if ($allowed -notcontains $kind) {
+		throw ("Resolve-NvmReleaseVersion: release kind '{0}' must be none, alpha, beta, rc, or hotfix." -f $kind)
+	}
+
+	$number = if ($null -eq $PrereleaseNumber) { "" } else { $PrereleaseNumber.Trim() }
+	$hotfix = if ($null -eq $HotfixBase) { "" } else { $HotfixBase.Trim() }
+	$hotfix = $hotfix -replace '^[vV]', ''
+
+	if ($kind -eq "none") {
+		if (-not [string]::IsNullOrWhiteSpace($number)) {
+			throw "Resolve-NvmReleaseVersion: Prerelease number is only used for alpha, beta, rc, and hotfix. Leave it empty when Release kind is none."
+		}
+		return $manifest
+	}
+
+	if ($number -notmatch '^[1-9]\d*$') {
+		throw ("Resolve-NvmReleaseVersion: Prerelease number is required when Release kind is {0}. Use a positive integer such as 1." -f $kind)
+	}
+
+	if ($kind -eq "hotfix") {
+		if ([string]::IsNullOrWhiteSpace($hotfix)) {
+			throw "Resolve-NvmReleaseVersion: Hotfix base is empty. Fill in a prior stable version such as 2.0.1, or leave the form empty so the latest non-prerelease release is used."
+		}
+		if ($hotfix -notmatch '^\d+\.\d+\.\d+$') {
+			throw ("Resolve-NvmReleaseVersion: Hotfix base '{0}' must be major.minor.patch with no prerelease suffix." -f $hotfix)
+		}
+		return "{0}-hotfix.{1}" -f $hotfix, $number
+	}
+
+	return "{0}-{1}.{2}" -f $manifest, $kind, $number
+}
+
 function Resolve-NvmHotfixVersion {
 	param(
 		[Parameter(Mandatory = $true)]

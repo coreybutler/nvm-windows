@@ -622,7 +622,7 @@ Org Program Files / MSI / Intune: use NVM for Windows Certified Builds.
 Assets per arch: Inno Setup installer (``*-setup.exe``) and prebuilt ``sync.exe`` (``*-sync.exe``) for public ``-DownloadSync`` builds.
 "@
 	if ($Version -match '^\d+\.\d+\.\d+-') {
-		$intro += "`n`nPrerelease stamp applied at build time via the Community Release ``prerelease`` workflow input (manifest base left unchanged in git)."
+		$intro += "`n`nPrerelease stamp applied at build time via the Community Release workflow (manifest base left unchanged in git)."
 	}
 	$commits = Get-NvmReleaseCommitSummarySection -Tag $Tag -HeadRef $headRef
 	$newContributors = Get-NvmReleaseNewContributorsSection -Tag $Tag -HeadRef $headRef
