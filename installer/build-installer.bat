@@ -61,7 +61,7 @@ if "%VERSION%"=="" (
   exit /b 1
 )
 
-for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "$v = '%VERSION%'; if ($v -match '^(\d+)\.(\d+)\.(\d+)(?:-[A-Za-z]+\.(\d+))?$') { $rev = if ($matches[4]) { [int]$matches[4] } else { 0 }; '{0}.{1}.{2}.{3}' -f [int]$matches[1], [int]$matches[2], [int]$matches[3], $rev } elseif ($v -match '^(\d+)\.(\d+)\.(\d+)$') { '{0}.{1}.{2}.0' -f [int]$matches[1], [int]$matches[2], [int]$matches[3] } else { Write-Error ('Unsupported version format: ' + $v); exit 1 }"`) do set "VERSION_INFO_VERSION=%%V"
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "$v = '%VERSION%'; if ($v -match '^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:-(?:\d+\.\d+\.\d+-)?[A-Za-z]+\.(?<rev>\d+))?$') { $rev = if ($matches['rev']) { [int]$matches['rev'] } else { 0 }; '{0}.{1}.{2}.{3}' -f [int]$matches['major'], [int]$matches['minor'], [int]$matches['patch'], $rev } else { Write-Error ('Unsupported version format: ' + $v); exit 1 }"`) do set "VERSION_INFO_VERSION=%%V"
 
 if "%VERSION_INFO_VERSION%"=="" (
   echo ERROR: Could not derive numeric VersionInfoVersion from "%VERSION%".

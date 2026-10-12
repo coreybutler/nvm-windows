@@ -22,8 +22,24 @@ on:
         required: false
         default: false
         type: boolean
-      prerelease:
-        description: Optional prerelease stamp appended to manifest (e.g. beta.1 → 2.0.1-beta.1; 1 or hotfix.1 → …-hotfix.1). Leave empty for manifest version.
+      release_kind:
+        description: Choose none for a normal release of the manifest version. Choose alpha, beta, or rc to prerelease that manifest version. Choose hotfix to patch an already published stable version. Fill in Prerelease number for every choice except none.
+        required: true
+        default: none
+        type: choice
+        options:
+          - none
+          - alpha
+          - beta
+          - rc
+          - hotfix
+      prerelease_number:
+        description: Fill this in when Release kind is alpha, beta, rc, or hotfix. Use a positive integer such as 1 (beta and 1 on manifest 2.0.2 produce 2.0.2-beta.1; hotfix and 1 produce 2.0.1-hotfix.1). Leave empty when Release kind is none.
+        required: false
+        default: ""
+        type: string
+      hotfix_base:
+        description: Fill this in only when Release kind is hotfix. Use a prior stable version such as 2.0.1, with no prerelease suffix. Leave empty to use the latest non-prerelease GitHub release. Ignored when Release kind is none, alpha, beta, or rc.
         required: false
         default: ""
         type: string
@@ -118,7 +134,9 @@ jobs:
           PUBLISH_RELEASE: ${{ inputs.publish_release }}
           OVERRIDE_EXISTING_RELEASE: ${{ inputs.override_existing_release }}
           ARCHES: ${{ steps.matrix.outputs.arches }}
-          HOTFIX: ${{ inputs.prerelease }}
+          RELEASE_KIND: ${{ inputs.release_kind }}
+          PRERELEASE_NUMBER: ${{ inputs.prerelease_number }}
+          HOTFIX_BASE: ${{ inputs.hotfix_base }}
         run: |
           . .\build\common.ps1
           $null = Initialize-NvmBuildContext -SkipZig
@@ -128,12 +146,22 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($baseVersion)) {
             throw "CLI manifest does not define version: $manifestPath"
           }
-          $effective = Resolve-NvmHotfixVersion -BaseVersion $baseVersion -Hotfix $env:HOTFIX
+          $kind = if ([string]::IsNullOrWhiteSpace($env:RELEASE_KIND)) { "none" } else { $env:RELEASE_KIND.Trim().ToLowerInvariant() }
+          $hotfixBase = if ($null -eq $env:HOTFIX_BASE) { "" } else { $env:HOTFIX_BASE.Trim() }
+          if ($kind -eq "hotfix" -and [string]::IsNullOrWhiteSpace($hotfixBase)) {
+            $hotfixBase = Get-NvmLatestStableReleaseVersion
+            Write-Host ("Hotfix base -> {0} (latest non-prerelease release)" -f $hotfixBase)
+          }
+          elseif ($kind -ne "hotfix" -and -not [string]::IsNullOrWhiteSpace($hotfixBase)) {
+            Write-Host ("Ignoring hotfix base '{0}' because Release kind is {1}." -f $hotfixBase, $kind)
+            $hotfixBase = ""
+          }
+          $effective = Resolve-NvmReleaseVersion -ManifestVersion $baseVersion -Kind $kind -PrereleaseNumber $env:PRERELEASE_NUMBER -HotfixBase $hotfixBase
           if ($effective -ne $baseVersion) {
-            Write-Host ("Prerelease stamp -> {0} (base {1})" -f $effective, $baseVersion)
+            Write-Host ("Prerelease stamp -> {0} (manifest {1})" -f $effective, $baseVersion)
           }
           else {
-            Write-Host ("Release version -> {0} (no prerelease input)" -f $effective)
+            Write-Host ("Release version -> {0} (no prerelease)" -f $effective)
           }
           [Environment]::SetEnvironmentVariable("NVM_CLI_VERSION", $effective, "Process")
           if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_ENV)) {
