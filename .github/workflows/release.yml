@@ -23,23 +23,18 @@ on:
         default: false
         type: boolean
       release_kind:
-        description: Choose none for a normal release of the manifest version. Choose alpha, beta, or rc to prerelease that manifest version. Choose hotfix to patch an already published stable version. Fill in Prerelease number for every choice except none.
+        description: Release Type
         required: true
-        default: none
+        default: General
         type: choice
         options:
-          - none
+          - General
           - alpha
           - beta
           - rc
           - hotfix
-      prerelease_number:
-        description: Fill this in when Release kind is alpha, beta, rc, or hotfix. Use a positive integer such as 1 (beta and 1 on manifest 2.0.2 produce 2.0.2-beta.1; hotfix and 1 produce 2.0.1-hotfix.1). Leave empty when Release kind is none.
-        required: false
-        default: ""
-        type: string
       hotfix_base:
-        description: Fill this in only when Release kind is hotfix. Use a prior stable version such as 2.0.1, with no prerelease suffix. Leave empty to use the latest non-prerelease GitHub release. Ignored when Release kind is none, alpha, beta, or rc.
+        description: Hotfix Mainline - specify general release to apply hotfix to - ex: 2.0.1
         required: false
         default: ""
         type: string
@@ -135,7 +130,6 @@ jobs:
           OVERRIDE_EXISTING_RELEASE: ${{ inputs.override_existing_release }}
           ARCHES: ${{ steps.matrix.outputs.arches }}
           RELEASE_KIND: ${{ inputs.release_kind }}
-          PRERELEASE_NUMBER: ${{ inputs.prerelease_number }}
           HOTFIX_BASE: ${{ inputs.hotfix_base }}
         run: |
           . .\build\common.ps1
@@ -147,16 +141,17 @@ jobs:
             throw "CLI manifest does not define version: $manifestPath"
           }
           $kind = if ([string]::IsNullOrWhiteSpace($env:RELEASE_KIND)) { "none" } else { $env:RELEASE_KIND.Trim().ToLowerInvariant() }
+          if ($kind -eq "general") { $kind = "none" }
           $hotfixBase = if ($null -eq $env:HOTFIX_BASE) { "" } else { $env:HOTFIX_BASE.Trim() }
           if ($kind -eq "hotfix" -and [string]::IsNullOrWhiteSpace($hotfixBase)) {
             $hotfixBase = Get-NvmLatestStableReleaseVersion
             Write-Host ("Hotfix base -> {0} (latest non-prerelease release)" -f $hotfixBase)
           }
           elseif ($kind -ne "hotfix" -and -not [string]::IsNullOrWhiteSpace($hotfixBase)) {
-            Write-Host ("Ignoring hotfix base '{0}' because Release kind is {1}." -f $hotfixBase, $kind)
+            Write-Host ("Ignoring hotfix base '{0}' because Release Type is {1}." -f $hotfixBase, $kind)
             $hotfixBase = ""
           }
-          $effective = Resolve-NvmReleaseVersion -ManifestVersion $baseVersion -Kind $kind -PrereleaseNumber $env:PRERELEASE_NUMBER -HotfixBase $hotfixBase
+          $effective = Resolve-NvmReleaseVersion -ManifestVersion $baseVersion -Kind $kind -HotfixBase $hotfixBase
           if ($effective -ne $baseVersion) {
             Write-Host ("Prerelease stamp -> {0} (manifest {1})" -f $effective, $baseVersion)
           }

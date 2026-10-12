@@ -90,6 +90,78 @@ function Get-NvmLatestStableReleaseVersion {
 	throw "Get-NvmLatestStableReleaseVersion: no stable x.y.z release found for $repo. Fill in Hotfix base with a version such as 2.0.1."
 }
 
+function Get-NvmNextPrereleaseNumberFromNames {
+	param(
+		[AllowEmptyCollection()]
+		[string[]]$Names = @(),
+		[Parameter(Mandatory = $true)]
+		[string]$Version,
+		[Parameter(Mandatory = $true)]
+		[string]$Kind
+	)
+
+	$version = $Version.Trim() -replace '^[vV]', ''
+	$kind = $Kind.Trim().ToLowerInvariant()
+	if ($version -notmatch '^\d+\.\d+\.\d+$') {
+		throw ("Get-NvmNextPrereleaseNumberFromNames: version '{0}' must be major.minor.patch." -f $version)
+	}
+	$allowed = @("alpha", "beta", "rc", "hotfix")
+	if ($allowed -notcontains $kind) {
+		throw ("Get-NvmNextPrereleaseNumberFromNames: kind '{0}' must be alpha, beta, rc, or hotfix." -f $kind)
+	}
+
+	$pattern = '^[vV]?' + [regex]::Escape($version) + '-' + [regex]::Escape($kind) + '\.(?<n>[1-9]\d*)$'
+	$max = [long]0
+	foreach ($name in @($Names)) {
+		if ([string]::IsNullOrWhiteSpace($name)) { continue }
+		if ($name.Trim() -match $pattern) {
+			$n = [long]$Matches["n"]
+			if ($n -gt $max) { $max = $n }
+		}
+	}
+	return ($max + 1)
+}
+
+function Get-NvmNextPrereleaseNumber {
+	param(
+		[Parameter(Mandatory = $true)]
+		[string]$Version,
+		[Parameter(Mandatory = $true)]
+		[string]$Kind,
+		[string]$Repo = "nvm-windows/nvm"
+	)
+
+	$repo = $Repo.Trim()
+	if ([string]::IsNullOrWhiteSpace($repo)) {
+		throw "Get-NvmNextPrereleaseNumber: Repo is empty"
+	}
+
+	$names = New-Object System.Collections.Generic.List[string]
+	$releaseRaw = & gh api --paginate "repos/$repo/releases?per_page=100"
+	if ($LASTEXITCODE -ne 0) {
+		throw "Get-NvmNextPrereleaseNumber: gh api repos/$repo/releases failed with exit code $LASTEXITCODE"
+	}
+	if (-not [string]::IsNullOrWhiteSpace($releaseRaw)) {
+		foreach ($rel in @($releaseRaw | ConvertFrom-Json)) {
+			$tag = [string]$rel.tag_name
+			if (-not [string]::IsNullOrWhiteSpace($tag)) { $names.Add($tag) }
+		}
+	}
+
+	$tagRaw = & gh api --paginate "repos/$repo/tags?per_page=100"
+	if ($LASTEXITCODE -ne 0) {
+		throw "Get-NvmNextPrereleaseNumber: gh api repos/$repo/tags failed with exit code $LASTEXITCODE"
+	}
+	if (-not [string]::IsNullOrWhiteSpace($tagRaw)) {
+		foreach ($tag in @($tagRaw | ConvertFrom-Json)) {
+			$name = [string]$tag.name
+			if (-not [string]::IsNullOrWhiteSpace($name)) { $names.Add($name) }
+		}
+	}
+
+	return (Get-NvmNextPrereleaseNumberFromNames -Names @($names) -Version $Version -Kind $Kind)
+}
+
 function Resolve-NvmReleaseVersion {
 	param(
 		[Parameter(Mandatory = $true)]
@@ -105,6 +177,7 @@ function Resolve-NvmReleaseVersion {
 	}
 
 	$kind = if ([string]::IsNullOrWhiteSpace($Kind)) { "none" } else { $Kind.Trim().ToLowerInvariant() }
+	if ($kind -eq "general") { $kind = "none" }
 	$allowed = @("none", "alpha", "beta", "rc", "hotfix")
 	if ($allowed -notcontains $kind) {
 		throw ("Resolve-NvmReleaseVersion: release kind '{0}' must be none, alpha, beta, rc, or hotfix." -f $kind)
@@ -121,10 +194,7 @@ function Resolve-NvmReleaseVersion {
 		return $manifest
 	}
 
-	if ($number -notmatch '^[1-9]\d*$') {
-		throw ("Resolve-NvmReleaseVersion: Prerelease number is required when Release kind is {0}. Use a positive integer such as 1." -f $kind)
-	}
-
+	$series = $manifest
 	if ($kind -eq "hotfix") {
 		if ([string]::IsNullOrWhiteSpace($hotfix)) {
 			throw "Resolve-NvmReleaseVersion: Hotfix base is empty. Fill in a prior stable version such as 2.0.1, or leave the form empty so the latest non-prerelease release is used."
@@ -132,10 +202,18 @@ function Resolve-NvmReleaseVersion {
 		if ($hotfix -notmatch '^\d+\.\d+\.\d+$') {
 			throw ("Resolve-NvmReleaseVersion: Hotfix base '{0}' must be major.minor.patch with no prerelease suffix." -f $hotfix)
 		}
-		return "{0}-hotfix.{1}" -f $hotfix, $number
+		$series = $hotfix
 	}
 
-	return "{0}-{1}.{2}" -f $manifest, $kind, $number
+	if ([string]::IsNullOrWhiteSpace($number)) {
+		$number = [string](Get-NvmNextPrereleaseNumber -Version $series -Kind $kind)
+		Write-Host ("Prerelease number -> {0} (next {1} for {2})" -f $number, $kind, $series)
+	}
+	elseif ($number -notmatch '^[1-9]\d*$') {
+		throw ("Resolve-NvmReleaseVersion: Prerelease number '{0}' must be a positive integer." -f $number)
+	}
+
+	return "{0}-{1}.{2}" -f $series, $kind, $number
 }
 
 function Resolve-NvmHotfixVersion {

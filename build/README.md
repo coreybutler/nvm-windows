@@ -56,16 +56,15 @@ Workflow: [Release Community Build](../.github/workflows/release.yml) (`workflow
 | `architecture` | `both` | `amd64`, `arm64`, or both |
 | `publish_release` | true | Draft → upload assets → publish |
 | `override_existing_release` | false | Replace setup.exe **and** sync.exe on existing tag |
-| `release_kind` | `none` | `none` publishes the manifest version. `alpha`, `beta`, and `rc` prerelease that manifest version. `hotfix` patches a prior stable version. |
-| `prerelease_number` | _(empty)_ | Fill in for `alpha`, `beta`, `rc`, and `hotfix`. `1` produces `-beta.1` or `-hotfix.1`. Leave empty when `release_kind` is `none`. |
-| `hotfix_base` | _(empty)_ | Fill in only for `hotfix`, for example `2.0.1`. Leave empty to use the latest non-prerelease GitHub release. Ignored for `none`, `alpha`, `beta`, and `rc`. |
+| `release_kind` | `General` | Release Type. `General` publishes the manifest version. `alpha`, `beta`, and `rc` prerelease that manifest version. `hotfix` patches a prior general release. The workflow assigns the next number. |
+| `hotfix_base` | _(empty)_ | Hotfix Mainline. Specify the general release to apply the hotfix to, for example `2.0.1`. Leave empty to use the latest general release. Ignored unless Release Type is `hotfix`. |
 
 GitHub Release assets per architecture:
 
 - `nvm-<version>-x64-setup.exe` and `nvm-<version>-arm64-setup.exe` — Inno Setup installers
 - `nvm-<version>-x64-sync.exe` and `nvm-<version>-arm64-sync.exe` — prebuilt sync for `-DownloadSync`
 
-Tag = `v` + effective version. `none` uses `cli/src/manifest.json` (`2.0.2`). `alpha`, `beta`, and `rc` use that manifest plus the kind and number (`2.0.2-beta.1`). `hotfix` uses the prior stable version plus `-hotfix.N` (`2.0.1-hotfix.1`), not the current manifest. The runner patches the manifest before the CLI and Inno build so the embedded version and `AppVersion` match. Inno `VersionInfoVersion` maps the trailing `-word.N` to the fourth numeric field (`2.0.1-hotfix.1` → `2.0.1.1`). Any `x.y.z-*` release is marked GitHub **`--prerelease`**.
+Tag = `v` + effective version. `General` uses `cli/src/manifest.json` (`2.0.2`). `alpha`, `beta`, and `rc` use that manifest plus the kind and the next unused number (`2.0.2-beta.3` already published means the next beta is `2.0.2-beta.4`). `hotfix` uses the Hotfix Mainline plus the next `-hotfix.N` (`2.0.1-hotfix.2` already published means the next hotfix of `2.0.1` is `2.0.1-hotfix.3`), not the current manifest. The runner patches the manifest before the CLI and Inno build so the embedded version and `AppVersion` match. Inno `VersionInfoVersion` maps the trailing `-word.N` to the fourth numeric field (`2.0.1-hotfix.1` → `2.0.1.1`). Any `x.y.z-*` release is marked GitHub **`--prerelease`**.
 
 ### WinGet
 
