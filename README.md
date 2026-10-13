@@ -42,7 +42,7 @@ _The original [nvm](https://github.com/nvm-sh/nvm) is a completely separate proj
 
 ## Resources
 
-- [Website](https://nvm-windows.com)
+- [Official Website](https://nvm-windows.com)
 - [Documentation](https://docs.nvm-windows.com)
 - [Announcements](https://github.com/orgs/nvm-windows/discussions/categories/announcements)
 - [Why We Rewrote NVM for Windows](https://medium.com/@goldglovecb/why-we-rewrote-nvm-for-windows-3b6fa5be3e7f?sharedUserId=goldglovecb)
