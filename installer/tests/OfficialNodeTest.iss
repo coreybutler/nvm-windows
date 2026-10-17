@@ -39,6 +39,9 @@ var
   BudgetDeadline: Cardinal;
   BudgetCode: String;
   BudgetMessage: String;
+  DeferOfficialNodeOnV2Upgrade: Boolean;
+
+#include "..\installtimeout.iss"
 
 function NormalizePath(const PathValue: String): String;
 begin
