@@ -1,10 +1,5 @@
 { Official Node.js adopt / drop. Included from setup.iss [Code]. }
-
-#include "installtimeout.iss"
-
-{ Set by setup.iss when a 2.0.0+ install is already present. The official Node.js product stays; setup notifies instead of uninstalling it. }
-var
-  DeferOfficialNodeOnV2Upgrade: Boolean;
+{ DeferOfficialNodeOnV2Upgrade is declared by the host script. A 2.0.0+ upgrade leaves official Node.js installed. }
 
 function OfficialNodeParam(): String;
 var

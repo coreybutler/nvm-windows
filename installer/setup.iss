@@ -220,6 +220,7 @@ var
   BudgetDeadline: Cardinal;
   BudgetCode: String;
   BudgetMessage: String;
+  DeferOfficialNodeOnV2Upgrade: Boolean;
   SkippedSymlinkLogPath: String;
   SkippedSymlinkLogBuffer: String;
   SkippedSymlinkCount: Integer;
@@ -265,6 +266,8 @@ const
   SMTO_ABORTIFHUNG = 2;
   WindowsAppsUninstallRoot = 'Software\Microsoft\Windows\CurrentVersion\Uninstall';
   SyncTaskName = '{#SyncTaskName}';
+
+#include "installtimeout.iss"
 
 function SendMessageTimeoutW(hWnd: HWND; Msg: UINT; wParam: UINT; lParam: String;
   fuFlags: UINT; uTimeout: UINT; var lpdwResult: DWORD): DWORD;
