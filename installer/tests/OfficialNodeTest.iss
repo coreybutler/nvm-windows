@@ -33,6 +33,12 @@ var
   OfficialNodeCopyFailed: Boolean;
   OfficialNodeDropFailed: Boolean;
   OfficialNodeDropError: String;
+  InstallerHardFailed: Boolean;
+  SuppressStepFailure: Boolean;
+  StepBudgetArmed: Boolean;
+  BudgetDeadline: Cardinal;
+  BudgetCode: String;
+  BudgetMessage: String;
 
 function NormalizePath(const PathValue: String): String;
 begin
