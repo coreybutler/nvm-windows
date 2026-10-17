@@ -1,0 +1,77 @@
+name: Installer report
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  label-and-dedupe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label autosubmission and comment on the existing install code
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue
+            const body = issue.body || ""
+            if (!body.includes("autosubmission")) return
+            const match = body.match(/Install code:\s*(NVM41\d\d)/)
+            if (!match) return
+            const code = match[1]
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            async function ensureLabel(name) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner,
+                  repo,
+                  name,
+                  color: "b60205",
+                  description: "Installer report"
+                })
+              } catch (error) {
+                if (error.status !== 422) throw error
+              }
+            }
+            await ensureLabel("autosubmission")
+            await ensureLabel(code)
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: issue.number,
+              labels: ["autosubmission", code]
+            })
+            const listed = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: "open",
+              labels: code,
+              per_page: 20
+            })
+            const older = listed.data
+              .filter((item) => item.number !== issue.number)
+              .sort((a, b) => a.number - b.number)
+            if (older.length === 0) return
+            const target = older[0]
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: target.number,
+              body: `Another setup report arrived in #${issue.number}.\n\n${body}`
+            })
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issue.number,
+              body: `This report was added to #${target.number}.`
+            })
+            await github.rest.issues.update({
+              owner,
+              repo,
+              issue_number: issue.number,
+              state: "closed",
+              state_reason: "duplicate"
+            })

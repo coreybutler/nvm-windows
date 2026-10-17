@@ -1,5 +1,11 @@
 { Official Node.js adopt / drop. Included from setup.iss [Code]. }
 
+#include "installtimeout.iss"
+
+{ Set by setup.iss when a 2.0.0+ install is already present. The official Node.js product stays; setup notifies instead of uninstalling it. }
+var
+  DeferOfficialNodeOnV2Upgrade: Boolean;
+
 function OfficialNodeParam(): String;
 var
   Raw: String;
@@ -43,10 +49,24 @@ begin
     Result := True;
 end;
 
+function PathIsReparsePoint(const DirPath: String): Boolean;
+var
+  FindRec: TFindRec;
+begin
+  Result := False;
+  if FindFirst(DirPath, FindRec) then
+  begin
+    Result := (FindRec.Attributes and FILE_ATTRIBUTE_REPARSE_POINT) <> 0;
+    FindClose(FindRec);
+  end;
+end;
+
 function OfficialNodeLooksLikeInstall(const DirPath: String): Boolean;
 begin
+  { A v1 NVM_SYMLINK directory symlink is not the nodejs.org product. The v1 cleanup removes the link. }
   Result :=
     (not IsNvmManagedPath(DirPath)) and
+    (not PathIsReparsePoint(DirPath)) and
     FileExists(AddBackslash(DirPath) + 'node.exe');
 end;
 
@@ -351,6 +371,8 @@ begin
   OfficialNodePage := nil;
   if not OfficialNodeDetected then
     Exit;
+  if DeferOfficialNodeOnV2Upgrade then
+    Exit;
 
   Description :=
     OfficialNodeSummary() + #13#10 +
@@ -388,6 +410,7 @@ begin
   Result := False;
   SourceDir := OfficialNodePath;
   DestDir := AddBackslash(GetInstallRoot('')) + OfficialNodeVersionDirName();
+  BeginStepBudget('NVM4106', 'Adopting official Node.js exceeded 15 minutes.', 900);
   AppendInstallLog('AdoptOfficialNode: source=' + SourceDir + ' dest=' + DestDir);
 
   if FileExists(AddBackslash(DestDir) + 'node.exe') then
@@ -435,12 +458,14 @@ begin
   end;
 
   UseVer := OfficialNodeVersion;
-  if not Exec(
+  if not ExecStep(
     ExpandConstant('{app}\{#Alias}.exe'),
     'use ' + UseVer,
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4106',
+    'Adopting official Node.js exceeded 15 minutes.',
+    RemainingBudgetSec,
+    True,
+    False,
     ResultCode
   ) then
     AppendInstallLogWarn('AdoptOfficialNode: nvm use failed to start')
@@ -494,13 +519,14 @@ begin
       Result := True;
       Exit;
     end;
-    Ok := ShellExec(
-      'runas',
+    Ok := ExecStep(
       ExpandConstant('{sys}\msiexec.exe'),
       Args,
-      '',
-      SW_HIDE,
-      ewWaitUntilTerminated,
+      'NVM4115',
+      'Uninstalling official Node.js exceeded 10 minutes.',
+      600,
+      False,
+      True,
       ResultCode
     );
     if not UninstallResultOk(Ok, ResultCode) then
@@ -525,7 +551,7 @@ begin
       Result := True;
       Exit;
     end;
-    Ok := ShellExec('runas', ExpandConstant('{cmd}'), '/C ' + Args, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Ok := ExecStep(ExpandConstant('{cmd}'), '/C ' + Args, 'NVM4115', 'Uninstalling official Node.js exceeded 10 minutes.', 600, False, True, ResultCode);
     if not UninstallResultOk(Ok, ResultCode) then
     begin
       NoteUninstallFailure(Ok, ResultCode, 'MSI uninstall string failed');
@@ -542,7 +568,7 @@ begin
       Result := True;
       Exit;
     end;
-    Ok := ShellExec('runas', ExpandConstant('{cmd}'), '/C ' + OfficialNodeUninstallString, '', SW_SHOWNORMAL, ewWaitUntilTerminated, ResultCode);
+    Ok := ExecStep(ExpandConstant('{cmd}'), '/C ' + OfficialNodeUninstallString, 'NVM4115', 'Uninstalling official Node.js exceeded 10 minutes.', 600, False, True, ResultCode);
     if not UninstallResultOk(Ok, ResultCode) then
     begin
       NoteUninstallFailure(Ok, ResultCode, 'Official uninstall failed');
@@ -564,6 +590,8 @@ procedure AbortInstallBecauseOfficialNodeRemains();
 var
   MessageText: String;
 begin
+  if InstallerHardFailed then
+    Exit;
   MessageText :=
     'The existing Node.js installation could not be removed.' + #13#10#13#10 +
     OfficialNodeDropError + #13#10#13#10 +
@@ -586,6 +614,12 @@ begin
   if not OfficialNodeDetected then
     Exit;
 
+  if DeferOfficialNodeOnV2Upgrade then
+  begin
+    AppendInstallLog('ApplyOfficialNodeChoice: left in place for a 2.x upgrade at ' + OfficialNodePath);
+    Exit;
+  end;
+
   OfficialNodeAction := SelectedOfficialNodeAction();
   AppendInstallLog('ApplyOfficialNodeChoice: action=' + OfficialNodeAction + ' path=' + OfficialNodePath);
 
@@ -595,6 +629,8 @@ begin
   begin
     if not AdoptOfficialNodeVersion() then
       OfficialNodeCopyFailed := True;
+    if InstallerHardFailed then
+      Exit;
     DropOfficialNodeInstall();
   end;
 

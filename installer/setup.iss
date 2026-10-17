@@ -174,6 +174,8 @@ Source: "..\bin\.sync\*"; DestDir: "{app}\.sync"; Flags: ignoreversion recursesu
 #endif
 Source: "updater\bin\nvm-upgrader.exe"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall
 Source: "{#ProjectRoot}\{#Icon}"; DestDir: "{app}\.icons"; DestName: "{#Alias}.ico"; Flags: ignoreversion
+Source: "InstallerReport.ps1"; DestDir: "{tmp}"; Flags: deleteafterinstall
+Source: "InstallerReport.ps1"; DestDir: "{app}\utils"; Flags: ignoreversion
 
 [Icons]
 Name: "{userprograms}\{#Name}"; Filename: "{app}\{#Alias}.exe"; IconFilename: "{app}\.icons\{#Alias}.ico"; Comment: "Node Version Manager"; AppUserModelID: "AuthorSoftware.NVMWindows"
@@ -199,6 +201,7 @@ var
   InstallCompleted: Boolean;
   RemoveLegacyTasks: Boolean;
   IsPreV2Upgrade: Boolean;
+  IsExistingV2Upgrade: Boolean;
   IsConcreteLegacyUpgrade: Boolean;
   LegacyInstallDir: String;
   LegacySettingsLoaded: Boolean;
@@ -211,6 +214,12 @@ var
   InstallLogPath: String;
   InstallLogBuffer: String;
   InstallLogHasIssues: Boolean;
+  InstallerHardFailed: Boolean;
+  SuppressStepFailure: Boolean;
+  StepBudgetArmed: Boolean;
+  BudgetDeadline: Cardinal;
+  BudgetCode: String;
+  BudgetMessage: String;
   SkippedSymlinkLogPath: String;
   SkippedSymlinkLogBuffer: String;
   SkippedSymlinkCount: Integer;
@@ -892,12 +901,14 @@ begin
     '}';
 
   SaveStringToFile(TaskCleanupScriptFile, TaskCleanupScript, False);
-  Exec(
+  ExecStep(
     ExpandConstant('{cmd}'),
     '/C powershell.exe -NoProfile -ExecutionPolicy Bypass -File "' + TaskCleanupScriptFile + '"',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4102',
+    'Removing scheduled tasks exceeded 3 minutes.',
+    180,
+    True,
+    False,
     ResultCode
   );
   DeleteFile(TaskCleanupScriptFile);
@@ -924,12 +935,14 @@ begin
     '/C schtasks /Create /SC HOURLY /MO 1 /TN "' + SyncTaskName +
     '" /TR "\"' + SyncExePath + '\" --background sync" /F';
 
-  if not Exec(
+  if not ExecStep(
     ExpandConstant('{cmd}'),
     TaskCreateCommand,
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4108',
+    'Creating the sync scheduled task exceeded 3 minutes.',
+    180,
+    True,
+    False,
     ResultCode
   ) then
   begin
@@ -955,12 +968,14 @@ begin
     '$folder.RegisterTaskDefinition($taskName, $definition, 6, $null, $null, $definition.Principal.LogonType, $null) | Out-Null';
 
   SaveStringToFile(TaskAuthorScriptFile, TaskAuthorScript, False);
-  if not Exec(
+  if not ExecStep(
     ExpandConstant('{cmd}'),
     '/C powershell.exe -NoProfile -ExecutionPolicy Bypass -File "' + TaskAuthorScriptFile + '"',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4108',
+    'Creating the sync scheduled task exceeded 3 minutes.',
+    180,
+    True,
+    False,
     ResultCode
   ) then
   begin
@@ -975,12 +990,14 @@ begin
   QueryOutputFile := ExpandConstant('{tmp}') + '\nvm-sync-task-query.txt';
   DeleteFile(QueryOutputFile);
 
-  if not Exec(
+  if not ExecStep(
     ExpandConstant('{cmd}'),
     '/C schtasks /Query /TN "' + SyncTaskName + '" /FO LIST /V > "' + QueryOutputFile + '" 2>&1',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4108',
+    'Creating the sync scheduled task exceeded 3 minutes.',
+    180,
+    True,
+    False,
     ResultCode
   ) then
   begin
@@ -1348,11 +1365,11 @@ var
   Attr: Integer;
   ResultCode: Integer;
   FindRec: TFindRec;
+  ElevatedExecOk: Boolean;
 begin
-  if not IsPreV2Upgrade then
-    Exit;
-
   LegacySymlinkPath := NormalizePath(Trim(LegacySettingsPath));
+  if LegacySymlinkPath = '' then
+    LegacySymlinkPath := NormalizePath(Trim(GetEnv('NVM_SYMLINK')));
   if LegacySymlinkPath = '' then
     Exit;
 
@@ -1377,21 +1394,40 @@ begin
     Exit;
   end;
 
-  if not Exec(
+  if not ExecStep(
     ExpandConstant('{cmd}'),
     '/C rmdir "' + LegacySymlinkPath + '"',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4104',
+    'Removing the legacy Node.js link exceeded 5 minutes.',
+    300,
+    True,
+    False,
     ResultCode
   ) then
-  begin
-    AppendLegacyCleanupWarning('Could not remove the legacy symlink path: ' + LegacySymlinkPath);
+    ResultCode := 1;
+
+  if InstallerHardFailed then
     Exit;
-  end;
 
   if ResultCode <> 0 then
-    AppendLegacyCleanupWarning('Could not remove the legacy symlink path: ' + LegacySymlinkPath + ' (exit code ' + IntToStr(ResultCode) + ').');
+  begin
+    ElevatedExecOk := ExecStep(
+      ExpandConstant('{cmd}'),
+      '/C rmdir "' + LegacySymlinkPath + '"',
+      'NVM4104',
+      'Removing the legacy Node.js link exceeded 5 minutes.',
+      300,
+      True,
+      True,
+      ResultCode
+    );
+    if (not ElevatedExecOk) or (ResultCode <> 0) then
+      AppendLegacyCleanupWarning('Could not remove the legacy symlink path: ' + LegacySymlinkPath + ' (exit code ' + IntToStr(ResultCode) + ').')
+    else
+      AppendInstallLog('Removed legacy symlink path: ' + LegacySymlinkPath);
+  end
+  else
+    AppendInstallLog('Removed legacy symlink path: ' + LegacySymlinkPath);
 end;
 
 { ── Elevated migration helper ────────────────────────────────────────────── }
@@ -1894,6 +1930,9 @@ var
   SourceArg: String;
   DestArg: String;
   ProgressSubText: String;
+  StepCode: String;
+  StepMessage: String;
+  StepSeconds: Integer;
 begin
   Result := True;
 
@@ -1926,13 +1965,24 @@ begin
   end;
 
   { Drop /V: verbose lines go to a hidden console (SW_HIDE), not the wizard or install.log. }
+  StepCode := 'NVM4105';
+  StepMessage := 'Copying a Node.js version exceeded 5 minutes.';
+  StepSeconds := 300;
+  if StepBudgetArmed and (BudgetCode <> '') then
+  begin
+    StepCode := BudgetCode;
+    StepMessage := BudgetMessage;
+    StepSeconds := RemainingBudgetSec;
+  end;
   ExecResult :=
-    Exec(
+    ExecStep(
       'robocopy.exe',
       '"' + SourceArg + '" "' + DestArg + '" /E /MT:16 /R:1 /W:1 /NP /XJF /XJD /SJ',
-      '',
-      SW_HIDE,
-      ewWaitUntilTerminated,
+      StepCode,
+      StepMessage,
+      StepSeconds,
+      False,
+      False,
       ResultCode
     );
 
@@ -2071,6 +2121,8 @@ begin
 
             if not CopyTreeWithProgress(SourceVersionDir, TargetVersionDir, ProgressPage, CopiedCount, FileCount, FindRec.Name) then
             begin
+              if InstallerHardFailed then
+                Exit;
               AppendInstallLogWarn('MigrateNodeStorageIfNeeded: copy failed after ' + IntToStr(CopiedCount) + ' files');
               if not TargetExistedBefore then
               begin
@@ -2366,7 +2418,11 @@ begin
     SummaryText := SummaryText + #13#10 + #13#10 +
       'A prior NVM for Windows installation was detected. Your settings and Node.js versions will be migrated.';
 
-  if OfficialNodeDetected then
+  if OfficialNodeDetected and DeferOfficialNodeOnV2Upgrade then
+    SummaryText := SummaryText + #13#10 + #13#10 +
+      OfficialNodeSummary() + #13#10 +
+      'The existing Node.js installation is left in place. After setup, Notification Center reminds you to uninstall it.'
+  else if OfficialNodeDetected then
     SummaryText := SummaryText + #13#10 + #13#10 +
       OfficialNodeSummary() + #13#10 +
       'Official Node.js action: ' + SelectedOfficialNodeAction() + #13#10 +
@@ -2558,12 +2614,14 @@ begin
     Exit;
 
   Args := '--check-runtime-acls "' + InstallRoot + '"';
-  if Exec(
+  if ExecStep(
     ExpandConstant('{app}\{#Alias}.exe'),
     Args,
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4103',
+    'Checking Node.js storage permissions exceeded 5 minutes.',
+    300,
+    True,
+    False,
     ResultCode
   ) then
     Result := (ResultCode = 0)
@@ -2648,7 +2706,7 @@ begin
   end;
 
   { Current-token repair first (owner WRITE_DAC / already elevated). }
-  if Exec(NvmExe, '--repair-runtime-acls', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  if ExecStep(NvmExe, '--repair-runtime-acls', 'NVM4112', 'Repairing Node.js storage permissions exceeded its time limit.', WalkTimeoutSec(CountInstalledNodeVersions(GetInstallRoot(''))), True, False, ResultCode) then
   begin
     if ResultCode = 0 then
     begin
@@ -2684,13 +2742,14 @@ begin
     Exit;
   end;
 
-  ElevatedExecOk := ShellExec(
-    'runas',
+  ElevatedExecOk := ExecStep(
     NvmExe,
     '--repair-runtime-acls',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4112',
+    'Repairing Node.js storage permissions exceeded its time limit.',
+    WalkTimeoutSec(CountInstalledNodeVersions(GetInstallRoot(''))),
+    True,
+    True,
     ResultCode
   );
 
@@ -2744,6 +2803,27 @@ begin
     AppendInstallLogWarn('Silent storage migration toast exit=' + IntToStr(ResultCode))
   else
     AppendInstallLog('Silent storage migration toast sent');
+end;
+
+procedure NotifyOfficialNodeLeftInPlace();
+var
+  ResultCode: Integer;
+begin
+  if (not DeferOfficialNodeOnV2Upgrade) or (not OfficialNodeDetected) then
+    Exit;
+  if not Exec(
+    ExpandConstant('{app}\{#Alias}.exe'),
+    '--notify-official-node "' + OfficialNodePath + '"',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  ) then
+    AppendInstallLogWarn('Official Node.js reminder failed to start')
+  else if ResultCode <> 0 then
+    AppendInstallLogWarn('Official Node.js reminder exit=' + IntToStr(ResultCode))
+  else
+    AppendInstallLog('Official Node.js reminder sent for ' + OfficialNodePath);
 end;
 
 procedure UpdateAutoInstallPromptState();
@@ -2806,6 +2886,8 @@ begin
   Result := True;
   RemoveLegacyTasks := False;
   IsPreV2Upgrade := False;
+  IsExistingV2Upgrade := False;
+  DeferOfficialNodeOnV2Upgrade := False;
   IsConcreteLegacyUpgrade := False;
 
   if not IsBuildArchitectureCompatible() then
@@ -2851,6 +2933,11 @@ begin
       V1NodeRoot := GetLegacyV1NodeStorageRoot();
       if V1NodeRoot <> '' then
         PreviousInstallRoot := V1NodeRoot;
+    end
+    else if ExistingMajorVersion >= 2 then
+    begin
+      IsExistingV2Upgrade := True;
+      DeferOfficialNodeOnV2Upgrade := True;
     end;
 
     if not ConfirmExistingInstallMigration(ExistingVersion) then
@@ -3258,12 +3345,14 @@ begin
 
   if DirExists(ProgramShim) then
   begin
-    if not Exec(
+    if not ExecStep(
       'robocopy.exe',
       '"' + ProgramShim + '" "' + DataShim + '" /E /MT:8 /R:1 /W:1 /NP /NFL /NDL /NJH /NJS',
-      '',
-      SW_HIDE,
-      ewWaitUntilTerminated,
+      'NVM4109',
+      'Creating the Node.js shim link exceeded 3 minutes.',
+      180,
+      True,
+      False,
       ResultCode
     ) then
       AppendInstallLogWarn('EnsureDataRootRuntimeLayout: robocopy seed failed to start')
@@ -3335,8 +3424,10 @@ begin
     '(Get-Item -LiteralPath $target -Force -ErrorAction Stop).Attributes = ' +
     '([System.IO.FileAttributes]::Hidden -bor [System.IO.FileAttributes]::Directory -bor [System.IO.FileAttributes]::ReparsePoint)"';
 
-  if not Exec(ExpandConstant('{cmd}'), CommandLine, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  if not ExecStep(ExpandConstant('{cmd}'), CommandLine, 'NVM4109', 'Creating the Node.js shim link exceeded 3 minutes.', 180, True, False, ResultCode) then
   begin
+    if InstallerHardFailed then
+      Exit;
     AppendInstallLogWarn('EnsureShimModeNodePathJunction: failed to execute junction command');
     Result := False;
     Exit;
@@ -3356,12 +3447,14 @@ procedure RegisterInstalledVersionsInWindowsApps();
 var
   ResultCode: Integer;
 begin
-  if not Exec(
+  if not ExecStep(
     ExpandConstant('{app}\{#Alias}.exe'),
     '--register-installed-versions',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4107',
+    'Registering installed Node.js versions exceeded its time limit.',
+    WalkTimeoutSec(CountInstalledNodeVersions(GetInstallRoot(''))),
+    True,
+    False,
     ResultCode
   ) then
   begin
@@ -3379,12 +3472,14 @@ var
 begin
   { 2.0.0 upgrades have Node installs and no npm-cli.js script-trust rows.
     reshim.exe swallows signer failures; call nvm directly and keep the exit code. }
-  if not Exec(
+  if not ExecStep(
     ExpandConstant('{app}\{#Alias}.exe'),
     '--sign-installed-versions',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4107',
+    'Signing installed Node.js versions exceeded its time limit.',
+    WalkTimeoutSec(CountInstalledNodeVersions(GetInstallRoot(''))),
+    True,
+    False,
     ResultCode
   ) then
   begin
@@ -3400,12 +3495,14 @@ procedure RunForceReshimAtEnd();
 var
   ResultCode: Integer;
 begin
-  if not Exec(
+  if not ExecStep(
     ExpandConstant('{app}\utils\reshim.exe'),
     '--force',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4113',
+    'Rebuilding shims exceeded its time limit.',
+    WalkTimeoutSec(CountInstalledNodeVersions(GetInstallRoot(''))),
+    True,
+    False,
     ResultCode
   ) then
   begin
@@ -3569,12 +3666,14 @@ begin
     False
   );
 
-  if Exec(
+  if ExecStep(
     ExpandConstant('{cmd}'),
     '/C powershell.exe -NoProfile -ExecutionPolicy Bypass -File "' + ScriptFile + '"',
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
+    'NVM4114',
+    'Closing Node.js processes exceeded 3 minutes.',
+    180,
+    True,
+    False,
     ResultCode
   ) then
     AppendInstallLog('ForceCloseNvmProcessesForInstall: exit=' + IntToStr(ResultCode))
@@ -3920,7 +4019,7 @@ begin
   FinalizingTotal := FinalizingTotal + 1;  { close blocking Node/NVM processes }
   FinalizingTotal := FinalizingTotal + 1;  { for forced reshim at final step }
   FinalizingTotal := FinalizingTotal + 1;  { for runtime ACL repair }
-  if OfficialNodeDetected then
+  if OfficialNodeDetected and (not DeferOfficialNodeOnV2Upgrade) then
     FinalizingTotal := FinalizingTotal + 1;
 
   FinalizingStep := 0;
@@ -3949,6 +4048,8 @@ begin
       FinalizingStep := FinalizingStep + 1;
       UpdateFinalizingProgress(FinalizingPage, 'Removing legacy scheduled tasks...', FinalizingStep, FinalizingTotal);
       RemoveLegacyScheduledTasks();
+      if InstallerHardFailed then
+        Exit;
     end;
 
     FinalizingStep := FinalizingStep + 1;
@@ -3956,14 +4057,22 @@ begin
     ApplySilentInstallRootPolicy();
     AppendInstallLog('CurStepChanged: install root after ACL policy=' + GetInstallRoot(''));
 
+    RemoveLegacySymlinkPathIfNeeded();
+    if InstallerHardFailed then
+      Exit;
+
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Migrating installed Node.js versions...', FinalizingStep, FinalizingTotal);
     MigrateNodeStorageIfNeeded();
-    if OfficialNodeDetected then
+    if InstallerHardFailed then
+      Exit;
+    if OfficialNodeDetected and (not DeferOfficialNodeOnV2Upgrade) then
     begin
       FinalizingStep := FinalizingStep + 1;
       UpdateFinalizingProgress(FinalizingPage, 'Applying official Node.js choice...', FinalizingStep, FinalizingTotal);
       ApplyOfficialNodeChoice();
+      if InstallerHardFailed then
+        Exit;
     end;
     if MigrationPerformed and HasSkippedSymlinks() then
       MsgBox(
@@ -3978,10 +4087,14 @@ begin
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Registering installed Node.js versions in Windows Apps...', FinalizingStep, FinalizingTotal);
     RegisterInstalledVersionsInWindowsApps();
+    if InstallerHardFailed then
+      Exit;
 
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Creating background sync scheduled task...', FinalizingStep, FinalizingTotal);
     CreateSyncScheduledTask();
+    if InstallerHardFailed then
+      Exit;
 
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Configuring internal Node.js shim junction...', FinalizingStep, FinalizingTotal);
@@ -4014,13 +4127,14 @@ begin
       FinalizingStep := FinalizingStep + 1;
       UpdateFinalizingProgress(FinalizingPage, 'Registering Windows Event Log source (UAC prompt may appear)...', FinalizingStep, FinalizingTotal);
 
-      ElevatedExecOk := ShellExec(
-        'runas',
+      ElevatedExecOk := ExecStep(
         ExpandConstant('{app}\{#Alias}.exe'),
         '--register-eventlog',
-        '',
-        SW_HIDE,
-        ewWaitUntilTerminated,
+        'NVM4111',
+        'Registering the Windows event log exceeded 5 minutes.',
+        300,
+        True,
+        True,
         ResultCode
       );
 
@@ -4046,12 +4160,15 @@ begin
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Hardening install and Node.js version ACLs...', FinalizingStep, FinalizingTotal);
     RepairRuntimeAclsPostInstall();
+    if InstallerHardFailed then
+      Exit;
 
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Configuring notification center integration...', FinalizingStep, FinalizingTotal);
     ConfigureAUMIDForNotifications();
     ConfigureUninstallDisplayIcon();
     NotifySilentStorageMigration();
+    NotifyOfficialNodeLeftInPlace();
 
     if RuntimeACLDegraded then
       AppendInstallLogWarn(
@@ -4061,10 +4178,14 @@ begin
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Closing Node.js processes that lock shims...', FinalizingStep, FinalizingTotal);
     ConfirmAndCloseBlockingInstallProcesses();
+    if InstallerHardFailed then
+      Exit;
 
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Rebuilding and prewarming module shims...', FinalizingStep, FinalizingTotal);
     RunForceReshimAtEnd();
+    if InstallerHardFailed then
+      Exit;
     SignInstalledVersionScripts();
     PrewarmNpmAndNpxShims();
     WarnIfShimFinalizeIncomplete();
@@ -4096,6 +4217,15 @@ var
   RollbackTotal, RollbackCount: Integer;
 begin
   AppendInstallLog('DeinitializeSetup: begin');
+  if InstallerHardFailed then
+  begin
+    if (not WizardSilent) then
+      ShowInstallerFailureDialog();
+    ScheduleInstallerRollback();
+    FlushInstallLog();
+    ExitProcess(1);
+  end;
+
   if InstallCompleted or not MigrationPerformed then
   begin
     AppendInstallLog('DeinitializeSetup: no rollback needed');
@@ -4118,6 +4248,7 @@ begin
   CountFilesInTree(MigrationDest, RollbackTotal);
   RollbackCount := 0;
 
+  SuppressStepFailure := True;
   if CopyTreeWithProgress(MigrationDest, MigrationSource, nil, RollbackCount, RollbackTotal, '') then
   begin
     AppendInstallLog('DeinitializeSetup: rollback copy succeeded, deleting migration destination');
