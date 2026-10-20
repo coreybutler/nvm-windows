@@ -266,7 +266,28 @@ const
   SMTO_ABORTIFHUNG = 2;
   WindowsAppsUninstallRoot = 'Software\Microsoft\Windows\CurrentVersion\Uninstall';
   SyncTaskName = '{#SyncTaskName}';
+  TH32CS_SNAPPROCESS = $00000002;
+  PROCESS_QUERY_LIMITED_INFORMATION = $1000;
+  INVALID_HANDLE_VALUE = $FFFFFFFF;
+  FleetWalkMaxDepth = 16;
+  NVM4116EventId = 4116;
 
+type
+  TProcessEntry32W = record
+    dwSize: DWORD;
+    cntUsage: DWORD;
+    th32ProcessID: DWORD;
+    th32DefaultHeapID: DWORD;
+    th32ModuleID: DWORD;
+    cntThreads: DWORD;
+    th32ParentProcessID: DWORD;
+    pcPriClassBase: LongInt;
+    dwFlags: DWORD;
+    szExeFile: array[0..259] of Char;
+  end;
+
+procedure WriteApplicationEventError(EventId: Integer; const Message: String); forward;
+#include "fleetgate.iss"
 #include "installtimeout.iss"
 
 function SendMessageTimeoutW(hWnd: HWND; Msg: UINT; wParam: UINT; lParam: String;
@@ -2892,6 +2913,12 @@ begin
   IsExistingV2Upgrade := False;
   DeferOfficialNodeOnV2Upgrade := False;
   IsConcreteLegacyUpgrade := False;
+
+  if not PassesFleetInstallGate() then
+  begin
+    Result := False;
+    Exit;
+  end;
 
   if not IsBuildArchitectureCompatible() then
   begin
