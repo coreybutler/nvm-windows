@@ -31,6 +31,33 @@ on:
         required: true
         default: true
         type: boolean
+  workflow_call:
+    inputs:
+      release:
+        description: latest or custom
+        required: false
+        type: string
+        default: latest
+      release_tag:
+        description: Release tag when release=custom
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        description: Validate only when true; open the winget-pkgs pull request when false
+        required: false
+        type: boolean
+        default: false
+      install_test:
+        description: Best-effort silent install smoke test
+        required: false
+        type: boolean
+        default: true
+      verify_public_urls:
+        description: Verify anonymous GitHub release URLs
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -102,8 +129,15 @@ jobs:
           if ($tag -notmatch '^v?[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$') {
             throw "release tag must be SemVer, optionally prefixed with v: $tag"
           }
-          gh release view $tag --repo $repo --json tagName,isDraft,isPrerelease,assets
+          $releaseJson = gh release view $tag --repo $repo --json tagName,isDraft,isPrerelease,assets
           if ($LASTEXITCODE -ne 0) { throw "GitHub Release not found: $tag" }
+          $releaseInfo = $releaseJson | ConvertFrom-Json
+          if ($releaseInfo.isDraft) {
+            throw "GitHub Release is a draft: $tag"
+          }
+          if (-not $dryRun -and $releaseInfo.isPrerelease) {
+            throw "WinGet publish is only for a stable GitHub Release, not a prerelease: $tag"
+          }
 
           $version = $tag -replace '^[vV]', ''
           "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -402,3 +436,76 @@ jobs:
           Write-Host "::notice title=WinGet pull request::$prUrl"
           "pull_request_url=$prUrl" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           [System.IO.File]::AppendAllText($env:GITHUB_STEP_SUMMARY, "### WinGet pull request`n`n$prUrl`n", $utf8)
+
+      - name: Agree Microsoft CLA
+        if: inputs.dry_run == false && steps.submit.outputs.pull_request_url != ''
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_CREATE_GITHUB_TOKEN }}
+          PR_URL: ${{ steps.submit.outputs.pull_request_url }}
+          CLA_COMPANY: Author Software Inc.
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+
+          $prUrl = $env:PR_URL.Trim()
+          $company = $env:CLA_COMPANY.Trim()
+          if ([string]::IsNullOrWhiteSpace($prUrl)) { throw "pull_request_url is empty." }
+          if ([string]::IsNullOrWhiteSpace($company)) { throw "CLA_COMPANY is empty." }
+
+          $agree = '@microsoft-github-policy-service agree company="' + $company + '"'
+          $pr = gh pr view $prUrl --json number,labels | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "Could not read $prUrl." }
+          $number = [int]$pr.number
+          $labels = @($pr.labels | ForEach-Object { [string]$_.name })
+          if ($labels -match '(?i)^cla-signed$') {
+            Write-Host "Microsoft CLA already signed on PR #$number."
+            exit 0
+          }
+
+          $login = (gh api user --jq .login).Trim()
+          $posted = $false
+          for ($i = 0; $i -lt 24; $i++) {
+            $comments = @(gh api "repos/microsoft/winget-pkgs/issues/$number/comments?per_page=100" | ConvertFrom-Json)
+            if ($LASTEXITCODE -ne 0) { throw "Could not list comments on PR #$number." }
+
+            $labels = @((gh pr view $prUrl --json labels | ConvertFrom-Json).labels | ForEach-Object { [string]$_.name })
+            if ($labels -match '(?i)^cla-signed$') {
+              Write-Host "Microsoft CLA already signed on PR #$number."
+              exit 0
+            }
+
+            $ours = @($comments | Where-Object {
+              $_.user.login -eq $login -and [string]$_.body -match '(?i)@microsoft-github-policy-service\s+agree'
+            })
+            if ($ours.Count -gt 0) {
+              Write-Host "CLA agreement comment already posted on PR #$number."
+              exit 0
+            }
+
+            $bot = @($comments | Where-Object { $_.user.login -eq 'microsoft-github-policy-service[bot]' })
+            $prompt = @($bot | Where-Object {
+              $body = [string]$_.body
+              $body -match 'Contributor License Agreement' -or $body -match 'cla\.opensource\.microsoft\.com' -or $body -match '(?i)@microsoft-github-policy-service\s+agree'
+            })
+            if ($prompt.Count -gt 0) {
+              $body = [string]$prompt[-1].body
+              if ($body -match 'cla\.opensource\.microsoft\.com') {
+                Write-Warning "The first company CLA still has to be signed at https://cla.opensource.microsoft.com for $login. Later WinGet pull requests reuse that signature."
+              }
+              gh pr comment $prUrl --body $agree
+              if ($LASTEXITCODE -ne 0) {
+                Write-Warning "Could not post the CLA agreement comment. Sign once in the browser if this is the first pull request."
+                exit 0
+              }
+              Write-Host "Posted CLA agreement for $company on PR #$number."
+              $posted = $true
+              break
+            }
+
+            Write-Host "Waiting for the Microsoft CLA bot on PR #$number..."
+            Start-Sleep -Seconds 10
+          }
+
+          if (-not $posted) {
+            Write-Warning "The Microsoft CLA bot did not comment within 4 minutes. Sign once at https://cla.opensource.microsoft.com, then later runs can post the agree comment."
+          }
