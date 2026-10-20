@@ -593,3 +593,19 @@ jobs:
           & .\build\steps\Update-VirusTotalReleaseNotes.ps1 `
             -Tag $env:TAG `
             -AssetRoot (Join-Path $PWD "release-assets")
+
+  publish-winget:
+    name: Publish to WinGet
+    needs: [prepare, build, release]
+    if: >-
+      success() &&
+      inputs.publish_release == true &&
+      inputs.release_kind == 'General'
+    uses: ./.github/workflows/winget.yml
+    with:
+      release: custom
+      release_tag: ${{ needs.prepare.outputs.tag }}
+      dry_run: false
+      install_test: true
+      verify_public_urls: true
+    secrets: inherit
