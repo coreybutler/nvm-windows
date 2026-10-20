@@ -389,12 +389,7 @@ jobs:
 
           $bodyPath = Join-Path $env:RUNNER_TEMP 'winget-pr-body.md'
           $tag = $env:RELEASE_TAG.Trim()
-          $body = @"
-$title
-
-Node.js version manager for Windows.
-https://github.com/$($env:GITHUB_REPOSITORY)/releases/tag/$tag
-"@
+          $body = "$title`n`nNode.js version manager for Windows.`nhttps://github.com/$($env:GITHUB_REPOSITORY)/releases/tag/$tag"
           [System.IO.File]::WriteAllText($bodyPath, $body.Trim() + "`n", $utf8)
 
           $prOutput = gh pr create --repo $upstream --base master --head "$($env:FORK_OWNER):$branch" --title $title --body-file $bodyPath
