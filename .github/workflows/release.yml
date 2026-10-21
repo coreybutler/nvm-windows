@@ -17,6 +17,11 @@ on:
         required: false
         default: true
         type: boolean
+      publish_winget:
+        description: Open a microsoft/winget-pkgs pull request after a successful General (non-prerelease) GitHub Release. Uncheck to skip WinGet or to run Publish to WinGet later by hand.
+        required: false
+        default: true
+        type: boolean
       override_existing_release:
         description: Replace existing setup.exe + sync.exe assets on that release
         required: false
@@ -600,6 +605,7 @@ jobs:
     if: >-
       success() &&
       inputs.publish_release == true &&
+      inputs.publish_winget == true &&
       inputs.release_kind == 'General'
     uses: ./.github/workflows/winget.yml
     with:
