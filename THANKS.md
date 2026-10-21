@@ -16,7 +16,7 @@ _Commit authors on `master` (v1) and `main` (v2), sorted by commit count. Bots o
 
 <table>
 <tr>
-<td align="center" valign="top" width="12%"><a href="https://github.com/coreybutler"><img src="https://avatars.githubusercontent.com/u/770982?v=4&s=64" width="64" height="64" alt="coreybutler" /><br /><sub><b>coreybutler</b></sub></a><br /><sub>540</sub></td>
+<td align="center" valign="top" width="12%"><a href="https://github.com/coreybutler"><img src="https://avatars.githubusercontent.com/u/770982?v=4&s=64" width="64" height="64" alt="coreybutler" /><br /><sub><b>coreybutler</b></sub></a><br /><sub>560</sub></td>
 <td align="center" valign="top" width="12%"><a href="https://github.com/gbdrummer"><img src="https://avatars.githubusercontent.com/u/3631962?v=4&s=64" width="64" height="64" alt="gbdrummer" /><br /><sub><b>gbdrummer</b></sub></a><br /><sub>10</sub></td>
 <td align="center" valign="top" width="12%"><a href="https://github.com/wsobolewski"><img src="https://avatars.githubusercontent.com/u/8691776?v=4&s=64" width="64" height="64" alt="wsobolewski" /><br /><sub><b>wsobolewski</b></sub></a><br /><sub>7</sub></td>
 <td align="center" valign="top" width="12%"><a href="https://github.com/Excited-ccccly"><img src="https://avatars.githubusercontent.com/u/5396750?v=4&s=64" width="64" height="64" alt="Excited-ccccly" /><br /><sub><b>Excited-ccccly</b></sub></a><br /><sub>4</sub></td>
