@@ -72,7 +72,7 @@ Not sure which edition is right for you? See [Choosing a Build](https://docs.nvm
 |Installers<br/><br/>|&bull; MSI/MST<br />&bull; Microsoft Intune|
 |Advanced Logging ⭐<br/><br/><br/><br/>|&bull; Fully auditable<br />&bull; Structured<br />&bull; Dedicated Event Source<br />&bull; Native SIEM integration|
 |Policy Enforcement ⭐<br/><br/><br/><br/><br/>|&bull; Active Directory/Entra integration<br/>&bull; Restrict Node.js versions/ranges (e.g. no EOL versions, LTS only, etc.)<br/>&bull; Control nvm-windows, Node/npm/npx settings<br/>&bull; Advanced proxy (IWA, WPAD/PAC) support<br />&bull; Private Node.js download mirror|
-|Trust Artifacts ⭐<br/><br/><br/><br/>|&bull; SBOM<br />&bull; SLSA Provenance<br />&bull; SAST<br />&bull; VEX Reports|
+|Trust Artifacts ⭐<br/><br/><br/><br/>|&bull; SBOM + AI-BOM<br />&bull; SLSA Provenance<br />&bull; SAST<br />&bull; VEX Reports|
 
 ⭐ = Add-on package
 
