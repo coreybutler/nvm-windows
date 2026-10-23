@@ -271,6 +271,7 @@ const
   INVALID_HANDLE_VALUE = $FFFFFFFF;
   FleetWalkMaxDepth = 16;
   NVM4116EventId = 4116;
+  NVM4117EventId = 4117;
 
 type
   TProcessEntry32W = record
@@ -4024,6 +4025,89 @@ begin
   RegWriteStringValue(HKCU, '{#RegistryKey}', 'Version', '{#Version}');
 end;
 
+function RegistryDwordOn(RootKey: Integer; const SubKey, ValueName: String): Boolean;
+var
+  Value: Cardinal;
+begin
+  Result := False;
+  if RegQueryDWordValue(RootKey, SubKey, ValueName, Value) then
+    Result := Value <> 0;
+end;
+
+function IsAirGappedInstall(): Boolean;
+begin
+  Result :=
+    RegistryDwordOn(HKLM, 'Software\Policies\{#OrgLabel}\{#Alias}', 'AirGapped') or
+    RegistryDwordOn(HKLM, '{#RegistryKey}', 'AirGapped') or
+    RegistryDwordOn(HKCU, '{#RegistryKey}', 'AirGapped');
+end;
+
+procedure SeedMalwareDefinitions(FinalizingPage: TOutputProgressWizardPage);
+var
+  SyncExe: String;
+  DataRoot: String;
+  DbPath: String;
+  Params: String;
+  ResultCode: Integer;
+  ContinueInstall: Boolean;
+begin
+  DataRoot := RemoveBackslashUnlessRoot(GetDataRoot(''));
+  DbPath := AddBackslash(DataRoot) + 'malware.db';
+  if FileExists(DbPath) then
+  begin
+    AppendInstallLog('malware.db already present at ' + DbPath);
+    Exit;
+  end;
+
+  SyncExe := ExpandConstant('{app}\utils\sync.exe');
+  if FileExists(SyncExe) then
+  begin
+    Params := 'malware-refresh --root "' + EscapeDoubleQuotedCommandArgument(DataRoot) + '"';
+    AppendInstallLog('Seeding malware.db via ' + SyncExe + ' ' + Params);
+    if not Exec(SyncExe, Params, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      AppendInstallLogWarn('malware-refresh failed to start (system error ' + IntToStr(ResultCode) + ')')
+    else if ResultCode <> 0 then
+      AppendInstallLogWarn('malware-refresh exited ' + IntToStr(ResultCode));
+  end
+  else
+    AppendInstallLogWarn('sync.exe missing; cannot seed malware.db');
+
+  if FileExists(DbPath) then
+  begin
+    AppendInstallLog('malware.db seeded at ' + DbPath);
+    Exit;
+  end;
+
+  if IsAirGappedInstall() then
+  begin
+    AppendInstallLogWarn('NVM' + IntToStr(NVM4117EventId) + ': malware.db missing; AirGapped install continued');
+    Exit;
+  end;
+
+  if FinalizingPage <> nil then
+    FinalizingPage.Hide;
+
+  ContinueInstall := SuppressibleMsgBox(
+    'NVM4117: Malicious package definitions could not be acquired.' + #13#10#13#10 +
+    'Package installs will be blocked until definitions download.' + #13#10#13#10 +
+    'Continue installation anyway?',
+    mbConfirmation,
+    MB_YESNO or MB_DEFBUTTON2,
+    IDYES
+  ) = IDYES;
+
+  if not ContinueInstall then
+  begin
+    AppendInstallLogWarn('NVM' + IntToStr(NVM4117EventId) + ': user declined to continue without malware.db');
+    InstallerHardFailed := True;
+    Exit;
+  end;
+
+  AppendInstallLogWarn('NVM' + IntToStr(NVM4117EventId) + ': malware.db missing; setup continued');
+  if FinalizingPage <> nil then
+    FinalizingPage.Show;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
@@ -4049,6 +4133,7 @@ begin
   FinalizingTotal := FinalizingTotal + 1;  { close blocking Node/NVM processes }
   FinalizingTotal := FinalizingTotal + 1;  { for forced reshim at final step }
   FinalizingTotal := FinalizingTotal + 1;  { for runtime ACL repair }
+  FinalizingTotal := FinalizingTotal + 1;  { seed malware.db }
   if OfficialNodeDetected and (not DeferOfficialNodeOnV2Upgrade) then
     FinalizingTotal := FinalizingTotal + 1;
 
@@ -4136,6 +4221,12 @@ begin
         mbInformation,
         MB_OK
       );
+
+    FinalizingStep := FinalizingStep + 1;
+    UpdateFinalizingProgress(FinalizingPage, 'Downloading malicious package definitions...', FinalizingStep, FinalizingTotal);
+    SeedMalwareDefinitions(FinalizingPage);
+    if InstallerHardFailed then
+      Exit;
 
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Updating environment variables and PATH priority...', FinalizingStep, FinalizingTotal);
