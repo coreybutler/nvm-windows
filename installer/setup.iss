@@ -176,6 +176,7 @@ Source: "updater\bin\nvm-upgrader.exe"; DestDir: "{tmp}"; Flags: ignoreversion d
 Source: "{#ProjectRoot}\{#Icon}"; DestDir: "{app}\.icons"; DestName: "{#Alias}.ico"; Flags: ignoreversion
 Source: "InstallerReport.ps1"; DestDir: "{tmp}"; Flags: deleteafterinstall
 Source: "InstallerReport.ps1"; DestDir: "{app}\utils"; Flags: ignoreversion
+Source: "..\bin\identity\*"; DestDir: "{app}\identity"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 Name: "{userprograms}\{#Name}"; Filename: "{app}\{#Alias}.exe"; IconFilename: "{app}\.icons\{#Alias}.ico"; Comment: "Node Version Manager"; AppUserModelID: "AuthorSoftware.NVMWindows"
@@ -3988,6 +3989,48 @@ begin
   RegWriteStringValue(HKCU, 'Software\Classes\AppUserModelId\AuthorSoftware.NVMWindows', 'IconUri', ExpandConstant('{app}\.icons\{#Alias}.ico'));
 end;
 
+procedure RegisterSparseIdentityPackage();
+var
+  ResultCode: Integer;
+begin
+  { Per-user, no UAC. Missing .msix or sideload GPO: fail-open. }
+  if not FileExists(ExpandConstant('{app}\identity\NVMWindows.msix')) then
+  begin
+    AppendInstallLog('Sparse identity .msix not present; notification collections skipped');
+    Exit;
+  end;
+  if not Exec(
+    ExpandConstant('{app}\{#Alias}.exe'),
+    '--register-sparse-identity',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  ) then
+    AppendInstallLogWarn('Sparse identity register failed to start')
+  else if ResultCode <> 0 then
+    AppendInstallLogWarn('Sparse identity register exit=' + IntToStr(ResultCode))
+  else
+    AppendInstallLog('Sparse identity registered');
+end;
+
+procedure UnregisterSparseIdentityPackage();
+var
+  NVMExe: String;
+  ResultCode: Integer;
+begin
+  NVMExe := ExpandConstant('{app}\{#Alias}.exe');
+  if not FileExists(NVMExe) then
+    Exit;
+  if Exec(NVMExe, '--unregister-sparse-identity', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    if ResultCode <> 0 then
+      Log('Sparse identity unregister returned exit code ' + IntToStr(ResultCode) + '.');
+  end
+  else
+    Log('Failed to run sparse identity unregister.');
+end;
+
 procedure ConfigureUninstallDisplayIcon();
 var
   UninstallKey: String;
@@ -4287,6 +4330,7 @@ begin
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Configuring notification center integration...', FinalizingStep, FinalizingTotal);
     ConfigureAUMIDForNotifications();
+    RegisterSparseIdentityPackage();
     ConfigureUninstallDisplayIcon();
     NotifySilentStorageMigration();
     NotifyOfficialNodeLeftInPlace();
@@ -5170,6 +5214,7 @@ begin
   begin
     UninstallAppRoot := ExpandConstant('{app}');
     UninstallInstallRoot := GetInstallRootForUninstall('');
+    UnregisterSparseIdentityPackage();
     ForceCloseNvmProcessesOnUninstall();
     CleanupInstallRootOnUninstall();
     RemoveSyncTaskOnUninstall();

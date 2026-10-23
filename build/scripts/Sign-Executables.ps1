@@ -252,8 +252,9 @@ foreach ($item in $Path) {
 	# resource DLL (wevtutil). Worker .dll = COSE Sign1 (Sign-SyncWorkers).
 	# .intunewin = container around signed MSI (not Authenticode).
 	$allowDll = ($ext -eq ".dll") -and ($name -ieq "NVMWindows.Events.dll")
-	if ($ext -ne ".exe" -and $ext -ne ".msi" -and -not $allowDll) {
-		throw "Only .exe/.msi/NVMWindows.Events.dll signed here (worker .dll COSE = Sign-SyncWorkers.ps1): $full"
+	$allowMsix = ($ext -eq ".msix")
+	if ($ext -ne ".exe" -and $ext -ne ".msi" -and -not $allowDll -and -not $allowMsix) {
+		throw "Only .exe/.msi/.msix/NVMWindows.Events.dll signed here (worker .dll COSE = Sign-SyncWorkers.ps1): $full"
 	}
 	$files.Add($full)
 }
