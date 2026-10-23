@@ -114,17 +114,34 @@ begin
     (CompareText(FileName, 'CcmExec.exe') = 0);
 end;
 
-function IsStoreAncestorImage(const FileName, ImagePath: String): Boolean;
+function PathLooksLikeWindowsApps(const ImagePath: String): Boolean;
 var
   LowerPath: String;
 begin
-  Result := False;
-  if CompareText(FileName, 'WinStore.App.exe') <> 0 then
-    Exit;
   LowerPath := LowerCase(ImagePath);
   Result :=
     (Pos('\windowsapps\', LowerPath) > 0) or
     (Pos('\systemapps\', LowerPath) > 0);
+end;
+
+function IsUserControlledAncestor(const FileName, ImagePath: String): Boolean;
+begin
+  Result := False;
+  if FileName = '' then
+    Exit;
+  if (CompareText(FileName, 'UniGetUI.exe') = 0) or
+     (CompareText(FileName, 'WingetUI.exe') = 0) or
+     (CompareText(FileName, 'uniget.exe') = 0) then
+  begin
+    Result := True;
+    Exit;
+  end;
+  if not PathLooksLikeWindowsApps(ImagePath) then
+    Exit;
+  Result :=
+    (CompareText(FileName, 'WinStore.App.exe') = 0) or
+    (CompareText(FileName, 'WindowsPackageManagerServer.exe') = 0) or
+    (CompareText(FileName, 'AppInstaller.exe') = 0);
 end;
 
 function AncestorHasRealConsole(const ProcessId: DWORD): Boolean;
@@ -150,7 +167,7 @@ var
   ParentPid: DWORD;
   ImagePath: String;
   FileName: String;
-  StoreAncestor: Boolean;
+  UserControlled: Boolean;
   ConsoleOk: Boolean;
   Seen: String;
 begin
@@ -162,7 +179,7 @@ begin
     Exit;
   end;
 
-  StoreAncestor := False;
+  UserControlled := False;
   ConsoleOk := False;
   Seen := ',';
   CurrentPid := GetCurrentProcessId();
@@ -187,8 +204,8 @@ begin
         Result := False;
         Exit;
       end;
-      if IsStoreAncestorImage(FileName, ImagePath) then
-        StoreAncestor := True;
+      if IsUserControlledAncestor(FileName, ImagePath) then
+        UserControlled := True;
     end;
 
     if AncestorHasRealConsole(ParentPid) then
@@ -200,7 +217,7 @@ begin
   if not WizardSilent then
     Exit;
 
-  if StoreAncestor or ConsoleOk then
+  if UserControlled or ConsoleOk then
     Exit;
 
   AbortFleetSetup('silent-no-console');
