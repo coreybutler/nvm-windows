@@ -103,6 +103,19 @@ begin
   Result := ExtractFileName(ImagePath);
 end;
 
+function ProcessEntryFileName(const Pe: TProcessEntry32W): String;
+var
+  I: Integer;
+begin
+  Result := '';
+  for I := 0 to 259 do
+  begin
+    if Pe.szExeFile[I] = #0 then
+      Break;
+    Result := Result + Pe.szExeFile[I];
+  end;
+end;
+
 function IsFleetHostFileName(const FileName: String): Boolean;
 begin
   Result :=
@@ -122,6 +135,64 @@ begin
   Result :=
     (Pos('\windowsapps\', LowerPath) > 0) or
     (Pos('\systemapps\', LowerPath) > 0);
+end;
+
+function PathLooksLikeIntuneAgent(const ImagePath: String): Boolean;
+begin
+  Result := Pos('\microsoft intune management extension\', LowerCase(ImagePath)) > 0;
+end;
+
+function IntuneAgentExecutorRunning(): Boolean;
+var
+  Snap: THandle;
+  Pe: TProcessEntry32W;
+  FileName: String;
+  ImagePath: String;
+begin
+  Result := False;
+  Snap := CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (Snap = 0) or (Snap = INVALID_HANDLE_VALUE) then
+    Exit;
+  Pe.dwSize := SizeOf(Pe);
+  if Process32FirstW(Snap, Pe) then
+  begin
+    repeat
+      FileName := ProcessEntryFileName(Pe);
+      if CompareText(FileName, 'AgentExecutor.exe') = 0 then
+      begin
+        ImagePath := GetProcessImagePath(Pe.th32ProcessID);
+        if (ImagePath = '') or PathLooksLikeIntuneAgent(ImagePath) then
+        begin
+          Result := True;
+          Break;
+        end;
+      end;
+    until not Process32NextW(Snap, Pe);
+  end;
+  CloseHandle(Snap);
+end;
+
+function IsStoreUiAncestor(const FileName, ImagePath: String): Boolean;
+begin
+  Result := False;
+  if CompareText(FileName, 'WinStore.App.exe') <> 0 then
+    Exit;
+  Result := PathLooksLikeWindowsApps(ImagePath);
+end;
+
+function IsClickHostAncestor(const FileName, ImagePath: String): Boolean;
+begin
+  Result := False;
+  if FileName = '' then
+    Exit;
+  if (CompareText(FileName, 'UniGetUI.exe') = 0) or
+     (CompareText(FileName, 'WingetUI.exe') = 0) or
+     (CompareText(FileName, 'uniget.exe') = 0) then
+  begin
+    Result := True;
+    Exit;
+  end;
+  Result := IsStoreUiAncestor(FileName, ImagePath);
 end;
 
 function IsUserControlledAncestor(const FileName, ImagePath: String): Boolean;
@@ -168,6 +239,7 @@ var
   ImagePath: String;
   FileName: String;
   UserControlled: Boolean;
+  ClickHost: Boolean;
   ConsoleOk: Boolean;
   Seen: String;
 begin
@@ -180,6 +252,7 @@ begin
   end;
 
   UserControlled := False;
+  ClickHost := False;
   ConsoleOk := False;
   Seen := ',';
   CurrentPid := GetCurrentProcessId();
@@ -204,6 +277,8 @@ begin
         Result := False;
         Exit;
       end;
+      if IsClickHostAncestor(FileName, ImagePath) then
+        ClickHost := True;
       if IsUserControlledAncestor(FileName, ImagePath) then
         UserControlled := True;
     end;
@@ -212,6 +287,13 @@ begin
       ConsoleOk := True;
 
     CurrentPid := ParentPid;
+  end;
+
+  if WizardSilent and IntuneAgentExecutorRunning() and (not ClickHost) and (not ConsoleOk) then
+  begin
+    AbortFleetSetup('AgentExecutor-peer');
+    Result := False;
+    Exit;
   end;
 
   if not WizardSilent then
