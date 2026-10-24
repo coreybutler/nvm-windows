@@ -1,0 +1,38 @@
+name: Translate
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created, edited]
+  discussion:
+    types: [created, edited]
+  discussion_comment:
+    types: [created, edited]
+  pull_request_target:
+    types: [opened, edited]
+  pull_request_review_comment:
+    types: [created, edited]
+
+permissions:
+  contents: none
+  issues: write
+  discussions: write
+  pull-requests: write
+
+concurrency:
+  group: translate-${{ github.repository }}-${{ github.event.issue.number || github.event.pull_request.number || github.event.discussion.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  translate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      # No checkout: pull_request_target must not run fork code.
+      - uses: lizheming/github-translate-action@b657888aa452b4b40f493836fa4477f6b66a23e5 # main 2026-09-06 (node24)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          IS_MODIFY_TITLE: true
+          APPEND_TRANSLATION: true
