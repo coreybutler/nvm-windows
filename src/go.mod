@@ -1,6 +1,6 @@
 module nvm
 
-go 1.18
+go 1.25.0
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
@@ -21,5 +21,5 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
-	golang.org/x/image v0.20.0 // indirect
+	golang.org/x/image v0.41.0 // indirect
 )
