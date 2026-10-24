@@ -1059,6 +1059,151 @@ begin
     not ((Length(Normalized) = 2) and (Normalized[2] = ':'));
 end;
 
+procedure AppendProtectedPath(var Items: TArrayOfString; const PathValue: String);
+var
+  Normalized: String;
+  I: Integer;
+begin
+  Normalized := NormalizePath(PathValue);
+  if Normalized = '' then
+    Exit;
+  for I := 0 to GetArrayLength(Items) - 1 do
+  begin
+    if CompareText(Items[I], Normalized) = 0 then
+      Exit;
+  end;
+  SetArrayLength(Items, GetArrayLength(Items) + 1);
+  Items[GetArrayLength(Items) - 1] := Normalized;
+end;
+
+procedure CollectInstallRootProtect(var Subtree, Exact: TArrayOfString);
+var
+  ProgramRoot: String;
+  LocalApp: String;
+  Profile: String;
+begin
+  SetArrayLength(Subtree, 0);
+  SetArrayLength(Exact, 0);
+
+  AppendProtectedPath(Subtree, ExpandConstant('{win}'));
+  AppendProtectedPath(Subtree, ExpandConstant('{sys}'));
+  AppendProtectedPath(Subtree, ExpandConstant('{syswow64}'));
+  AppendProtectedPath(Subtree, ExpandConstant('{win}') + '\WinSxS');
+  AppendProtectedPath(Subtree, ExpandConstant('{pf}'));
+  AppendProtectedPath(Subtree, ExpandConstant('{pf32}'));
+  AppendProtectedPath(Subtree, ExpandConstant('{cf}'));
+  AppendProtectedPath(Subtree, ExpandConstant('{cf32}'));
+  AppendProtectedPath(Subtree, ExpandConstant('{commonappdata}'));
+  AppendProtectedPath(Subtree, ExpandConstant('{pf}') + '\WindowsApps');
+  AppendProtectedPath(Subtree, ExpandConstant('{pf32}') + '\WindowsApps');
+
+  LocalApp := ExpandConstant('{localappdata}');
+  Profile := GetEnv('USERPROFILE');
+  AppendProtectedPath(Exact, Profile);
+  AppendProtectedPath(Exact, LocalApp);
+  AppendProtectedPath(Exact, ExpandConstant('{userappdata}'));
+  AppendProtectedPath(Exact, ExpandConstant('{userdesktop}'));
+  AppendProtectedPath(Exact, ExpandConstant('{userdocs}'));
+  AppendProtectedPath(Exact, ExpandConstant('{userpics}'));
+  AppendProtectedPath(Exact, ExpandConstant('{usermusic}'));
+  AppendProtectedPath(Exact, ExpandConstant('{uservideos}'));
+  AppendProtectedPath(Exact, Profile + '\Downloads');
+  AppendProtectedPath(Exact, ExpandConstant('{commondesktop}'));
+  AppendProtectedPath(Exact, ExpandConstant('{commondocs}'));
+  AppendProtectedPath(Exact, GetEnv('PUBLIC'));
+  AppendProtectedPath(Exact, GetEnv('PUBLIC') + '\Downloads');
+  AppendProtectedPath(Exact, ExpandConstant('{userstartmenu}'));
+  AppendProtectedPath(Exact, ExpandConstant('{commonstartmenu}'));
+  AppendProtectedPath(Exact, ExpandConstant('{userstartup}'));
+  AppendProtectedPath(Exact, ExpandConstant('{commonstartup}'));
+  AppendProtectedPath(Exact, ExpandConstant('{userpf}'));
+  AppendProtectedPath(Exact, LocalApp + '\Microsoft');
+  AppendProtectedPath(Exact, LocalApp + '\Programs');
+
+  ProgramRoot := GetRealProgramRoot('');
+  AppendProtectedPath(Exact, ProgramRoot);
+  AppendProtectedPath(Exact, ProgramRoot + '\.shim');
+  AppendProtectedPath(Exact, ProgramRoot + '\.nodejs');
+  AppendProtectedPath(Exact, ProgramRoot + '\utils');
+  AppendProtectedPath(Exact, ExpandConstant('{pf}\{#OrgLabel}\{#Alias}'));
+  AppendProtectedPath(Exact, ExpandConstant('{pf32}\{#OrgLabel}\{#Alias}'));
+end;
+
+function DisallowedNodeStorageMessage(const PathValue: String): String;
+begin
+  Result :=
+    'This path is not a safe Node.js storage location.' + #13#10 + #13#10 +
+    'Requested path: ' + Trim(PathValue) + #13#10 + #13#10 +
+    'Node.js versions must live in a dedicated directory. Uninstall removes that folder. ' +
+    'Storing versions in Windows, Program Files, your user profile, or other system folders can hide or delete other software.' + #13#10 + #13#10 +
+    'Disallowed locations include:' + #13#10 +
+    '- Windows, System32, WinSxS, Program Files, Program Files (x86), ProgramData, WindowsApps, Recycle Bin' + #13#10 +
+    '- Drive roots (C:\)' + #13#10 +
+    '- Your user profile, AppData, Desktop, Documents, Downloads, Pictures, Videos, Music' + #13#10 +
+    '- Start Menu, Startup, LocalAppData\Programs, LocalAppData\Microsoft' + #13#10 +
+    '- The NVM program folder, .shim, .nodejs, and utils' + #13#10 +
+    '- Any parent of those folders (for example C:\Users)' + #13#10 + #13#10 +
+    'Use a dedicated directory. Default: %LOCALAPPDATA%\Author Software\nvm\installs' + #13#10 + #13#10 +
+    'Event code: NVM4313';
+end;
+
+function IsDisallowedNodeStorage(const PathValue: String): Boolean;
+var
+  PathNorm: String;
+  Subtree: TArrayOfString;
+  Exact: TArrayOfString;
+  I: Integer;
+  Drive: String;
+begin
+  Result := True;
+  PathNorm := NormalizePath(PathValue);
+  if PathNorm = '' then
+    Exit;
+
+  if (Length(PathNorm) >= 2) and (PathNorm[1] = '\') and (PathNorm[2] = '\') then
+    Exit;
+
+  if (Length(PathNorm) = 2) and (PathNorm[2] = ':') then
+    Exit;
+
+  CollectInstallRootProtect(Subtree, Exact);
+  Drive := ExtractFileDrive(PathNorm);
+  if Drive <> '' then
+    AppendProtectedPath(Subtree, Drive + '\$Recycle.Bin');
+
+  for I := 0 to GetArrayLength(Subtree) - 1 do
+  begin
+    if PathIsUnderOrEqualRoot(PathNorm, Subtree[I]) then
+      Exit;
+  end;
+  for I := 0 to GetArrayLength(Exact) - 1 do
+  begin
+    if CompareText(PathNorm, Exact[I]) = 0 then
+      Exit;
+  end;
+  for I := 0 to GetArrayLength(Subtree) - 1 do
+  begin
+    if PathIsUnderOrEqualRoot(Subtree[I], PathNorm) and (CompareText(PathNorm, Subtree[I]) <> 0) then
+      Exit;
+  end;
+  for I := 0 to GetArrayLength(Exact) - 1 do
+  begin
+    if PathIsUnderOrEqualRoot(Exact[I], PathNorm) and (CompareText(PathNorm, Exact[I]) <> 0) then
+      Exit;
+  end;
+  Result := False;
+end;
+
+function UninstallScanDataRoot(const AppRoot, InstallRoot: String): String;
+begin
+  Result := AppRoot;
+  if (InstallRoot = '') or IsDisallowedNodeStorage(InstallRoot) then
+    Exit;
+  Result := RemoveBackslashUnlessRoot(ExtractFileDir(InstallRoot));
+  if Result = '' then
+    Result := InstallRoot;
+end;
+
 procedure RemoveLegacyFilesFromSameDirectory(const RootDir: String);
 var
   CleanupScriptFile: String;
@@ -2610,8 +2755,19 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   AppDataRoot: String;
+  Chosen: String;
 begin
   Result := True;
+  if (NodeStoragePage <> nil) and (CurPageID = NodeStoragePage.ID) then
+  begin
+    Chosen := Trim(NodeStoragePage.Values[0]);
+    if (Chosen = '') or IsDisallowedNodeStorage(Chosen) then
+    begin
+      MsgBox(DisallowedNodeStorageMessage(Chosen), mbError, MB_OK);
+      Result := False;
+    end;
+    Exit;
+  end;
   if (StoragePermissionsPage = nil) or (CurPageID <> StoragePermissionsPage.ID) then
     Exit;
 
@@ -2682,6 +2838,19 @@ begin
 
   if CompareText(Candidate, AppDataRoot) = 0 then
     Exit;
+
+  if IsDisallowedNodeStorage(Candidate) then
+  begin
+    AppendInstallLogWarn('NVM4313: InstallRoot disallowed, forcing AppData: ' + Candidate + ' -> ' + AppDataRoot);
+    SilentForcedAppDataFrom := Candidate;
+    if Trim(PreviousInstallRoot) = '' then
+      PreviousInstallRoot := Candidate
+    else if CompareText(NormalizePath(PreviousInstallRoot), Candidate) <> 0 then
+      PreviousInstallRoot := Candidate;
+    NodeStoragePage.Values[0] := DefaultAppDataInstallRoot();
+    RegWriteStringValue(HKCU, '{#RegistryKey}', 'InstallRoot', DefaultAppDataInstallRoot());
+    Exit;
+  end;
 
   if IsPathUnderSafeManagedRoot(Candidate) then
   begin
@@ -4740,9 +4909,8 @@ begin
     InstallRoot := RemoveBackslashUnlessRoot(GetInstallRootForUninstall(''));
 
   // DataRoot owns .shim; InstallRoot alone misses it when storage is split.
-  DataRoot := RemoveBackslashUnlessRoot(ExtractFileDir(InstallRoot));
-  if DataRoot = '' then
-    DataRoot := InstallRoot;
+  // Never walk the parent of a disallowed storage path (e.g. profile -> C:\Users).
+  DataRoot := UninstallScanDataRoot(AppRoot, InstallRoot);
 
   while True do
   begin
@@ -4793,9 +4961,7 @@ begin
     InstallRoot := GetInstallRootForUninstall('');
   InstallRoot := RemoveBackslashUnlessRoot(InstallRoot);
 
-  DataRoot := RemoveBackslashUnlessRoot(ExtractFileDir(InstallRoot));
-  if DataRoot = '' then
-    DataRoot := InstallRoot;
+  DataRoot := UninstallScanDataRoot(AppRoot, InstallRoot);
 
   ScriptFile := ExpandConstant('{tmp}\nvm-uninstall-force-close.ps1');
   SaveStringToFile(
@@ -4948,18 +5114,7 @@ begin
 
   ScanKnownLockedShims(AppRoot);
   // Scan DataRoot so .shim under split storage is included (not InstallRoot alone).
-  if InstallRoot <> '' then
-  begin
-    if RemoveBackslashUnlessRoot(ExtractFileDir(InstallRoot)) <> '' then
-      AppendRunningNvmProcessesToLeftovers(
-        AppRoot,
-        RemoveBackslashUnlessRoot(ExtractFileDir(InstallRoot))
-      )
-    else
-      AppendRunningNvmProcessesToLeftovers(AppRoot, InstallRoot);
-  end
-  else
-    AppendRunningNvmProcessesToLeftovers(AppRoot, InstallRoot);
+  AppendRunningNvmProcessesToLeftovers(AppRoot, UninstallScanDataRoot(AppRoot, InstallRoot));
 end;
 
 function InitializeUninstall(): Boolean;
@@ -5046,7 +5201,7 @@ begin
   if not DirExists(RootToRemove) then
     Exit;
 
-  if not IsSafeRemovableDirectory(RootToRemove) then
+  if (not IsSafeRemovableDirectory(RootToRemove)) or IsDisallowedNodeStorage(RootToRemove) then
   begin
     Log('Skipping install root removal due to safety check: ' + RootToRemove);
     Exit;
