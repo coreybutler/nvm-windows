@@ -1,0 +1,92 @@
+name: DCO
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: dco-${{ github.repository }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: DCO
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Check DCO
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const marker = '<!-- dco-check -->';
+            const botLogin = /\[bot\]$/i;
+
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner,
+              repo,
+              pull_number: pr.number,
+              per_page: 100
+            });
+
+            const missing = [];
+            for (const commit of commits) {
+              const login = (commit.author && commit.author.login) || '';
+              if (botLogin.test(login)) continue;
+              const message = commit.commit.message || '';
+              if (!/Signed-off-by:\s+.+\s+<.+>/.test(message)) {
+                missing.push(commit.sha.slice(0, 7));
+              }
+            }
+
+            async function upsertComment(body) {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: pr.number,
+                per_page: 100
+              });
+              const existing = comments.find((c) => c.body && c.body.includes(marker));
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: existing.id,
+                  body
+                });
+                return;
+              }
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pr.number,
+                body
+              });
+            }
+
+            if (missing.length > 0) {
+              const body = [
+                marker,
+                '### DCO check failed',
+                '',
+                'One or more commits are missing a `Signed-off-by` trailer.',
+                '',
+                'Missing in:',
+                ...missing.map((s) => `- \`${s}\``),
+                '',
+                'To fix:',
+                '1. `git commit --amend -s` (or `git rebase -i` and reword with `-s`)',
+                '2. Force-push the updated branch',
+                '',
+                'See [CONTRIBUTING.md](https://github.com/nvm-windows/nvm/blob/main/CONTRIBUTING.md).'
+              ].join('\n');
+              await upsertComment(body);
+              core.setFailed(`Missing Signed-off-by in commits: ${missing.join(', ')}`);
+            }

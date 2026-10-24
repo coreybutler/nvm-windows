@@ -76,6 +76,10 @@ Not sure which edition is right for you? See [Choosing a Build](https://docs.nvm
 
 ⭐ = Add-on package
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Every commit needs a `Signed-off-by` trailer (`git commit -s`).
+
 ## :pray: Thanks
 
 Thanks to everyone who has submitted issues on and off GitHub, made suggestions, and generally helped make this a better project. Special thanks and the full contributor list is available **[here](THANKS.md)**.
