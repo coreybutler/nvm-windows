@@ -35,6 +35,10 @@ if (-not $InstallerOnly) {
 		Assert-NvmFile -Path $path -Label ([System.IO.Path]::GetFileName($path)) | Out-Null
 		$signable.Add($path)
 	}
+	$msix = Join-Path $ctx.BinRoot "identity\NVMWindows.msix"
+	if (Test-Path -LiteralPath $msix -PathType Leaf) {
+		$signable.Add($msix)
+	}
 }
 
 if ($IncludeInstaller -or $InstallerOnly) {

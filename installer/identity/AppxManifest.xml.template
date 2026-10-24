@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  IgnorableNamespaces="uap uap10"
+  uap10:AllowExternalContent="true">
+  <Identity
+    Name="{{NAME}}"
+    Publisher="{{PUBLISHER}}"
+    Version="{{VERSION}}" />
+  <Properties>
+    <DisplayName>{{DISPLAY}}</DisplayName>
+    <PublisherDisplayName>Author Software Inc.</PublisherDisplayName>
+    <Description>Identity package for Windows notification collections. Not a Store app.</Description>
+    <Logo>StoreLogo.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Applications>
+    <Application
+      Id="nvm"
+      Executable="nvm.exe"
+      uap10:TrustLevel="mediumIL"
+      uap10:RuntimeBehavior="win32App">
+      <uap:VisualElements
+        DisplayName="{{DISPLAY}}"
+        Description="Node Version Manager for Windows"
+        BackgroundColor="transparent"
+        Square150x150Logo="StoreLogo.png"
+        Square44x44Logo="StoreLogo.png"
+        AppListEntry="none" />
+    </Application>
+    <Application
+      Id="sync"
+      Executable="utils\sync.exe"
+      uap10:TrustLevel="mediumIL"
+      uap10:RuntimeBehavior="win32App">
+      <uap:VisualElements
+        DisplayName="{{DISPLAY}} Sync"
+        Description="NVM for Windows background sync"
+        BackgroundColor="transparent"
+        Square150x150Logo="StoreLogo.png"
+        Square44x44Logo="StoreLogo.png"
+        AppListEntry="none" />
+    </Application>
+  </Applications>
+</Package>

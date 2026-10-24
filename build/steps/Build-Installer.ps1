@@ -36,6 +36,22 @@ Write-Host "Installer version -> $version"
 # Inno copies bin/.sync/* only when sync.exe exists; keep dir present, no DLLs.
 New-Item -ItemType Directory -Force -Path (Join-Path $ctx.BinRoot ".sync") | Out-Null
 
+Write-Host "Building sparse identity package..."
+$identityScript = Join-Path $PSScriptRoot "New-IdentityPackage.ps1"
+if (Test-Path -LiteralPath $identityScript -PathType Leaf) {
+	& $identityScript -Architecture $Architecture -BinRoot $ctx.BinRoot -Version $version
+	$msix = Join-Path $ctx.BinRoot "identity\NVMWindows.msix"
+	$signScript = Join-Path $PSScriptRoot "..\scripts\Sign-Executables.ps1"
+	if ((Test-Path -LiteralPath $msix -PathType Leaf) -and (Test-Path -LiteralPath $signScript -PathType Leaf)) {
+		try {
+			& $signScript -Path @($msix)
+			Write-Host "Signed identity package -> $msix"
+		} catch {
+			Write-Warning ("Identity .msix unsigned (signing skipped): {0}" -f $_.Exception.Message)
+		}
+	}
+}
+
 Write-Host "Building updater..."
 & $updaterScript -Architecture $Architecture
 if ($LASTEXITCODE -ne 0 -and $null -ne $LASTEXITCODE) {
