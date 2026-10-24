@@ -3989,6 +3989,37 @@ begin
   RegWriteStringValue(HKCU, 'Software\Classes\AppUserModelId\AuthorSoftware.NVMWindows', 'IconUri', ExpandConstant('{app}\.icons\{#Alias}.ico'));
 end;
 
+procedure UnregisterCertifiedIdentityIfOrphaned();
+var
+  ResultCode: Integer;
+  NVMExe: String;
+begin
+  { Downgrade leftover: drop Certified Appx only when Program Files nvm.exe is gone. }
+  if FileExists(ExpandConstant('{commonpf}\Author Software\nvm\nvm.exe')) then
+    Exit;
+  if FileExists(ExpandConstant('{pf32}\Author Software\nvm\nvm.exe')) then
+    Exit;
+  NVMExe := ExpandConstant('{app}\{#Alias}.exe');
+  if not FileExists(NVMExe) then
+    Exit;
+  if Exec(
+    NVMExe,
+    '--unregister-sparse-identity AuthorSoftware.NVMWindows.Certified',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  ) then
+  begin
+    if ResultCode <> 0 then
+      AppendInstallLogWarn('Certified sparse identity unregister exit=' + IntToStr(ResultCode))
+    else
+      AppendInstallLog('Certified sparse identity unregistered');
+  end
+  else
+    AppendInstallLogWarn('Certified sparse identity unregister failed to start');
+end;
+
 procedure RegisterSparseIdentityPackage();
 var
   ResultCode: Integer;
@@ -4330,6 +4361,7 @@ begin
     FinalizingStep := FinalizingStep + 1;
     UpdateFinalizingProgress(FinalizingPage, 'Configuring notification center integration...', FinalizingStep, FinalizingTotal);
     ConfigureAUMIDForNotifications();
+    UnregisterCertifiedIdentityIfOrphaned();
     RegisterSparseIdentityPackage();
     ConfigureUninstallDisplayIcon();
     NotifySilentStorageMigration();
