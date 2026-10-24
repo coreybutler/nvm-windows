@@ -1,0 +1,45 @@
+name: PR Description
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: none
+  pull-requests: read
+
+concurrency:
+  group: pr-description-${{ github.repository }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require What / Why / Testing / Risk
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python3 << 'PY'
+          import os, re, sys
+
+          body = os.environ.get("BODY") or ""
+          body = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+          missing = []
+          for section in ("What", "Why", "Testing", "Risk"):
+              m = re.search(rf"(?im)^##\s*{re.escape(section)}\s*$", body)
+              if not m:
+                  missing.append(section)
+                  continue
+              rest = body[m.end() :]
+              nxt = re.search(r"(?m)^##\s+", rest)
+              chunk = rest[: nxt.start()] if nxt else rest
+              text = re.sub(r"\s+", " ", chunk).strip()
+              if len(text) < 3:
+                  missing.append(f"{section} (empty)")
+          if missing:
+              print("PR body must include filled sections: What / Why / Testing / Risk")
+              print("Missing or empty:", ", ".join(missing))
+              sys.exit(1)
+          print("PR description has What / Why / Testing / Risk")
+          PY
